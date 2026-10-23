@@ -11,14 +11,14 @@ import { lab, useUI } from '../state/lab';
 import { settled } from '../state/scroll';
 import { Blob } from './Lab';
 import { M, laserMat, reskin } from './materials';
-import { B, lerp, sstep } from './shared';
+import { B, lerp, sstep, MESHOPT } from './shared';
 import { Tag } from './Tag';
 
 interface Vial { root: THREE.Object3D; liquid: THREE.Object3D; y0: number; s0: number; fill: number; x: number; z: number; lift: number }
 
 /** Station 03: twelve ingredient vials in a machined rack, a dropper that doses V-04, ampoules, and a laser that scans the row. */
 export function Bench() {
-  const vial = useGLTF(vialUrl), amp = useGLTF(ampouleUrl), drop = useGLTF(dropperUrl);
+  const vial = useGLTF(vialUrl, false, MESHOPT), amp = useGLTF(ampouleUrl, false, MESHOPT), drop = useGLTF(dropperUrl, false, MESHOPT);
   const vials = useMemo<Vial[]>(() => {
     reskin(vial.scene);
     return INGREDIENTS.map((_, i) => {

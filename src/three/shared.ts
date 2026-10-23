@@ -15,3 +15,6 @@ export const sstep = (a: number, b: number, x: number) => { const t = Math.min(1
 export const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 export const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 export const sgn = (n: number, l: number, d: number) => (n < 0 ? '-' : '+') + Math.abs(n).toFixed(d).padStart(l, '0');
+
+/** preview builds ship WebAssembly-free models (see vite.config.ts), so they skip the meshopt decoder */
+export const MESHOPT = import.meta.env.MODE !== 'preview';

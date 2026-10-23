@@ -1,4 +1,4 @@
-import { Suspense, useEffect } from 'react';
+import { Component, Suspense, useEffect, type ReactNode } from 'react';
 import { Canvas, useThree } from '@react-three/fiber';
 import { AdaptiveDpr, Preload } from '@react-three/drei';
 import * as THREE from 'three';
@@ -26,6 +26,14 @@ function Room() {
   return null;
 }
 
+/** a model that fails to load drops out of the scene instead of taking the whole page down with it */
+class ModelGuard extends Component<{ children: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() { return { failed: true }; }
+  componentDidCatch(e: unknown) { console.error('model failed to load', e); }
+  render() { return this.state.failed ? null : this.props.children; }
+}
+
 /** fog reaches further on a phone, where the camera stands back to fit the stations */
 function Fog() {
   const { scene, size } = useThree();
@@ -50,12 +58,14 @@ export function Experience() {
         <CameraRig />
         <Swarm />
         <Specimen />
-        <Suspense fallback={null}>
-          <Bench />
-          <Pack />
-          <Tray />
-          <Preload all />
-        </Suspense>
+        <ModelGuard>
+          <Suspense fallback={null}>
+            <Bench />
+            <Pack />
+            <Tray />
+            <Preload all />
+          </Suspense>
+        </ModelGuard>
         <Effects />
         <AdaptiveDpr pixelated={false} />
       </Canvas>

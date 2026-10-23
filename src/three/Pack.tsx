@@ -9,12 +9,12 @@ import { settled } from '../state/scroll';
 import { Dimension } from './Dimension';
 import { Blob } from './Lab';
 import { reskin } from './materials';
-import { P, sstep } from './shared';
+import { P, sstep, MESHOPT } from './shared';
 import { Tag } from './Tag';
 
 /** Station 04: the aluminium tin opens to receive the specimen; the foil refill pouch turns with scroll or a drag. */
 export function Pack() {
-  const tin = useGLTF(tinUrl), pouch = useGLTF(pouchUrl);
+  const tin = useGLTF(tinUrl, false, MESHOPT), pouch = useGLTF(pouchUrl, false, MESHOPT);
   const tinScene = useMemo(() => reskin(tin.scene), [tin.scene]);
   const pouchScene = useMemo(() => reskin(pouch.scene), [pouch.scene]);
   const lid = useMemo(() => { const l = tinScene.getObjectByName('tin_lid')!; return { o: l, y: l.position.y, z: l.position.z }; }, [tinScene]);

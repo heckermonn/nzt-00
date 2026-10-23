@@ -9,14 +9,14 @@ import { settled } from '../state/scroll';
 import { bodyGeo, capGeo } from './capsule';
 import { Blob } from './Lab';
 import { M, bodyMat, reskin } from './materials';
-import { D, sstep } from './shared';
+import { D, sstep, MESHOPT } from './shared';
 import { Tag } from './Tag';
 
 const R = 5.6; // well radius on the Blender tray
 
 /** Station 05: the 30-well indexing tray. It steps one well per scroll beat and per dispense; filled wells hold upright capsules. */
 export function Tray() {
-  const tray = useGLTF(trayUrl);
+  const tray = useGLTF(trayUrl, false, MESHOPT);
   const scene = useMemo(() => reskin(tray.scene, (n) => (n.startsWith('tray_disc') ? M.alu : n.startsWith('tray_numbers') ? M.plastic_black : undefined)), [tray.scene]);
   const capM = useMemo(() => new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 1, roughness: 0.22 }), []);
   const geo = useMemo(() => ({ cap: capGeo(12, 32), body: bodyGeo(12, 32) }), []);
