@@ -12,6 +12,8 @@ npm run build:preview  # self-contained build: relative paths, models inlined in
 npm run typecheck
 ```
 
+Every push to `main` builds the site and publishes it to the `gh-pages` branch (`.github/workflows/pages.yml`), which GitHub Pages serves at `https://<owner>.github.io/<repo>/`.
+
 Add `?test` to the URL to expose the live scroll state as `window.__lab` (used by the headless screenshot checks).
 
 ## Stack

@@ -1,10 +1,10 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
-// `--mode preview` builds a self-contained bundle (relative paths, models inlined)
-// so the whole site can be dropped into a static host or a single-folder preview.
+// Relative base so the build works from any sub-path (GitHub Pages serves it under /<repo>/).
+// `--mode preview` also inlines the models so the whole site is a single-folder bundle.
 export default defineConfig(({ mode }) => ({
-  base: mode === 'preview' ? './' : '/',
+  base: './',
   plugins: [react()],
   assetsInclude: ['**/*.glb'],
   build: {
