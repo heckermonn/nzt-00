@@ -33,7 +33,24 @@ export const lab = {
   wells: Array.from({ length: 30 }, (_, i) => (i >= 3 && i <= 8 ? (i - 3) % 4 : -1)),
   wellsVersion: 0,
   nextWell: 9,
+  /** the way in: door, then airlock, then the lab. Times are seconds since the phase began */
+  entry: {
+    phase: 'door' as EntryPhase,
+    /** 0..1 keypad hold; falls back if released before the bolts are home */
+    hold: 0,
+    /** 0..1 decontamination cycle: air shower, UV-C, nitrogen purge in thirds; pauses when released */
+    cycle: 0,
+    holding: false,
+    /** seconds into the current phase */
+    tp: 0,
+    /** 0 = camera on the entry path, 1 = handed to the scroll rail */
+    blend: 0,
+    /** 0..1 condensation on the lens between zones */
+    frost: 0,
+  },
 };
+
+export type EntryPhase = 'door' | 'opening' | 'airlock' | 'cleared' | 'exit' | 'lab';
 
 /** React-facing UI state that changes rarely */
 interface UIState {
@@ -47,6 +64,8 @@ interface UIState {
   setSound: (on: boolean) => void;
   setReady: () => void;
   setHoverVial: (i: number) => void;
+  phase: EntryPhase;
+  setPhase: (p: EntryPhase) => void;
 }
 export const useUI = create<UIState>((set) => ({
   chapter: 0,
@@ -59,4 +78,6 @@ export const useUI = create<UIState>((set) => ({
   setSound: (sound) => set({ sound }),
   setReady: () => set({ ready: true }),
   setHoverVial: (hoverVial) => set({ hoverVial }),
+  phase: 'door',
+  setPhase: (phase) => { lab.entry.phase = phase; lab.entry.tp = 0; set({ phase }); },
 }));

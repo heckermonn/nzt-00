@@ -5,6 +5,7 @@ import { Experience } from './three/Experience';
 import { Boot, Header, Hud, ProcessRail } from './ui/Chrome';
 import { Chapters, Footer } from './ui/Chapters';
 import { CartDrawer, DispenseRecord } from './ui/Commerce';
+import { EntryUI } from './ui/Entry';
 
 export function App() {
   useLabScroll();
@@ -19,6 +20,7 @@ export function App() {
       <Footer />
       <DispenseRecord />
       <CartDrawer />
+      <EntryUI />
       <Boot />
     </>
   );

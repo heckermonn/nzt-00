@@ -7,6 +7,7 @@ import { lab } from '../state/lab';
 import { Bench } from './Bench';
 import { CameraRig } from './CameraRig';
 import { Effects } from './Effects';
+import { Entry } from './Entry';
 import { Lab } from './Lab';
 import { Pack } from './Pack';
 import { Specimen } from './Specimen';
@@ -45,6 +46,7 @@ export function Experience() {
         <Room />
         <Lab />
         <Fog />
+        <Entry />
         <CameraRig />
         <Swarm />
         <Specimen />

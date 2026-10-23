@@ -47,6 +47,8 @@ export function useLabScroll() {
     onResize();
     addEventListener('resize', onResize);
     (window as unknown as { __lenis: Lenis }).__lenis = lenis;
+    // the page stays sealed until the visitor is through the airlock
+    if (lab.entry.phase !== 'lab') { scrollTo(0, 0); lenis.stop(); }
     return () => { removeEventListener('resize', onResize); triggers.forEach((t) => t.kill()); ScrollTrigger.getAll().forEach((t) => t.kill()); gsap.ticker.remove(tick); lenis.destroy(); };
   }, []);
 }
