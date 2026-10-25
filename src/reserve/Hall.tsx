@@ -6,6 +6,7 @@ import { COLLECTIONS, R, SLOTS, slotAngle } from './data';
 import { MONO, blobTexture, paintTexture, spaced, wide } from './paint';
 import { rv, turnTo } from './state';
 import { Specimen } from './Specimens';
+import { concrete, concreteMap } from './concrete';
 
 /** the Reserve: a ten-sided hall, the door in one wall and a lit niche in each of the other nine */
 export const HALL = {
@@ -16,12 +17,14 @@ export const HALL = {
   DW: 1.9, DH: 3.1, // door opening
 };
 const { H, TH, W, NW, NB, NH, ND, DW, DH } = HALL;
-const PLINTH = 1.05;
+export const PLINTH = 1.05;
 
-export const wallMat = new THREE.MeshStandardMaterial({ color: 0x111315, roughness: 0.86 });
-const nicheMat = new THREE.MeshStandardMaterial({ color: 0x1a1c1e, roughness: 0.78 });
-const plinthMat = new THREE.MeshStandardMaterial({ color: 0x202224, roughness: 0.55 });
-const ceilMat = new THREE.MeshStandardMaterial({ color: 0x0c0d0e, roughness: 0.9 });
+/** béton brut throughout: walls, niches, plinths and ceiling are one board-formed pour */
+export const wallMat = concrete({ color: 0xa4a4a0, roughness: 0.94 });
+const nicheMat = concrete({ color: 0xc2c2be, roughness: 0.88, tile: 0.9 });
+const plinthMat = concrete({ color: 0xbdbdb9, roughness: 0.74, tile: 0.7 });
+const ceilMat = concrete({ color: 0x7c7c78, roughness: 0.95, tile: 1.6 });
+const floorMap = (() => { const t = concreteMap().clone(); t.repeat.set(18, 18); t.needsUpdate = true; return t; })();
 
 /** white pushed past the bloom threshold */
 const glow = (k: number) => new THREE.MeshBasicMaterial({ color: new THREE.Color(1, 0.985, 0.96).multiplyScalar(k), toneMapped: false });
@@ -66,7 +69,7 @@ function Bay({ i }: { i: number }) {
   const spot = useRef<THREE.SpotLight>(null), target = useRef<THREE.Object3D>(null);
   const parts = useMemo(() => {
     const num = numeralTexture(c.n);
-    const back = new THREE.MeshStandardMaterial({ color: 0x1d1f21, roughness: 0.8, roughnessMap: num, bumpMap: num, bumpScale: 2.5 });
+    const back = concrete({ color: 0xc8c8c4, roughness: 0.86, tile: 0.9 }); back.bumpMap = num; back.bumpScale = 3;
     const sign = new THREE.MeshBasicMaterial({ map: signTexture(c.n, c.name, c.line), toneMapped: false, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
     const cove = glow(0);
     const blob = new THREE.MeshBasicMaterial({ map: blobTexture(), transparent: true, depthWrite: false, opacity: 0.9 });
@@ -167,14 +170,14 @@ export function Hall({ narrow }: { narrow: boolean }) {
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 4]}>
         <planeGeometry args={[30, 30]} />
         <MeshReflectorMaterial resolution={narrow ? 256 : 512} blur={[400, 120]} mixBlur={1} mixStrength={3.2} mirror={0.6}
-          roughness={0.82} depthScale={0} metalness={0.4} color="#0b0c0d" />
+          roughness={0.78} depthScale={0} metalness={0.2} color="#3c3c3a" map={floorMap} />
       </mesh>
       {/* ceiling and the ring of light over the centre */}
       <mesh material={ceilMat} rotation={[Math.PI / 2, 0, 0]} position={[0, H, 0]}><circleGeometry args={[R + 1, 10]} /></mesh>
       <mesh material={sky} rotation={[Math.PI / 2, 0, 0]} position={[0, H - 0.01, 0]}><circleGeometry args={[2.3, 64]} /></mesh>
       <mesh material={oculus} rotation={[Math.PI / 2, 0, 0]} position={[0, H - 0.03, 0]}><torusGeometry args={[2.35, 0.03, 8, 128]} /></mesh>
       <pointLight position={[0, H - 0.6, 0]} intensity={22} distance={14} decay={1.6} color="#e9eef2" />
-      <hemisphereLight args={['#c8d0d6', '#000000', 0.12]} />
+      <hemisphereLight args={['#c8d0d6', '#2a2a28', 0.32]} />
       <Lines />
     </group>
   );

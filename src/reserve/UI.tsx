@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { COLLECTIONS, GOALS, MEMBER } from './data';
-import { presentKey, turnTo, useReserve } from './state';
+import { TAPE_K, hud } from './hud';
+import { MeasureOverlay } from './Measure';
+import { presentKey, rv, turnTo, useReserve } from './state';
 
-type Reader = { scan: (o?: { signal?: AbortSignal }) => Promise<void>; onreading: (() => void) | null; onreadingerror: (() => void) | null };
+type Reader = { scan: (o?: { signal?: AbortSignal }) => Promise<void>; onreading: ((e: { serialNumber?: string }) => void) | null; onreadingerror: (() => void) | null };
 
 /** Android Chrome reads the card in the page; everywhere else the button stands in for the card */
 async function readKey() {
@@ -12,7 +14,7 @@ async function readKey() {
     const reader = new (window as unknown as { NDEFReader: new () => Reader }).NDEFReader(), stop = new AbortController();
     await reader.scan({ signal: stop.signal });
     ui.setNfc('scanning');
-    reader.onreading = () => { stop.abort(); ui.setNfc('ready'); presentKey(); };
+    reader.onreading = (e) => { stop.abort(); rv.uid = (e.serialNumber ?? '').replace(/:/g, ' ').toUpperCase(); ui.setNfc('ready'); presentKey(); };
   } catch {
     presentKey(); // permission refused or no reader: fall back to the stand-in
   }
@@ -42,6 +44,9 @@ function Threshold() {
       : touch ? 'On iPhone, hold the key near the top of the phone.' : 'On a laptop, your phone reads the key for you.';
   return (
     <section className="threshold" aria-labelledby="threshold-title">
+      <dl className="spec">
+        <Cell k="Access" v="By invitation" /><Cell k="Key" v="NFC · engraved metal" /><Cell k="Door" v="00" />
+      </dl>
       <h1 id="threshold-title">Members only beyond this door.</h1>
       <button type="button" className="key" onClick={readKey} data-state={nfc}>
         <Contactless /><span>{nfc === 'scanning' ? 'Waiting for your key' : 'Present your key'}</span>
@@ -72,6 +77,27 @@ function Goals() {
   );
 }
 
+const pad = (n: number) => String(n).padStart(2, '0');
+
+/** heading tape: the hall's bays as a compass strip that slides as you turn; the scene moves it each frame */
+function Tape() {
+  const bay = useReserve((s) => s.bay), goal = useReserve((s) => s.goal);
+  const lit = goal >= 0 ? GOALS[goal].bays : null;
+  const marks: ReactNode[] = [];
+  for (let c = -1; c <= 1; c++) for (let s = 0; s < 10; s++) {
+    const left = (c * 360 + s * 36 + 360) * TAPE_K, key = `${c}-${s}`;
+    marks.push(s === 0
+      ? <span key={key} className="tape-mark door" style={{ left }}>Door</span>
+      : <button key={key} type="button" tabIndex={-1} className="tape-mark" style={{ left }} data-on={bay === s - 1} data-dim={!!lit && !lit.includes(s - 1)}
+        onClick={() => turnTo(s - 1)}>{COLLECTIONS[s - 1].n}</button>);
+  }
+  return (
+    <div className="tape" aria-hidden="true">
+      <div className="tape-strip" ref={(el) => { hud.tape = el; }} style={{ width: 1080 * TAPE_K }}>{marks}</div>
+    </div>
+  );
+}
+
 function Hall() {
   const bay = useReserve((s) => s.bay), c = COLLECTIONS[bay];
   const step = (d: number) => { let b = bay + d; b = ((b % 9) + 9) % 9; turnTo(b); };
@@ -80,8 +106,70 @@ function Hall() {
       <p className="sr" aria-live="polite">{`${c.n} ${c.name}. ${c.line}.`}</p>
       <button type="button" className="turn prev" onClick={() => step(-1)} aria-label={`Previous: ${COLLECTIONS[(bay + 8) % 9].name}`}><Chevron dir={-1} /></button>
       <button type="button" className="turn next" onClick={() => step(1)} aria-label={`Next: ${COLLECTIONS[(bay + 1) % 9].name}`}><Chevron dir={1} /></button>
-      <Goals />
+      <div className="dock">
+        <Tape />
+        <Goals />
+      </div>
     </>
+  );
+}
+
+/** what the reader reports while it reads the key, in order, by seconds into the read */
+const LOG: [number, string, () => string][] = [
+  [0.25, 'Field', () => '13.56 MHz'],
+  [0.6, 'UID', () => rv.uid || '04 A2 5F 1C 9E 33 80'],
+  [1.0, 'Record', () => 'p4ce.com/k/••••'],
+  [1.5, 'Signature', () => 'Valid'],
+  [1.95, 'Member', () => MEMBER],
+];
+
+function KeyLog() {
+  const phase = useReserve((s) => s.phase);
+  const [n, setN] = useState(0);
+  useEffect(() => {
+    let id = 0;
+    const tick = () => { setN(rv.phase === 'reading' ? LOG.filter(([t]) => rv.tp >= t).length : LOG.length); id = requestAnimationFrame(tick); };
+    tick();
+    return () => cancelAnimationFrame(id);
+  }, []);
+  return (
+    <section className="keylog" aria-hidden="true">
+      <p className="keylog-head">Reader 00 · Key log</p>
+      <dl>
+        {LOG.slice(0, n).map(([, k, v]) => <Cell key={k} k={k} v={v()} />)}
+        {phase === 'reading' ? <Cell k="Status" v={<>Reading<i className="caret" /></>} live /> : <Cell k="Result" v="Verified" />}
+      </dl>
+    </section>
+  );
+}
+
+/** `min` hides a cell below a width: md on phones, lg on anything narrower than a wide laptop */
+function Cell({ k, v, live, min }: { k: string; v: ReactNode; live?: boolean; min?: 'md' | 'lg' }) {
+  return <div className="cell" data-min={min}><dt>{k}</dt><dd data-live={live || undefined}>{v}</dd></div>;
+}
+
+/** the readout along the top: door and lock state outside, heading and bay inside */
+function Readout() {
+  const phase = useReserve((s) => s.phase), bay = useReserve((s) => s.bay), goal = useReserve((s) => s.goal);
+  if (phase === 'hall') {
+    const lit = goal >= 0 ? GOALS[goal].bays.length : 9;
+    return (
+      <dl className="cells">
+        <Cell k="Reserve" v="Hall" min="lg" />
+        <Cell k="Hdg" v={<span className="hdg" ref={(el) => { hud.hdg = el; }}>180.0°</span>} min="md" />
+        <Cell k="Bay" v={`${COLLECTIONS[bay].n}/09`} />
+        <Cell k="Lit" v={`${pad(lit)}/09`} min="md" />
+        <Cell k="Member" v={MEMBER} />
+      </dl>
+    );
+  }
+  const shut = phase === 'door' || phase === 'reading';
+  return (
+    <dl className="cells">
+      <Cell k="Door" v="00" min="md" />
+      <Cell k="Lock" v={shut ? 'Engaged' : 'Released'} />
+      <Cell k="Reader" v={phase === 'door' ? 'Armed' : phase === 'reading' ? 'Reading' : 'Verified'} live={phase === 'reading'} />
+    </dl>
   );
 }
 
@@ -92,16 +180,16 @@ export function ReserveUI() {
   useEffect(() => { document.documentElement.dataset.phase = phase; }, [phase]);
   return (
     <div className="ui">
+      <MeasureOverlay />
+      <div className="frame" aria-hidden="true"><i /><i /><i /><i /></div>
       <header className="bar">
         <span className="mark">P4CE</span>
-        {phase === 'hall' && <span className="member mono">Member {MEMBER}</span>}
+        <Readout />
       </header>
       {phase === 'door' && <Threshold />}
+      {(phase === 'reading' || phase === 'verified') && <KeyLog />}
       {phase === 'hall' && <Hall />}
       <p className="sr" aria-live="assertive">{SAY[phase] ?? ''}</p>
     </div>
   );
 }
-
-/** test hook for headless screenshots */
-

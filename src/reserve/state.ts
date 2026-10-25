@@ -16,6 +16,8 @@ export const rv = {
   /** 0..1 light each bay is easing toward, and where it is now */
   want: Array(9).fill(0.65) as number[],
   light: Array(9).fill(0) as number[],
+  /** serial number of the key that opened the door, when the browser could read it */
+  uid: '',
   reduce: typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches,
 };
 

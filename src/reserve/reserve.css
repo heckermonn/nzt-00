@@ -23,12 +23,39 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 
 .ui { position: fixed; inset: 0; z-index: 10; pointer-events: none }
 .ui > *, .ui button { pointer-events: auto }
-.bar { position: absolute; top: max(14px, env(safe-area-inset-top, 0px)); left: var(--gut); right: var(--gut-r); display: flex; justify-content: space-between; align-items: baseline; pointer-events: none }
+.bar { position: absolute; top: max(20px, env(safe-area-inset-top, 0px)); left: var(--gut); right: var(--gut-r); display: flex; justify-content: space-between; align-items: center; gap: 16px; pointer-events: none }
 .mark { font: 900 21px/1 var(--f-display); font-stretch: 125%; letter-spacing: .04em }
-.member { color: var(--quiet) }
+
+/* readouts: label in grey, value in white, ruled into cells like an instrument panel */
+.cells, .spec, .keylog dl { margin: 0; font: 500 11px/1 var(--f-mono); letter-spacing: .1em; text-transform: uppercase; font-variant-numeric: tabular-nums }
+.cells { display: flex; border: 1px solid var(--rule); border-left: 0; background: rgba(5, 6, 6, .4) }
+.cell { display: flex; gap: 8px; white-space: nowrap }
+.cell dt { color: var(--quiet) }
+.cell dd { margin: 0 }
+.cell dd[data-live] { color: var(--signal) }
+.cells .cell { padding: 8px 11px }
+.cells .cell { border-left: 1px solid var(--rule) }
+.hdg { display: inline-block; min-width: 6.2ch; text-align: right }
+
+/* viewfinder: four corner brackets that frame every phase */
+.ui > .frame, .ui > .measure { pointer-events: none }
+.frame i { position: absolute; width: 12px; height: 12px; border: 0 solid rgba(235, 232, 227, .5) }
+.frame i:nth-child(1) { top: 8px; left: 8px; border-width: 1px 0 0 1px }
+.frame i:nth-child(2) { top: 8px; right: 8px; border-width: 1px 1px 0 0 }
+.frame i:nth-child(3) { bottom: 8px; left: 8px; border-width: 0 0 1px 1px }
+.frame i:nth-child(4) { bottom: 8px; right: 8px; border-width: 0 1px 1px 0 }
+
+/* the measured overlay the scene projects onto the bay you face */
+.measure { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; opacity: 0 }
+.m-line, .m-lead { fill: none; stroke: var(--paper); stroke-width: 1 }
+.m-lead { stroke-opacity: .7 }
+.measure text { font: 500 10.5px var(--f-mono); letter-spacing: .1em; text-transform: uppercase; fill: var(--paper) }
+.measure .m-key, .measure .m-tag { fill: var(--quiet) }
 
 /* at the door */
 .threshold { position: absolute; left: var(--gut); bottom: calc(var(--pad-b) + 12px); width: min(420px, calc(100% - 32px)); display: flex; flex-direction: column; align-items: flex-start; gap: 14px; animation: rise .9s cubic-bezier(.16, 1, .3, 1) both .3s }
+.spec { display: grid; gap: 7px; margin-bottom: 10px; padding: 10px 0 0; border-top: 1px solid var(--rule); width: 100% }
+.spec .cell dt { width: 8ch }
 .threshold h1 { margin: 0 0 6px; font: 900 clamp(30px, 4.2vw, 46px)/1 var(--f-display); font-stretch: 125%; letter-spacing: -.02em; text-transform: uppercase; text-wrap: balance }
 .key { display: inline-flex; align-items: center; gap: 12px; padding: 16px 22px 16px 18px; border: 1px solid var(--paper); font: 600 15px/1 var(--f-body); letter-spacing: .01em; transition: background .25s, color .25s, border-color .25s }
 .key:hover { background: var(--paper); color: var(--night) }
@@ -36,6 +63,15 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .key[data-state="scanning"] svg { animation: pulse 1.2s ease-in-out infinite }
 .hint { margin: 0; color: var(--paper); font-size: 14px; max-width: 34ch }
 .note { margin: 0; color: var(--quiet); font-size: 12px }
+/* the reader's log while the key is read */
+.keylog { position: absolute; left: var(--gut); bottom: calc(var(--pad-b) + 12px); width: min(340px, calc(100% - 32px)); border-top: 1px solid var(--rule); padding-top: 10px }
+.keylog-head { margin: 0 0 10px; font: 500 11px/1 var(--f-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--quiet) }
+.keylog dl { display: grid; gap: 8px }
+.keylog .cell { animation: type .28s steps(4) both }
+.keylog .cell dt { width: 12ch }
+.caret { display: inline-block; width: .6em; height: 1em; margin-left: 6px; vertical-align: -2px; background: currentColor; animation: blink .9s steps(1) infinite }
+@keyframes type { from { clip-path: inset(0 100% 0 0) } }
+@keyframes blink { 50% { opacity: 0 } }
 @keyframes rise { from { opacity: 0; transform: translateY(14px) } }
 @keyframes pulse { 50% { opacity: .35 } }
 
@@ -44,7 +80,18 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .turn:hover { opacity: 1 }
 .turn.prev { left: max(4px, env(safe-area-inset-left, 0px)) }
 .turn.next { right: max(4px, env(safe-area-inset-right, 0px)) }
-.goals { position: absolute; left: 0; right: 0; bottom: 0; padding: 40px var(--gut-r) var(--pad-b) var(--gut); background: linear-gradient(to top, rgba(5, 6, 6, .92), rgba(5, 6, 6, .6) 60%, transparent); animation: rise 1s cubic-bezier(.16, 1, .3, 1) both .4s }
+.dock { position: absolute; left: 0; right: 0; bottom: 0; padding: 40px var(--gut-r) var(--pad-b) var(--gut); background: linear-gradient(to top, rgba(5, 6, 6, .92), rgba(5, 6, 6, .6) 60%, transparent); animation: rise 1s cubic-bezier(.16, 1, .3, 1) both .4s }
+
+/* heading tape: minor ticks every 6°, a long tick at each bay, the index fixed in the middle */
+.tape { position: relative; height: 32px; width: min(560px, 100%); margin: 0 auto 14px; overflow: hidden; mask-image: linear-gradient(to right, transparent, #000 20%, #000 80%, transparent) }
+.tape::after { content: ""; position: absolute; left: 50%; bottom: 0; width: 1px; height: 18px; background: var(--paper) }
+.tape-strip { position: absolute; top: 0; bottom: 0; left: 50%; will-change: transform; background:
+  repeating-linear-gradient(to right, rgba(235, 232, 227, .45) 0 1px, transparent 1px 24px) left bottom / 100% 5px no-repeat,
+  repeating-linear-gradient(to right, rgba(235, 232, 227, .8) 0 1px, transparent 1px 144px) left bottom / 100% 11px no-repeat }
+.tape-mark { position: absolute; top: 0; translate: -50% 0; padding: 2px 4px; font: 500 11px/1 var(--f-mono); letter-spacing: .1em; text-transform: uppercase; font-variant-numeric: tabular-nums; color: var(--paper); transition: background .2s, color .2s, opacity .2s }
+.tape-mark.door { color: var(--quiet) }
+.tape-mark[data-dim="true"] { opacity: .35 }
+.tape-mark[data-on="true"] { background: var(--paper); color: var(--night); opacity: 1 }
 .goals-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 18px; margin-bottom: 12px }
 .goals h2 { margin: 0; font: 600 15px/1.2 var(--f-body) }
 .lit { margin: 0; display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: baseline; color: var(--quiet) }
@@ -57,12 +104,18 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .goal-list button:hover { border-color: var(--paper) }
 .goal-list button[aria-pressed="true"] { background: var(--paper); color: var(--night); border-color: var(--paper) }
 
+@media (max-width: 1180px) {
+  .cell[data-min="lg"] { display: none }
+}
 @media (max-width: 760px) {
   .turn { top: 38%; width: 48px }
   .threshold { right: var(--gut-r); width: auto }
   .key { width: 100%; justify-content: center }
+  .cell[data-min] { display: none }
+  .cells .cell { padding: 7px 9px }
 }
 @media (prefers-reduced-motion: reduce) {
-  .threshold, .goals { animation: none }
+  .threshold, .dock, .keylog .cell { animation: none }
+  .caret { animation: none }
   .key[data-state="scanning"] svg { animation: none }
 }

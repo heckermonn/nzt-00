@@ -6,6 +6,7 @@ import { BlendFunction, ToneMappingMode } from 'postprocessing';
 import { KeyCard } from './Card';
 import { Door } from './Door';
 import { Hall } from './Hall';
+import { Projector } from './Measure';
 import { Rig } from './Rig';
 
 /** shadows are cast by things that never move, so the maps render once the scene has settled */
@@ -43,6 +44,7 @@ export function Scene({ narrow }: { narrow: boolean }) {
         <Door />
         <KeyCard />
         <Rig />
+        <Projector narrow={narrow} />
         <EffectComposer multisampling={narrow ? 0 : 4}>
           <Bloom mipmapBlur luminanceThreshold={1.1} luminanceSmoothing={0.15} intensity={0.7} radius={0.7} />
           <ToneMapping mode={ToneMappingMode.AGX} />
