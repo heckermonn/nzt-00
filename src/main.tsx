@@ -1,14 +1,21 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { App } from './App';
-import { lab, useUI } from './state/lab';
-import './styles.css';
 
 history.scrollRestoration = 'manual';
-// `?skip` starts inside the lab (returning visitors, tests)
-if (location.search.includes('skip')) { lab.entry.phase = 'lab'; useUI.setState({ phase: 'lab' }); }
+const q = location.search, root = createRoot(document.getElementById('root')!);
 
-createRoot(document.getElementById('root')!).render(<StrictMode><App /></StrictMode>);
-
-// test hook: headless screenshots read the scroll state
-if (location.search.includes('test')) Object.assign(window, { __lab: lab, __ui: useUI });
+// `?lab` keeps the earlier scroll lab reachable for comparison; the Reserve is the site
+if (q.includes('lab')) {
+  Promise.all([import('./App'), import('./state/lab'), import('./styles.css')]).then(([{ App }, { lab, useUI }]) => {
+    if (q.includes('skip')) { lab.entry.phase = 'lab'; useUI.setState({ phase: 'lab' }); }
+    if (q.includes('test')) Object.assign(window, { __lab: lab, __ui: useUI });
+    root.render(<StrictMode><App /></StrictMode>);
+  });
+} else {
+  Promise.all([import('./reserve/App'), import('./reserve/state')]).then(([{ ReserveApp }, { rv, useReserve }]) => {
+    // `?skip` starts inside the hall (returning members, tests)
+    if (q.includes('skip')) { useReserve.getState().setPhase('hall'); rv.tp = 10; }
+    if (q.includes('test')) Object.assign(window, { __rv: rv, __reserve: useReserve });
+    root.render(<StrictMode><ReserveApp /></StrictMode>);
+  });
+}
