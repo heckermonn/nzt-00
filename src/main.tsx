@@ -12,10 +12,10 @@ if (q.includes('lab')) {
     root.render(<StrictMode><App /></StrictMode>);
   });
 } else {
-  Promise.all([import('./reserve/App'), import('./reserve/state')]).then(([{ ReserveApp }, { rv, useReserve }]) => {
+  Promise.all([import('./reserve/App'), import('./reserve/state'), import('./reserve/cart')]).then(([{ ReserveApp }, { rv, useReserve }, { useCart }]) => {
     // `?skip` starts inside the hall (returning members, tests)
     if (q.includes('skip')) { useReserve.getState().setPhase('hall'); rv.tp = 10; }
-    if (q.includes('test')) Object.assign(window, { __rv: rv, __reserve: useReserve });
+    if (q.includes('test')) Object.assign(window, { __rv: rv, __reserve: useReserve, __cart: useCart });
     root.render(<StrictMode><ReserveApp /></StrictMode>);
   });
 }

@@ -5,8 +5,7 @@ import { Bloom, EffectComposer, Noise, ToneMapping, Vignette } from '@react-thre
 import { BlendFunction, ToneMappingMode } from 'postprocessing';
 import { KeyCard } from './Card';
 import { Door } from './Door';
-import { Hall } from './Hall';
-import { Projector } from './Measure';
+import { Line } from './Line';
 import { Rig } from './Rig';
 
 /** shadows are cast by things that never move, so the maps render once the scene has settled */
@@ -21,7 +20,7 @@ function ShadowsOnce() {
 /** studio reflections for the metal: a ring overhead like the oculus, two tall strips either side */
 function Reflections() {
   return (
-    <Environment resolution={256} frames={1} environmentIntensity={0.22}>
+    <Environment resolution={256} frames={1} environmentIntensity={0.4}>
       <color attach="background" args={['#050505']} />
       <Lightformer form="ring" intensity={3} position={[0, 6, 0]} rotation={[Math.PI / 2, 0, 0]} scale={4} />
       <Lightformer form="rect" intensity={2.2} position={[-5, 2, 1]} rotation={[0, Math.PI / 2, 0]} scale={[1.2, 7, 1]} />
@@ -37,14 +36,13 @@ export function Scene({ narrow }: { narrow: boolean }) {
       <Canvas shadows="percentage" dpr={[1, 1.75]} camera={{ fov: 44, near: 0.05, far: 80, position: [0, 1.6, 12] }}
         gl={{ antialias: false, powerPreference: 'high-performance' }}>
         <color attach="background" args={['#050606']} />
-        <fog attach="fog" args={['#050606', 9, 26]} />
+        <fog attach="fog" args={['#050606', 10, 30]} />
         <ShadowsOnce />
         <Reflections />
-        <Hall narrow={narrow} />
+        <Line narrow={narrow} />
         <Door />
         <KeyCard />
         <Rig />
-        <Projector narrow={narrow} />
         <EffectComposer multisampling={narrow ? 0 : 4}>
           <Bloom mipmapBlur luminanceThreshold={1.1} luminanceSmoothing={0.15} intensity={0.7} radius={0.7} />
           <ToneMapping mode={ToneMappingMode.AGX} />

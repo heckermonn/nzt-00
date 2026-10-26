@@ -3,11 +3,11 @@ import { useFrame } from '@react-three/fiber';
 import { RoundedBox } from '@react-three/drei';
 import * as THREE from 'three';
 import { MEMBER, R } from './data';
-import { HALL, wallMat } from './Hall';
+import { WALL, wallMat } from './room';
 import { DOT, MONO, paintTexture, spaced, wide } from './paint';
 import { rv, useReserve, type Phase } from './state';
 
-const { TH, DW, DH } = HALL;
+const { TH, DW, DH } = WALL;
 /** outside face of the door wall, and the corridor that leads up to it */
 export const FACE = R + TH;
 const VEST = { hw: 1.75, len: 7, h: 3.6 };

@@ -4,9 +4,9 @@ import type { Form } from './data';
 import { MONO, paintTexture, spaced, wide } from './paint';
 
 /** lathe a profile given as [radius, height] pairs */
-const lathe = (pts: number[][], seg = 72) => new THREE.LatheGeometry(pts.map(([r, y]) => new THREE.Vector2(r, y)), seg);
+export const lathe = (pts: number[][], seg = 72) => new THREE.LatheGeometry(pts.map(([r, y]) => new THREE.Vector2(r, y)), seg);
 
-const MAT = {
+export const MAT = {
   glass: new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.03, transmission: 1, thickness: 0.06, ior: 1.5, envMapIntensity: 1.1, side: THREE.DoubleSide }),
   frost: new THREE.MeshPhysicalMaterial({ color: 0xf2f3f3, roughness: 0.42, transmission: 0.85, thickness: 0.12, ior: 1.5, envMapIntensity: 1 }),
   smoke: new THREE.MeshPhysicalMaterial({ color: 0x1b1d1f, roughness: 0.08, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.05, envMapIntensity: 1.4 }),
@@ -14,7 +14,7 @@ const MAT = {
   cake: new THREE.MeshStandardMaterial({ color: 0xf1f0ec, roughness: 0.96 }),
   rubber: new THREE.MeshStandardMaterial({ color: 0x505457, roughness: 0.75 }),
   bulb: new THREE.MeshPhysicalMaterial({ color: 0x151617, roughness: 0.55, clearcoat: 0.3 }),
-  alu: new THREE.MeshPhysicalMaterial({ color: 0xc9cdd0, metalness: 1, roughness: 0.3, anisotropy: 0.6, envMapIntensity: 1.3 }),
+  alu: new THREE.MeshPhysicalMaterial({ color: 0xc9cdd0, metalness: 1, roughness: 0.34, anisotropy: 0.6, envMapIntensity: 2.6 }),
   cap: new THREE.MeshPhysicalMaterial({ color: 0x1c1d1f, roughness: 0.38, clearcoat: 0.4 }),
   ring: new THREE.MeshStandardMaterial({ color: 0x8f9396, roughness: 0.6 }),
   /** ampoule glass is thin and catches the spot at every bend; a little roughness keeps the tips from flaring */
@@ -22,7 +22,7 @@ const MAT = {
 };
 
 /** printed vial label: white stock, black type */
-function useLabel(n: string, name: string) {
+export function useLabel(n: string, name: string) {
   return useMemo(() => new THREE.MeshStandardMaterial({
     roughness: 0.62, transparent: false,
     map: paintTexture(1024, 400, (g, w, h) => {
@@ -37,18 +37,22 @@ function useLabel(n: string, name: string) {
 }
 
 /** freeze-dried powder vial: glass, a dry cake, grey stopper, crimped aluminium seal */
+export const vialGeo = () => ({
+  glass: lathe([[0, 0.004], [0.09, 0], [0.105, 0.006], [0.11, 0.02], [0.11, 0.3], [0.106, 0.317], [0.086, 0.333], [0.075, 0.345], [0.075, 0.368], [0.083, 0.372], [0.085, 0.388], [0.076, 0.394]]),
+  cake: lathe([[0, 0.012], [0.098, 0.012], [0.1, 0.02], [0.1, 0.086], [0.094, 0.093], [0.05, 0.097], [0, 0.095]], 48),
+  stopper: new THREE.CylinderGeometry(0.071, 0.071, 0.05, 48),
+  crimp: lathe([[0.05, 0.408], [0.084, 0.41], [0.088, 0.405], [0.088, 0.36], [0.086, 0.355]]),
+  flip: lathe([[0, 0.432], [0.078, 0.432], [0.083, 0.427], [0.083, 0.412], [0.05, 0.41]], 48),
+  band: new THREE.CylinderGeometry(0.1112, 0.1112, 0.15, 64, 1, true, -1.15, 2.3),
+});
+/** vials are drawn at this scale, everywhere */
+export const VIAL_S = 1.55;
+
 function Vial({ n, name }: { n: string; name: string }) {
   const label = useLabel(n, name);
-  const g = useMemo(() => ({
-    glass: lathe([[0, 0.004], [0.09, 0], [0.105, 0.006], [0.11, 0.02], [0.11, 0.3], [0.106, 0.317], [0.086, 0.333], [0.075, 0.345], [0.075, 0.368], [0.083, 0.372], [0.085, 0.388], [0.076, 0.394]]),
-    cake: lathe([[0, 0.012], [0.098, 0.012], [0.1, 0.02], [0.1, 0.086], [0.094, 0.093], [0.05, 0.097], [0, 0.095]], 48),
-    stopper: new THREE.CylinderGeometry(0.071, 0.071, 0.05, 48),
-    crimp: lathe([[0.05, 0.408], [0.084, 0.41], [0.088, 0.405], [0.088, 0.36], [0.086, 0.355]]),
-    flip: lathe([[0, 0.432], [0.078, 0.432], [0.083, 0.427], [0.083, 0.412], [0.05, 0.41]], 48),
-    band: new THREE.CylinderGeometry(0.1112, 0.1112, 0.15, 64, 1, true, -1.15, 2.3),
-  }), []);
+  const g = useMemo(vialGeo, []);
   return (
-    <group scale={1.55}>
+    <group scale={VIAL_S}>
       <mesh geometry={g.cake} material={MAT.cake} />
       <mesh geometry={g.glass} material={MAT.glass} />
       <mesh geometry={g.stopper} material={MAT.rubber} position={[0, 0.385, 0]} />
@@ -85,20 +89,26 @@ function Ampoules() {
   );
 }
 
+export const tinGeo = () => ({
+  body: lathe([[0, 0], [0.15, 0], [0.16, 0.008], [0.16, 0.17], [0.155, 0.173]]),
+  lid: lathe([[0.158, 0.168], [0.163, 0.172], [0.163, 0.222], [0.155, 0.23], [0, 0.231]]),
+});
+export const TIN_S = 1.35;
+
 function Tin() {
-  const g = useMemo(() => ({
-    body: lathe([[0, 0], [0.15, 0], [0.16, 0.008], [0.16, 0.17], [0.155, 0.173]]),
-    lid: lathe([[0.158, 0.168], [0.163, 0.172], [0.163, 0.222], [0.155, 0.23], [0, 0.231]]),
-  }), []);
-  return <group scale={1.35}><mesh geometry={g.body} material={MAT.alu} /><mesh geometry={g.lid} material={MAT.alu} /></group>;
+  const g = useMemo(tinGeo, []);
+  return <group scale={TIN_S}><mesh geometry={g.body} material={MAT.alu} /><mesh geometry={g.lid} material={MAT.alu} /></group>;
 }
 
+export const jarGeo = () => ({
+  body: lathe([[0, 0], [0.12, 0], [0.13, 0.012], [0.13, 0.13], [0.11, 0.142], [0.11, 0.15]]),
+  lid: lathe([[0.112, 0.14], [0.124, 0.142], [0.124, 0.2], [0.118, 0.206], [0, 0.207]]),
+});
+export const JAR_S = 1.5;
+
 function Jar() {
-  const g = useMemo(() => ({
-    body: lathe([[0, 0], [0.12, 0], [0.13, 0.012], [0.13, 0.13], [0.11, 0.142], [0.11, 0.15]]),
-    lid: lathe([[0.112, 0.14], [0.124, 0.142], [0.124, 0.2], [0.118, 0.206], [0, 0.207]]),
-  }), []);
-  return <group scale={1.5}><mesh geometry={g.body} material={MAT.frost} /><mesh geometry={g.lid} material={MAT.cap} /></group>;
+  const g = useMemo(jarGeo, []);
+  return <group scale={JAR_S}><mesh geometry={g.body} material={MAT.frost} /><mesh geometry={g.lid} material={MAT.cap} /></group>;
 }
 
 function Bottle() {

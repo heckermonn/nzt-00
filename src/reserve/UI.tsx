@@ -1,8 +1,9 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { COLLECTIONS, GOALS, MEMBER } from './data';
-import { TAPE_K, hud } from './hud';
-import { MeasureOverlay } from './Measure';
-import { presentKey, rv, turnTo, useReserve } from './state';
+import { MEMBER } from './data';
+import { STATIONS } from './line';
+import { lh } from './hud';
+import { LineUI, useLineReadout } from './LineUI';
+import { presentKey, rv, useReserve } from './state';
 
 type Reader = { scan: (o?: { signal?: AbortSignal }) => Promise<void>; onreading: ((e: { serialNumber?: string }) => void) | null; onreadingerror: (() => void) | null };
 
@@ -57,62 +58,7 @@ function Threshold() {
   );
 }
 
-function Goals() {
-  const goal = useReserve((s) => s.goal), setGoal = useReserve((s) => s.setGoal);
-  const lit = goal >= 0 ? GOALS[goal].bays.map((b) => `${COLLECTIONS[b].n} ${COLLECTIONS[b].name}`).join(', ') : '';
-  return (
-    <div className="goals">
-      <div className="goals-head">
-        <h2 id="goals-title">What are you working on?</h2>
-        {goal >= 0 && (
-          <p className="lit" aria-live="polite"><span className="mono">{lit}</span><button type="button" className="text" onClick={() => setGoal(-1)}>Show every collection</button></p>
-        )}
-      </div>
-      <div className="goal-list" role="group" aria-labelledby="goals-title">
-        {GOALS.map((g, i) => (
-          <button key={g.name} type="button" aria-pressed={goal === i} onClick={() => setGoal(goal === i ? -1 : i)}>{g.name}</button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 const pad = (n: number) => String(n).padStart(2, '0');
-
-/** heading tape: the hall's bays as a compass strip that slides as you turn; the scene moves it each frame */
-function Tape() {
-  const bay = useReserve((s) => s.bay), goal = useReserve((s) => s.goal);
-  const lit = goal >= 0 ? GOALS[goal].bays : null;
-  const marks: ReactNode[] = [];
-  for (let c = -1; c <= 1; c++) for (let s = 0; s < 10; s++) {
-    const left = (c * 360 + s * 36 + 360) * TAPE_K, key = `${c}-${s}`;
-    marks.push(s === 0
-      ? <span key={key} className="tape-mark door" style={{ left }}>Door</span>
-      : <button key={key} type="button" tabIndex={-1} className="tape-mark" style={{ left }} data-on={bay === s - 1} data-dim={!!lit && !lit.includes(s - 1)}
-        onClick={() => turnTo(s - 1)}>{COLLECTIONS[s - 1].n}</button>);
-  }
-  return (
-    <div className="tape" aria-hidden="true">
-      <div className="tape-strip" ref={(el) => { hud.tape = el; }} style={{ width: 1080 * TAPE_K }}>{marks}</div>
-    </div>
-  );
-}
-
-function Hall() {
-  const bay = useReserve((s) => s.bay), c = COLLECTIONS[bay];
-  const step = (d: number) => { let b = bay + d; b = ((b % 9) + 9) % 9; turnTo(b); };
-  return (
-    <>
-      <p className="sr" aria-live="polite">{`${c.n} ${c.name}. ${c.line}.`}</p>
-      <button type="button" className="turn prev" onClick={() => step(-1)} aria-label={`Previous: ${COLLECTIONS[(bay + 8) % 9].name}`}><Chevron dir={-1} /></button>
-      <button type="button" className="turn next" onClick={() => step(1)} aria-label={`Next: ${COLLECTIONS[(bay + 1) % 9].name}`}><Chevron dir={1} /></button>
-      <div className="dock">
-        <Tape />
-        <Goals />
-      </div>
-    </>
-  );
-}
 
 /** what the reader reports while it reads the key, in order, by seconds into the read */
 const LOG: [number, string, () => string][] = [
@@ -149,20 +95,22 @@ function Cell({ k, v, live, min }: { k: string; v: ReactNode; live?: boolean; mi
 }
 
 /** the readout along the top: door and lock state outside, heading and bay inside */
+function LineReadout() {
+  const { st, n } = useLineReadout();
+  return (
+    <dl className="cells">
+      <Cell k="Line" v="00" min="lg" />
+      <Cell k="Station" v={`${pad(st + 1)}/${pad(STATIONS.length)}`} min="md" />
+      <Cell k="Pos" v={<span className="hdg" ref={(el) => { lh.pos = el; }}>00.0 m</span>} min="md" />
+      <Cell k="Protocol" v={pad(n)} />
+      <Cell k="Member" v={MEMBER} />
+    </dl>
+  );
+}
+
 function Readout() {
-  const phase = useReserve((s) => s.phase), bay = useReserve((s) => s.bay), goal = useReserve((s) => s.goal);
-  if (phase === 'hall') {
-    const lit = goal >= 0 ? GOALS[goal].bays.length : 9;
-    return (
-      <dl className="cells">
-        <Cell k="Reserve" v="Hall" min="lg" />
-        <Cell k="Hdg" v={<span className="hdg" ref={(el) => { hud.hdg = el; }}>180.0°</span>} min="md" />
-        <Cell k="Bay" v={`${COLLECTIONS[bay].n}/09`} />
-        <Cell k="Lit" v={`${pad(lit)}/09`} min="md" />
-        <Cell k="Member" v={MEMBER} />
-      </dl>
-    );
-  }
+  const phase = useReserve((s) => s.phase);
+  if (phase === 'hall') return <LineReadout />;
   const shut = phase === 'door' || phase === 'reading';
   return (
     <dl className="cells">
@@ -173,14 +121,13 @@ function Readout() {
   );
 }
 
-const SAY: Record<string, string> = { reading: 'Reading your key.', verified: `Member ${MEMBER} verified. The door is opening.`, hall: 'You are in the Reserve.' };
+const SAY: Record<string, string> = { reading: 'Reading your key.', verified: `Member ${MEMBER} verified. The door is opening.`, hall: 'You are on the Line. Scroll to run it.' };
 
 export function ReserveUI() {
   const phase = useReserve((s) => s.phase);
   useEffect(() => { document.documentElement.dataset.phase = phase; }, [phase]);
   return (
     <div className="ui">
-      <MeasureOverlay />
       <div className="frame" aria-hidden="true"><i /><i /><i /><i /></div>
       <header className="bar">
         <span className="mark">P4CE</span>
@@ -188,7 +135,7 @@ export function ReserveUI() {
       </header>
       {phase === 'door' && <Threshold />}
       {(phase === 'reading' || phase === 'verified') && <KeyLog />}
-      {phase === 'hall' && <Hall />}
+      {phase === 'hall' && <LineUI />}
       <p className="sr" aria-live="assertive">{SAY[phase] ?? ''}</p>
     </div>
   );

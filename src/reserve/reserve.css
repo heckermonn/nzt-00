@@ -18,12 +18,14 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 
 .stage { position: fixed; inset: 0; z-index: 0; touch-action: none }
 .stage canvas { cursor: default }
-[data-phase="hall"] .stage canvas { cursor: grab }
-[data-phase="hall"] .stage canvas:active { cursor: grabbing }
+/* inside, the page scrolls and the scroll runs the line */
+html[data-phase="hall"] { overflow-y: auto; height: auto }
+html[data-phase="hall"] body { overflow: visible; height: auto }
+[data-phase="hall"] .stage { touch-action: pan-y }
 
 .ui { position: fixed; inset: 0; z-index: 10; pointer-events: none }
 .ui > *, .ui button { pointer-events: auto }
-.bar { position: absolute; top: max(20px, env(safe-area-inset-top, 0px)); left: var(--gut); right: var(--gut-r); display: flex; justify-content: space-between; align-items: center; gap: 16px; pointer-events: none }
+.bar { position: absolute; z-index: 2; top: max(20px, env(safe-area-inset-top, 0px)); left: var(--gut); right: var(--gut-r); display: flex; justify-content: space-between; align-items: center; gap: 16px; pointer-events: none }
 .mark { font: 900 21px/1 var(--f-display); font-stretch: 125%; letter-spacing: .04em }
 
 /* readouts: label in grey, value in white, ruled into cells like an instrument panel */
@@ -45,12 +47,11 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .frame i:nth-child(3) { bottom: 8px; left: 8px; border-width: 0 0 1px 1px }
 .frame i:nth-child(4) { bottom: 8px; right: 8px; border-width: 0 1px 1px 0 }
 
-/* the measured overlay the scene projects onto the bay you face */
+/* crop marks the scene projects round a finished product */
 .measure { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; opacity: 0 }
-.m-line, .m-lead { fill: none; stroke: var(--paper); stroke-width: 1 }
-.m-lead { stroke-opacity: .7 }
+.m-line { fill: none; stroke: var(--paper); stroke-width: 1 }
+.measure .m-tag { fill: var(--quiet) }
 .measure text { font: 500 10.5px var(--f-mono); letter-spacing: .1em; text-transform: uppercase; fill: var(--paper) }
-.measure .m-key, .measure .m-tag { fill: var(--quiet) }
 
 /* at the door */
 .threshold { position: absolute; left: var(--gut); bottom: calc(var(--pad-b) + 12px); width: min(420px, calc(100% - 32px)); display: flex; flex-direction: column; align-items: flex-start; gap: 14px; animation: rise .9s cubic-bezier(.16, 1, .3, 1) both .3s }
@@ -75,47 +76,85 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 @keyframes rise { from { opacity: 0; transform: translateY(14px) } }
 @keyframes pulse { 50% { opacity: .35 } }
 
-/* in the hall */
-.turn { position: absolute; top: 50%; translate: 0 -50%; width: 64px; height: 120px; display: grid; place-items: center; color: var(--paper); opacity: .55; transition: opacity .2s }
-.turn:hover { opacity: 1 }
-.turn.prev { left: max(4px, env(safe-area-inset-left, 0px)) }
-.turn.next { right: max(4px, env(safe-area-inset-right, 0px)) }
+/* inside: the dock along the bottom edge */
 .dock { position: absolute; left: 0; right: 0; bottom: 0; padding: 40px var(--gut-r) var(--pad-b) var(--gut); background: linear-gradient(to top, rgba(5, 6, 6, .92), rgba(5, 6, 6, .6) 60%, transparent); animation: rise 1s cubic-bezier(.16, 1, .3, 1) both .4s }
+.text { font-size: 13px; color: var(--quiet); text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px }
+.text:hover { color: var(--paper) }
 
-/* heading tape: minor ticks every 6°, a long tick at each bay, the index fixed in the middle */
+/* the line tape: a tick every metre, a long one every five, the index fixed in the middle */
 .tape { position: relative; height: 32px; width: min(560px, 100%); margin: 0 auto 14px; overflow: hidden; mask-image: linear-gradient(to right, transparent, #000 20%, #000 80%, transparent) }
 .tape::after { content: ""; position: absolute; left: 50%; bottom: 0; width: 1px; height: 18px; background: var(--paper) }
 .tape-strip { position: absolute; top: 0; bottom: 0; left: 50%; will-change: transform; background:
-  repeating-linear-gradient(to right, rgba(235, 232, 227, .45) 0 1px, transparent 1px 24px) left bottom / 100% 5px no-repeat,
-  repeating-linear-gradient(to right, rgba(235, 232, 227, .8) 0 1px, transparent 1px 144px) left bottom / 100% 11px no-repeat }
+  repeating-linear-gradient(to right, rgba(235, 232, 227, .45) 0 1px, transparent 1px 14px) left bottom / 100% 5px no-repeat,
+  repeating-linear-gradient(to right, rgba(235, 232, 227, .8) 0 1px, transparent 1px 70px) left bottom / 100% 11px no-repeat }
 .tape-mark { position: absolute; top: 0; translate: -50% 0; padding: 2px 4px; font: 500 11px/1 var(--f-mono); letter-spacing: .1em; text-transform: uppercase; font-variant-numeric: tabular-nums; color: var(--paper); transition: background .2s, color .2s, opacity .2s }
-.tape-mark.door { color: var(--quiet) }
-.tape-mark[data-dim="true"] { opacity: .35 }
-.tape-mark[data-on="true"] { background: var(--paper); color: var(--night); opacity: 1 }
-.goals-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 18px; margin-bottom: 12px }
-.goals h2 { margin: 0; font: 600 15px/1.2 var(--f-body) }
-.lit { margin: 0; display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: baseline; color: var(--quiet) }
-.lit .mono { color: var(--paper) }
-.text { font-size: 13px; color: var(--quiet); text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px }
-.text:hover { color: var(--paper) }
-.goal-list { display: flex; gap: 8px; overflow-x: auto; margin: 0 calc(-1 * var(--gut-r)) 0 calc(-1 * var(--gut)); padding: 0 var(--gut-r) 2px var(--gut); scrollbar-width: none; mask-image: linear-gradient(to right, #000 calc(100% - 64px), transparent) }
-.goal-list::-webkit-scrollbar { display: none }
-.goal-list button { padding: 8px 12px; border: 1px solid var(--rule); font-size: 13px; line-height: 1.2; color: var(--paper); white-space: nowrap; transition: border-color .2s, background .2s, color .2s }
-.goal-list button:hover { border-color: var(--paper) }
-.goal-list button[aria-pressed="true"] { background: var(--paper); color: var(--night); border-color: var(--paper) }
+
+/* the Line */
+.station { position: absolute; top: 78px; left: var(--gut); width: min(300px, calc(100% - 32px)); animation: rise .6s cubic-bezier(.16, 1, .3, 1) both }
+.station-head { margin: 0 0 10px; font: 500 11px/1 var(--f-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--quiet) }
+.station h2, .sheet h2, .end h2 { margin: 0; font: 900 clamp(26px, 3vw, 38px)/1 var(--f-display); font-stretch: 125%; letter-spacing: -.01em; text-transform: uppercase }
+.station-n { display: block; margin-bottom: 6px; font: 500 12px/1 var(--f-mono); letter-spacing: .1em; color: var(--quiet) }
+.station-line { margin: 10px 0 16px; color: var(--quiet); font-size: 14px; max-width: 32ch }
+.steps { list-style: none; margin: 0 0 14px; padding: 10px 0 0; border-top: 1px solid var(--rule); display: grid; gap: 7px; font: 500 11px/1 var(--f-mono); letter-spacing: .1em; text-transform: uppercase }
+.steps li { display: flex; gap: 10px; color: var(--quiet); transition: color .25s }
+.steps li span { width: 2.6ch }
+.steps li[data-state="done"] { color: rgba(235, 232, 227, .55) }
+.steps li[data-state="now"] { color: var(--paper) }
+.steps li[data-state="now"]::after { content: ""; width: 6px; height: 6px; margin: 2px 0 0 2px; background: var(--signal); animation: pulse 1s steps(2) infinite }
+.cells-v { display: grid; gap: 7px; margin: 0; padding-top: 10px; border-top: 1px solid var(--rule); font: 500 11px/1 var(--f-mono); letter-spacing: .1em; text-transform: uppercase; font-variant-numeric: tabular-nums }
+.cells-v dt { width: 9ch }
+.dossier-link { margin-top: 14px }
+.ui > .crops { pointer-events: none }
+.add { position: absolute; top: 0; left: 0; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px 0 12px; border: 1px solid var(--paper); background: rgba(5, 6, 6, .55); font: 500 12px/1 var(--f-mono); letter-spacing: .1em; text-transform: uppercase; transition: background .2s, color .2s }
+.add span { font-size: 18px; line-height: 1 }
+.add:hover { background: var(--paper); color: var(--night) }
+.line-dock { display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 16px; padding-top: 56px }
+.line-tape { margin: 0 }
+.tray { display: grid; grid-template-columns: auto auto; grid-template-areas: "head n" "wells n"; gap: 8px 16px; align-items: center; padding: 10px 12px; border: 1px solid var(--rule); background: rgba(5, 6, 6, .6); text-align: left; transition: border-color .2s, transform .42s cubic-bezier(.16, 1, .3, 1) }
+.tray:hover { border-color: var(--paper) }
+.tray[data-bump] { transform: translateY(-4px); border-color: var(--paper) }
+.tray-head { grid-area: head; font: 500 11px/1 var(--f-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--quiet) }
+.wells { grid-area: wells; display: flex; gap: 5px }
+.wells i { width: 14px; height: 14px; border-radius: 50%; border: 1px solid var(--rule); transition: background .3s, border-color .3s }
+.wells i[data-full] { background: var(--paper); border-color: var(--paper) }
+.tray-n { grid-area: n; font: 900 30px/1 var(--f-display); font-stretch: 125%; font-variant-numeric: tabular-nums }
+.sheet { position: fixed; top: 0; right: 0; bottom: 0; width: min(380px, 100%); z-index: 20; padding: 84px 24px calc(var(--pad-b) + 16px); background: rgba(5, 6, 6, .94); border-left: 1px solid var(--rule); display: flex; flex-direction: column; gap: 0; animation: slide .45s cubic-bezier(.16, 1, .3, 1) both; overflow-y: auto }
+.sheet .note { margin: 14px 0 0 }
+.sheet-actions { margin-top: auto; padding-top: 24px; display: flex; align-items: center; gap: 20px }
+.lines { list-style: none; margin: 8px 0 0; padding: 0; border-top: 1px solid var(--rule) }
+.lines li { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--rule) }
+.line-name { flex: 1; font: 900 16px/1 var(--f-display); font-stretch: 125%; text-transform: uppercase }
+.qty { display: inline-flex; align-items: center; gap: 4px }
+.qty button { width: 44px; height: 44px; border: 1px solid var(--rule); font-size: 18px }
+.qty button:hover { border-color: var(--paper) }
+.cue { position: absolute; left: 50%; bottom: 150px; translate: -50% 0; margin: 0; color: var(--paper); animation: rise .8s cubic-bezier(.16, 1, .3, 1) both .3s }
+.cue::after { content: ""; display: block; width: 1px; height: 28px; margin: 12px auto 0; background: var(--paper); animation: drop 1.6s cubic-bezier(.65, 0, .35, 1) infinite }
+.end { position: absolute; left: var(--gut); top: 50%; translate: 0 -50%; display: grid; gap: 18px; justify-items: start; animation: rise .6s cubic-bezier(.16, 1, .3, 1) both }
+@keyframes slide { from { transform: translateX(24px); opacity: 0 } }
+@keyframes drop { 0% { transform: scaleY(0); transform-origin: top } 50% { transform: scaleY(1); transform-origin: top } 51% { transform-origin: bottom } 100% { transform: scaleY(0); transform-origin: bottom } }
 
 @media (max-width: 1180px) {
   .cell[data-min="lg"] { display: none }
 }
 @media (max-width: 760px) {
-  .turn { top: 38%; width: 48px }
   .threshold { right: var(--gut-r); width: auto }
   .key { width: 100%; justify-content: center }
   .cell[data-min] { display: none }
+  .station { top: 0; left: 0; right: 0; width: auto; padding: 64px var(--gut-r) 28px var(--gut); background: linear-gradient(to bottom, rgba(5, 6, 6, .94), rgba(5, 6, 6, .8) 70%, transparent) }
+  .station h2 { font-size: 24px }
+  .station-line, .steps li[data-state="done"], .steps li[data-state="next"] { display: none }
+  .steps { padding-top: 8px; margin-bottom: 8px }
+  .cells-v { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)) }
+  .line-dock { grid-template-columns: 1fr; padding-top: 40px }
+  .tray { justify-self: end }
+  .sheet { top: auto; height: min(70vh, 560px); width: 100%; border-left: 0; border-top: 1px solid var(--rule); padding-top: 24px }
+  .cue { bottom: 190px }
   .cells .cell { padding: 7px 9px }
 }
 @media (prefers-reduced-motion: reduce) {
   .threshold, .dock, .keylog .cell { animation: none }
   .caret { animation: none }
+  .station, .sheet, .end, .cue, .cue::after, .steps li[data-state="now"]::after { animation: none }
+  .tray { transition: none }
   .key[data-state="scanning"] svg { animation: none }
 }

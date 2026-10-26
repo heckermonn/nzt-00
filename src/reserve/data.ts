@@ -28,11 +28,7 @@ export const GOALS: { name: string; bays: number[] }[] = [
   { name: 'Healthy Ageing & Cellular Function', bays: [8, 0] },
 ];
 
-/** the hall is a decagon: slot 0 is the door, slots 1–9 hold the collections */
-export const SLOTS = 10;
-export const R = 7; // centre to the middle of each wall
-export const slotAngle = (slot: number) => (slot / SLOTS) * Math.PI * 2;
-/** world direction of a slot, measured from +z (the door side) */
-export const slotDir = (slot: number): [number, number] => [Math.sin(slotAngle(slot)), Math.cos(slotAngle(slot))];
+/** the door wall stands this far from the origin; the Line runs behind it */
+export const R = 7;
 
 export const MEMBER = '0047';
