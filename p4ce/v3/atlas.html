@@ -580,6 +580,8 @@ body.gate #bar,body.gate #cap,body.gate #map,body.gate #dock,body.gate #crumb{op
 #dock:hover .t{color:var(--ink)}
 #dock:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 body.nogl #dock{display:none!important}
+body.nogl #bar{background:rgba(236,234,230,.84);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:0 1px 0 var(--hair)}
+#hud .hk.below{align-items:flex-start;text-align:left;white-space:normal;flex-wrap:wrap;max-width:calc(100vw - 24px)}
 #dos .db{container-type:inline-size}
 /* the toast never sits on the layer's tabs */
 body.lay #toast{top:auto;bottom:calc(20px + var(--gb))}
@@ -869,8 +871,8 @@ body.nogl #dos .x{display:none}
   .pdl .m{display:none}
   .pdl .i{font-size:8.5px}
   #hud .hk b{font-size:13.5px}
-  #hud .hk.chip{flex-direction:row;align-items:baseline;gap:8px;text-align:left}
-  #hud .hk.chip small{display:none}
+  #hud .hk.below{flex-direction:row;align-items:baseline;gap:8px;text-align:left}
+  #hud .hk.below small{display:none}
   #dos .buyrow{position:sticky;bottom:calc(-28px - var(--gb));z-index:3;margin-left:-18px;margin-right:-18px;padding:12px 18px calc(14px + var(--gb));background:linear-gradient(rgba(244,243,240,0),rgba(244,243,240,.94) 26%)}
   #hud .hh,#hud .hw{font-size:9.5px}
   #hud .hi{display:none}
@@ -952,7 +954,7 @@ html.rm #veil{transition-duration:.32s!important}
 
 <div id="fb" aria-live="polite"></div>
 <svg id="ring" viewBox="0 0 76 76" aria-hidden="true"><circle class="bg" cx="38" cy="38" r="30"/><circle class="fg" id="ringFg" cx="38" cy="38" r="30" stroke-dasharray="188.5" stroke-dashoffset="188.5"/><circle class="dotc" cx="38" cy="38" r="2.5"/></svg>
-<div id="hint" role="status" aria-live="polite"><i aria-hidden="true"></i><span id="hintT">Drag to look. Hold a station to travel.</span></div>
+<div id="hint" role="status" aria-live="polite"><i aria-hidden="true"></i><span id="hintT">Drag to look. Click a station to travel.</span></div>
 <div id="toast" class="glass" role="status" aria-live="polite"></div>
 <div id="veil" aria-hidden="true"></div>
 
@@ -2000,7 +2002,7 @@ class Build{
       vertexShader:`attribute vec3 aS;attribute vec2 aR;uniform float uB;uniform float uW;uniform float uSize;uniform float uT;varying float vA;varying float vS;
 void main(){float t=clamp((uB*(1.+uW)-aR.x)/uW,0.,1.);float e=t*t*(3.-2.*t);vec4 wp=modelMatrix*vec4(mix(aS,position,e),1.);
 float s=sin(e*3.14159);wp.x+=sin(aR.y*61.+e*5.+uT*.6)*s*.2;wp.z+=cos(aR.y*47.+e*4.)*s*.2;wp.y+=s*.18*aR.y;
-vS=aR.y;vA=smoothstep(0.,.06,t)*(1.-smoothstep(.86,1.,t));vec4 mv=viewMatrix*wp;gl_PointSize=max(1.5,uSize*(.5+aR.y*1.)/-mv.z);gl_Position=projectionMatrix*mv;}`,
+vS=aR.y;vA=smoothstep(0.,.06,t)*(1.-smoothstep(.86,1.,t));vec4 mv=viewMatrix*wp;gl_PointSize=max(1.9,uSize*(.5+aR.y*1.)/-mv.z);gl_Position=projectionMatrix*mv;}`,
       fragmentShader:GRAIN_FS});
     this.pts=new THREE.Points(geo,this.pm);this.pts.frustumCulled=false;this.pts.visible=false;this.pts.renderOrder=5;root.add(this.pts);
     BUILDS.push(this);
@@ -2430,14 +2432,14 @@ lblHost.after(hud);
 const hudP=hud.querySelector('.br'),hudL=hud.querySelector('.ld'),hudH=hud.querySelector('.hh'),hudW=hud.querySelector('.hw'),hudK=hud.querySelector('.hk');let hudKW=0,hudKH=0;
 function hudUpdate(){const H=arm.hold,on=want.w==='p'&&H&&arm.atP&&H.p.id===want.id&&!travel.on&&!dimmed&&H.o.b&&H.o.b.p>=1&&!H.o.b.ng;hud.classList.toggle('on',!!on);if(!on)return;
   const o=H.o,p=H.p;
-  if(hud.dataset.id!==p.id){hud.dataset.id=p.id;hudH.textContent='H '+p.dim[0]+' mm';hudW.textContent=(p.dim[2]==='\u00d8'?'\u00d8 ':'W ')+p.dim[1]+' mm';const k=(P4.kir?P4.kir(p):[])[0]||['',''];hudK.querySelector('b').textContent=k[0];hudK.querySelector('small').textContent=k[1];hudKW=hudK.offsetWidth;hudKH=hudK.offsetHeight}
+  if(hud.dataset.id!==p.id){hud.dataset.id=p.id;hudH.textContent='H '+p.dim[0]+' mm';hudW.textContent=(p.dim[2]==='\u00d8'?'\u00d8 ':'W ')+p.dim[1]+' mm';const k=(P4.kir?P4.kir(p):[])[0]||['',''];hudK.querySelector('b').textContent=k[0];hudK.querySelector('small').textContent=k[1];hudK.classList.remove('below');hudKW=hudK.offsetWidth;hudKH=hudK.offsetHeight}
   let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;const z=o.size;
   for(let i=0;i<8;i++){_v.set((i&1?.5:-.5)*z.x,(i&2?.5:-.5)*z.y,(i&4?.5:-.5)*z.z).applyMatrix4(o.obj.matrixWorld);const q=scr(_v);x0=Math.min(x0,q[0]);x1=Math.max(x1,q[0]);y0=Math.min(y0,q[1]);y1=Math.max(y1,q[1])}
   const g=PH?12:18,t=PH?4:5,xr=x1+g,yb=y1+g;let w0=x0,w1=x1;if(p.kind==='sachet'){const c=(x0+x1)/2,hw=(x1-x0)*.19;w0=c-hw;w1=c+hw}
   hudP.setAttribute('d','M'+xr+','+y0+'V'+y1+'M'+(xr-t)+','+y0+'h'+2*t+'M'+(xr-t)+','+y1+'h'+2*t+'M'+w0+','+yb+'H'+w1+'M'+w0+','+(yb-t)+'v'+2*t+'M'+w1+','+(yb-t)+'v'+2*t);
   hudH.style.transform='translate('+(xr+8)+'px,'+((y0+y1)/2-7)+'px)';hudW.style.transform='translate('+((x0+x1)/2)+'px,'+(yb+8)+'px) translateX(-50%)';
   const ax=x0+(x1-x0)*.3,ay=y0+(y1-y0)*.46;let bx=x0-(PH?18:46),by=ay-(PH?34:58),cx=bx-(PH?10:26);
-  let lx=cx-6-hudKW;const chip=lx<10;hudK.classList.toggle('chip',chip);
+  let lx=cx-6-hudKW;const chip=lx<10;if(chip!==hudK.classList.contains('below')){hudK.classList.toggle('below',chip);hudKW=hudK.offsetWidth;hudKH=hudK.offsetHeight}
   if(chip){/* no room beside the object: the callout sits under the dimensions, its leader rising to the pack */
     const kx=x0+(x1-x0)*.22,ky=yb+(PH?30:38);lx=clamp(kx-10,10,innerWidth-10-hudKW);hudL.setAttribute('d','M'+(kx-2.6)+','+(y1-(y1-y0)*.18)+'a2.6,2.6 0 1,0 5.2,0a2.6,2.6 0 1,0 -5.2,0M'+kx+','+(y1-(y1-y0)*.18)+'V'+(ky-4));hudK.style.transform='translate('+lx+'px,'+ky+'px)';return}
   hudL.setAttribute('d','M'+(ax-2.6)+','+ay+'a2.6,2.6 0 1,0 5.2,0a2.6,2.6 0 1,0 -5.2,0M'+ax+','+ay+'L'+bx+','+by+'H'+cx);
