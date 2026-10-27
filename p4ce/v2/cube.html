@@ -52,11 +52,14 @@ button:focus-visible,a:focus-visible,select:focus-visible{outline:1px solid var(
 #caption span{display:block;color:var(--dim)}
 #caption em{font-style:normal}
 #caption em.br{display:none}
-.ctl{position:fixed;z-index:6;top:calc(14px + var(--st));right:calc(40px + var(--sr));display:flex;gap:2px;align-items:center}
-.ctl button{font:400 10px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--dim);padding:8px 10px;transition:color .25s}
+.ctl{position:fixed;z-index:6;top:calc(3px + var(--st));right:calc(34px + var(--sr));display:flex;gap:2px;align-items:center}
+.ctl button{font:400 10px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--dim);min-height:44px;padding:0 10px;transition:color .25s}
+.ctl #members-link{order:3;min-width:44px;padding:0 12px}
+.ctl .sep{order:2}
+.ctl #sound{order:1}
 .ctl button:hover{color:var(--paper)}
 .ctl #members-link{color:var(--paper)}
-.ctl #members-link::after{content:"";display:block;height:1px;margin-top:5px;background:currentColor;opacity:.5;transform-origin:left;transition:transform .4s var(--ease),opacity .3s}
+.ctl #members-link::after{content:"";display:block;height:1px;margin-top:5px;margin-bottom:-6px;background:currentColor;opacity:.5;transform-origin:left;transition:transform .4s var(--ease),opacity .3s}
 .ctl #members-link:hover::after{opacity:1}
 .ctl .sep{width:1px;height:12px;background:var(--hair-2)}
 #sound[aria-pressed="true"] .s-state{color:var(--paper)}
@@ -67,6 +70,7 @@ button:focus-visible,a:focus-visible,select:focus-visible{outline:1px solid var(
 #readout{position:fixed;z-index:3;right:calc(44px + var(--sr));bottom:calc(17px + var(--sb));text-align:right;pointer-events:none;font-variant-numeric:tabular-nums;line-height:1.7}
 #readout .v{color:var(--paper)}
 #readout .acid{color:var(--acid)}
+#readout .warm{color:var(--acid);margin-left:.6em}
 #reticle{position:fixed;z-index:3;left:0;top:0;width:10px;height:10px;pointer-events:none;opacity:0;transition:opacity .3s}
 #reticle i{position:absolute;width:16px;height:16px;border:0 solid var(--paper)}
 #reticle i:nth-child(1){left:0;top:0;border-width:1px 0 0 1px}
@@ -74,8 +78,8 @@ button:focus-visible,a:focus-visible,select:focus-visible{outline:1px solid var(
 #reticle i:nth-child(3){left:0;bottom:0;border-width:0 0 1px 1px}
 #reticle i:nth-child(4){right:0;bottom:0;border-width:0 1px 1px 0}
 #reticle span{position:absolute;left:0;top:-20px;white-space:nowrap}
-body.ritual #status,body.ritual #readout{opacity:.0;transition:opacity .5s}
-body.ritual.anchored #status{opacity:1}
+body.ritual #readout{opacity:0;transition:opacity .5s}
+body.ritual.mode-sheet-on #status{bottom:calc(var(--sheet-h,0px) + 14px);left:max(18px,var(--sl));max-width:calc(100vw - 36px);transition:opacity .45s var(--ease),transform .45s var(--ease),filter .45s,bottom .8s var(--ease)}
 
 /* ---------- ritual ---------- */
 #ritual{position:fixed;inset:0;z-index:5;pointer-events:none}
@@ -83,6 +87,9 @@ body.ritual.anchored #status{opacity:1}
 .face{position:absolute;left:0;top:0;width:300px;height:300px;padding:clamp(16px,1.5vw,24px);display:flex;flex-direction:column;pointer-events:auto;
   opacity:0;filter:blur(6px);transition:opacity .9s var(--ease),filter .9s var(--ease);color:var(--paper)}
 #ritual.on .face{opacity:1;filter:none}
+.face{background:rgba(5,5,6,0);transition:opacity .9s var(--ease),filter .9s var(--ease),background-color 1.2s var(--ease)}
+#ritual.early .face{background:rgba(5,5,6,.78);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+#ritual.mode-sheet.early .face{background:none;backdrop-filter:none;-webkit-backdrop-filter:none}
 #ritual.on .face:nth-child(2){transition-delay:.12s}
 #ritual.on .face:nth-child(3){transition-delay:.24s}
 .face::before{content:"";position:absolute;inset:8px;pointer-events:none;opacity:.7;
@@ -93,28 +100,28 @@ body.ritual.anchored #status{opacity:1}
    linear-gradient(var(--line),var(--line)) right bottom/9px 1px no-repeat,linear-gradient(var(--line),var(--line)) right bottom/1px 9px no-repeat}
 .face .ser{position:absolute;right:20px;bottom:16px;pointer-events:none}
 .face h2{margin:0;font-weight:400}
-.path{display:block;width:100%;text-align:left;font:400 clamp(26px,2.3vw,34px)/1.02 var(--serif);letter-spacing:-.01em;color:var(--paper);
+.path{display:block;width:100%;text-align:left;font:400 clamp(30px,2.8vw,42px)/1 var(--serif);letter-spacing:-.01em;color:var(--paper);
   text-shadow:0 1px 0 rgba(255,255,255,.07),0 -1px 1px rgba(0,0,0,.6);text-wrap:balance;transition:color .3s}
-.path .go{display:block;margin-top:12px;font:400 10px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--dim);transition:color .3s,letter-spacing .5s var(--ease)}
+.path .go{display:block;margin-top:12px;font:400 10.5px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--dim);transition:color .3s,letter-spacing .5s var(--ease)}
 .path:hover .go{color:var(--paper);letter-spacing:.22em}
 .face.active .path .go{display:none}
-.face-line{margin:10px 0 0;max-width:30ch;font:300 11.5px/1.6 var(--mono);color:var(--paper-2)}
+.face-line{margin:10px 0 0;max-width:30ch;font:300 12px/1.6 var(--mono);color:var(--paper-2)}
 .face.active .face-line{display:none}
 .face-body{display:none;margin-top:14px;flex:1;min-height:0}
 .face.active .face-body{display:block}
-.face.dimmed{opacity:.55!important}
+.face.dimmed{opacity:.75!important}
 .face.dimmed:hover,.face.dimmed:focus-within{opacity:1!important}
 form{display:grid;gap:10px}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .fld{display:grid;gap:4px;min-width:0}
-.fld label{font:400 9.5px/1.4 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+.fld label{font:400 10.5px/1.4 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
 .fld input,.fld select{width:100%;min-width:0;height:34px;padding:0 1px;font:400 14px/1 var(--mono);color:var(--paper);background:transparent;border:0;border-bottom:1px solid var(--hair-2);border-radius:0;outline:0;transition:border-color .25s,box-shadow .25s}
 .fld select{appearance:none;-webkit-appearance:none;cursor:pointer;background:linear-gradient(45deg,transparent 50%,var(--dim) 50%) right 6px center/5px 5px no-repeat,linear-gradient(-45deg,transparent 50%,var(--dim) 50%) right 1px center/5px 5px no-repeat}
 .fld select option{background:#121315;color:var(--paper)}
 .fld input::placeholder{color:#7d8188}
 .fld input:focus,.fld select:focus{border-bottom-color:var(--paper);box-shadow:0 1px 0 var(--paper)}
 .fld input[aria-invalid="true"],.fld select[aria-invalid="true"]{border-bottom-color:var(--err);box-shadow:0 1px 0 var(--err)}
-.hint{font:400 10px/1.5 var(--mono);letter-spacing:.06em;color:var(--dim)}
+.hint{font:400 10.5px/1.5 var(--mono);letter-spacing:.06em;color:var(--dim)}
 .hint code{font:inherit;color:var(--paper);letter-spacing:.12em;user-select:all}
 .err{min-height:0;margin:0;font:400 11px/1.45 var(--mono);color:var(--err)}
 .err:empty{display:none}
@@ -125,7 +132,7 @@ form{display:grid;gap:10px}
 .btn:disabled{opacity:.5;cursor:default}
 .btn-q{font:400 10px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--dim);padding:8px 0}
 .btn-q:hover{color:var(--paper)}
-.step{font:400 9.5px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-bottom:2px}
+.step{font:400 10.5px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-bottom:2px}
 .done{display:grid;gap:10px}
 .done p{margin:0}
 .done .big{font:400 clamp(22px,1.9vw,28px)/1.1 var(--serif);color:var(--paper)}
@@ -133,12 +140,11 @@ form{display:grid;gap:10px}
 
 /* sheet mode (phones, narrow windows, no WebGL) */
 #ritual.mode-sheet .sheet{display:block;position:fixed;left:0;right:0;bottom:0;max-height:min(66dvh,640px);overflow:auto;overscroll-behavior:contain;pointer-events:auto;
-  padding:6px max(18px,var(--sr)) calc(14px + var(--sb)) max(18px,var(--sl));
+  padding:4px max(18px,var(--sr)) calc(14px + var(--sb)) max(18px,var(--sl));
   background:linear-gradient(180deg,rgba(28,29,33,.78),rgba(10,10,12,.9));-webkit-backdrop-filter:blur(26px) saturate(1.3);backdrop-filter:blur(26px) saturate(1.3);
   border-top:1px solid var(--hair-2);border-radius:16px 16px 0 0;box-shadow:0 -18px 50px rgba(0,0,0,.5);
   transform:translateY(105%);transition:transform .8s var(--ease)}
 #ritual.mode-sheet.on .sheet{transform:none}
-#ritual.mode-sheet .sheet::before{content:"";display:block;width:36px;height:3px;border-radius:2px;background:var(--hair-2);margin:4px auto 6px}
 #ritual.mode-sheet .face{position:relative;left:auto!important;top:auto!important;width:auto!important;height:auto!important;padding:0;opacity:1;filter:none;border-bottom:1px solid var(--hair)}
 #ritual.mode-sheet .face:last-child{border-bottom:0}
 #ritual.mode-sheet .face::before,#ritual.mode-sheet .face .ser{display:none}
@@ -150,7 +156,8 @@ form{display:grid;gap:10px}
 #ritual.mode-sheet .face-body{margin:0 0 18px}
 #ritual.mode-sheet .fld input,#ritual.mode-sheet .fld select{font-size:16px;height:40px}
 #ritual.mode-sheet .btn{height:44px}
-@media (min-width:700px){#ritual.mode-sheet .sheet{left:50%;right:auto;width:520px;margin-left:-260px}}
+@media (min-width:700px){#ritual.mode-sheet .sheet{left:50%;right:auto;width:520px;margin-left:-260px}
+  body.ritual.mode-sheet-on #status{bottom:calc(17px + var(--sb));left:calc(44px + var(--sl));max-width:min(36ch,calc(50vw - 300px))}}
 
 #flood{position:fixed;inset:0;z-index:9;background:#fff;opacity:0;pointer-events:none}
 body::after{content:"";position:fixed;inset:-50%;z-index:8;pointer-events:none;opacity:.07;mix-blend-mode:overlay;
@@ -181,7 +188,7 @@ body.ritual #fallback{opacity:.35;transition:opacity .8s}
 body.ritual.mode-sheet-on #fallback{place-items:start center;padding-top:16vh}
 
 @media (max-width:640px){
-  #status{max-width:62vw;font-size:11.5px}
+  #status{max-width:calc(100vw - 88px);font-size:11.5px;bottom:calc(58px + var(--sb))}
   #caption span{display:none}
   #caption em{display:none}
   #caption em.br{display:block}
@@ -193,6 +200,11 @@ body.ritual.mode-sheet-on #fallback{place-items:start center;padding-top:16vh}
 }
 </style>
 
+<div class="ctl">
+  <button id="members-link">Members</button>
+  <i class="sep" aria-hidden="true"></i>
+  <button id="sound" aria-pressed="false">Sound <span class="s-state">off</span></button>
+</div>
 <canvas id="gl" aria-hidden="true"></canvas>
 <div id="poster" aria-hidden="true"></div>
 <button id="stage" aria-label="Object 0047. Drag to turn it. Arrow keys turn it a quarter turn. Enter presses it." aria-describedby="status"></button>
@@ -207,15 +219,10 @@ body.ritual.mode-sheet-on #fallback{place-items:start center;padding-top:16vh}
 
 <i class="xh tl"></i><i class="xh tr"></i><i class="xh bl"></i><i class="xh br"></i>
 <div id="caption" class="lbl"><b>Object 0047<em> / </em><em class="br"></em>Do not touch</b><span>Held for observation</span></div>
-<div class="ctl">
-  <button id="sound" aria-pressed="false">Sound <span class="s-state">off</span></button>
-  <i class="sep" aria-hidden="true"></i>
-  <button id="members-link">Members</button>
-</div>
 <div id="vlabel" class="lbl" aria-hidden="true">Observer 01 · You</div>
 <div id="reticle" aria-hidden="true"><i></i><i></i><i></i><i></i><span class="lbl"></span></div>
 <p id="status" role="status" aria-live="polite"></p>
-<div id="readout" class="lbl" aria-hidden="true"><div>Off-axis <span class="v" id="ro-axis">--.-°</span></div><div>Contact <span class="v" id="ro-contact">00</span></div></div>
+<div id="readout" class="lbl" aria-hidden="true"><div>Off-axis <span class="v" id="ro-axis">--.-°</span><span class="warm" id="ro-warm" hidden>Warmer.</span></div><div>Contact <span class="v" id="ro-contact">00</span></div></div>
 
 <section id="ritual" aria-label="Access" hidden>
   <div class="sheet">
@@ -270,7 +277,7 @@ body.ritual.mode-sheet-on #fallback{place-items:start center;padding-top:16vh}
                 <option value="">Choose one</option><option>A member mentioned it</option><option>I found the object</option><option>Word of mouth</option><option>I would rather not say</option>
               </select></div>
           </div>
-          <div class="fld"><label for="apply-why">Why now? One line</label><input id="apply-why" maxlength="120" placeholder="Be brief. It is." aria-describedby="apply-err"></div>
+          <div class="fld"><label for="apply-why">Why now? One line</label><input id="apply-why" maxlength="120" placeholder="One line. It will be read." aria-describedby="apply-err"></div>
           <p class="err" id="apply-err" aria-live="assertive"></p>
           <div class="act"><button class="btn" id="apply-submit" type="submit">Submit application</button></div>
         </form>
@@ -369,9 +376,9 @@ body.ritual.mode-sheet-on #fallback{place-items:start center;padding-top:16vh}
     ritual.hidden = false;
     requestAnimationFrame(()=>requestAnimationFrame(()=>ritual.classList.add('on')));
     P4.say(path==='member' ? 'Members may skip the formalities. It understands.' : 'It is open. Three ways in. Choose one.', {prio:7, hold:6000});
-    if (path) P4.setActive(path, true); else if (P4.kbOpen) setTimeout(()=>$('#path-invite').focus({preventScroll:true}), RM?50:900);
+    if (path) P4.setActive(path, true, true); else if (P4.kbOpen) setTimeout(()=>$('#path-invite').focus({preventScroll:true}), RM?50:900);
   };
-  P4.setActive = function(path, focus){
+  P4.setActive = function(path, focus, now){
     P4.active = path;
     for (const k in faces){
       const on = k===path; faces[k].classList.toggle('active', on); faces[k].classList.toggle('dimmed', !!path && !on);
@@ -380,7 +387,7 @@ body.ritual.mode-sheet-on #fallback{place-items:start center;padding-top:16vh}
     P4.gl && P4.gl.setPath && P4.gl.setPath(path);
     if (focus){
       const f = faces[path].querySelector('form:not([hidden]) input, form:not([hidden]) select');
-      if (f) setTimeout(()=>f.focus({preventScroll:true}), RM?30:650);
+      if (f){ if (now) f.focus({preventScroll:true}); else setTimeout(()=>f.focus({preventScroll:true}), RM?30:650); }
     }
   };
   for (const k in faces) faces[k].querySelector('.path').addEventListener('click', ()=>P4.setActive(P4.active===k && P4.mode==='sheet' ? null : k, true));
@@ -388,10 +395,18 @@ body.ritual.mode-sheet-on #fallback{place-items:start center;padding-top:16vh}
   P4.openRitual = function(path){
     if (P4.state==='ritual'){ P4.setActive(path, true); return; }
     if (P4.state==='opening' || P4.state==='success') return;
-    if (P4.gl && P4.gl.ok){ P4.gl.open({fast:true, path}); }
+    if (P4.gl && P4.gl.ok){ P4.gl.open({fast:true, path}); if (path==='member'){ ritual.classList.add('early'); P4.showRitual(path); } }
     else { P4.state='opening'; $('#fallback .fb-cube') && ($('#fallback .fb-cube').style.animationPlayState='paused'); P4.showRitual(path); }
   };
   $('#members-link').addEventListener('click', ()=>P4.openRitual('member'));
+  document.addEventListener('keydown', e=>{
+    if (e.key!=='Escape' || P4.state!=='ritual') return;
+    if (!$('#form-create').hidden && faces.invite.contains(document.activeElement)){ $('#create-back').click(); return; }
+    if (P4.active){ const b = faces[P4.active].querySelector('.path'); P4.setActive(null); b.focus(); P4.say('Stepped back. It is still open.', {prio:3}); return; }
+    P4.say('It stays open. It has made up its mind.', {prio:3});
+  });
+  // the sheet's height drives the status line position on phones
+  if (window.ResizeObserver){ const sh=$('#ritual .sheet'); new ResizeObserver(()=>{ const h = ritual.classList.contains('mode-sheet') && !ritual.hidden ? sh.getBoundingClientRect().height : 0; document.body.style.setProperty('--sheet-h', h+'px'); }).observe(sh); }
   $('#fb-open').addEventListener('click', ()=>{ P4.openRitual(null); P4.say('It opened. Less ceremony than intended.', {prio:3}); });
 
   /* ---- forms ---- */
@@ -454,7 +469,7 @@ body.ritual.mode-sheet-on #fallback{place-items:start center;padding-top:16vh}
     const go = ()=>{ if(!qs.has('stay')) location.href = 'enter.html'; };
     ritual.classList.remove('on');
     if (P4.gl && P4.gl.ok) P4.gl.success(go);
-    else { const fl=$('#flood'); fl.style.transition='opacity .9s ease'; fl.style.opacity='1'; setTimeout(go, 1000); }
+    else { const fl=$('#flood'); gsap.timeline({onComplete:go}).to(fl,{opacity:1,duration:RM?.3:.5,ease:'power2.in'}).to(fl,{backgroundColor:'#030404',duration:.45,ease:'power2.out'},'+=.15'); }
   };
 
   /* ---- fallback ---- */
@@ -514,9 +529,9 @@ camera.position.set(0, .45, 9.6);
 /* ---------- studio environment: strip softboxes ---------- */
 // glass sees crisp strips on black; steel gets a softer studio so it reads as brushed metal
 function studio(soft){
-  const env = new THREE.Scene(); env.background = new THREE.Color(soft ? 0x0b0b0c : 0x000000);
+  const env = new THREE.Scene(); env.background = new THREE.Color(soft ? 0x030303 : 0x000000);
   const strip = (w,h,i,pos,tint=0xffffff) => {
-    const m = new THREE.Mesh(new THREE.PlaneGeometry(w,h), new THREE.MeshBasicMaterial({ color:new THREE.Color(tint).multiplyScalar(i), side:THREE.DoubleSide }));
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w,h), new THREE.MeshBasicMaterial({ color:new THREE.Color(tint).multiplyScalar(i*(soft ? .3 : 1)), side:THREE.DoubleSide }));
     m.position.set(...pos); m.lookAt(0,0,0); env.add(m);
   };
   strip(1.3, 11, 7.5, [-6.2, 1.2, 3.4]);          // tall key strip, front left
@@ -524,11 +539,11 @@ function studio(soft){
   strip(.55, 9, 3.6, [6.6, .2, -3.2]);            // rim strip, back right
   strip(.45, 5, 1.4, [4.2, -.5, 6.5], 0xffe9d2);  // faint warm card, front right
   strip(14, 3, .05, [0, -7, 0], 0xb8b0a6);        // floor bounce
-  if (soft){
-    strip(10, 10, .9, [-1, 7, -4]);               // big overhead scrim
-    strip(7, 9, .55, [-8, 0, 1], 0xe8ebf0);       // soft fill left
-    strip(7, 9, .35, [8, 1, 3], 0xfff0e0);        // warm fill right
-    strip(12, 4, .25, [0, -5, 5]);                // floor card
+  if (soft){ // banks of strips with dark gaps between them, so brushed steel keeps its contrast
+    for (const x of [-3.2, -1.1, 1.0, 3.1]) strip(.8, 9, .84, [x, 7, -3]);
+    for (const z of [-3, 0, 3]) strip(1.0, 8, .52, [-8, 0, z], 0xe8ebf0);
+    for (const z of [-2, 2]) strip(.7, 8, .32, [8, 1, z], 0xfff0e0);
+    strip(10, 1, .24, [0, -5, 5]);
   }
   const pm = new THREE.PMREMGenerator(renderer);
   const t = pm.fromScene(env, .03).texture; pm.dispose(); return t;
@@ -558,7 +573,7 @@ function glyph(kind){
   const xh = (x,y,s=14,w=5)=>{ g.lineWidth=w; g.beginPath(); g.moveTo(x-s,y); g.lineTo(x+s,y); g.moveTo(x,y-s); g.lineTo(x,y+s); g.stroke(); };
   if (kind==='dots'){
     const F={ '0':['01110','10001','10011','10101','11001','10001','01110'], '4':['00010','00110','01010','10010','11111','00010','00010'], '7':['11111','00001','00010','00100','01000','01000','01000'] };
-    const p=19, r=8.4, digits='0047', W=4*5*p+3*p, x0=256-W/2+p/2, y0=200;
+    const p=19, r=9.3, digits='0047', W=4*5*p+3*p, x0=256-W/2+p/2, y0=200;
     [...digits].forEach((d,k)=>F[d].forEach((row,j)=>[...row].forEach((b,i)=>{ if(b==='1'){ g.beginPath(); g.arc(x0+k*6*p+i*p, y0+j*p, r, 0, 7); g.fill(); } })));
     g.font=mono(21); g.textAlign='center'; g.fillText('0047 / NO MANUAL', 256, 400);
     xh(70,70); xh(442,70); xh(70,442); xh(442,442);
@@ -607,11 +622,11 @@ function glyph(kind){
 }
 
 /* ---------- materials ---------- */
-const transRough = { value:.66 };
+const transRough = { value:.56 };
 const glassMat = () => {
   const m = new THREE.MeshPhysicalMaterial({
     color:0xffffff, metalness:0, roughness:.24, transmission:1, thickness:.55, ior:1.47,
-    attenuationColor:new THREE.Color(0xe6e9ee), attenuationDistance:2.4,
+    attenuationColor:new THREE.Color(0xc9ced6), attenuationDistance:.9,
     specularIntensity:1, specularColor:new THREE.Color(0xffffff),
     clearcoat:.7, clearcoatRoughness:.08, dispersion:.12, envMapIntensity:.85
   });
@@ -621,8 +636,8 @@ const glassMat = () => {
       THREE.ShaderChunk.transmission_fragment.replace('n, v, material.roughness,', 'n, v, material.roughness * transRough,')); };
   return m;
 };
-const steel = new THREE.MeshPhysicalMaterial({ color:0xd2d5da, metalness:1, roughness:.3, roughnessMap:brushed, anisotropy:.8, envMap:steelEnv, envMapIntensity:1.0, clearcoat:.25, clearcoatRoughness:.22 });
-const plateMat = (map) => new THREE.MeshStandardMaterial({ color:0x24262a, metalness:.8, roughness:.42, map, alphaTest:.5, side:THREE.DoubleSide, envMapIntensity:.9 });
+const steel = new THREE.MeshPhysicalMaterial({ color:0xb4b8be, metalness:1, roughness:.24, roughnessMap:brushed, anisotropy:.45, envMap:steelEnv, envMapIntensity:.62, clearcoat:.12, clearcoatRoughness:.2 });
+const plateMat = (map) => new THREE.MeshStandardMaterial({ color:0x0b0c0e, metalness:.55, roughness:.62, map, alphaTest:.5, side:THREE.DoubleSide, envMapIntensity:.45 });
 
 /* ---------- the object ---------- */
 const rig = new THREE.Group(); scene.add(rig);         // position: float, drift, recoil
@@ -638,7 +653,7 @@ const ORI = {
 };
 const NRM = { pz:[0,0,1], nz:[0,0,-1], px:[1,0,0], nx:[-1,0,0], py:[0,1,0], ny:[0,-1,0] };
 const GLY = { nz:'dots', px:'hand', nx:'eye', py:'dna', ny:'label' };
-const slabGeo = new RoundedBoxGeometry(PANEL, PANEL, SLAB, 4, .03);
+const slabGeo = new RoundedBoxGeometry(PANEL, PANEL, SLAB, 5, .04);
 const plateGeo = new THREE.PlaneGeometry(1.66, 1.66);
 const faces = {};
 const HINGE = { nx:new THREE.Vector3(-S,0,-S), px:new THREE.Vector3(S,0,-S) };
@@ -660,23 +675,33 @@ const fourPieces = ['stem','bar','diag'].map((kind,i)=>{
   m.userData.depth = [S - SLAB/2 - .006, .26, -.46][i];
   faces.pz.pivot.add(m); return m;
 });
+const acidFlash = new THREE.MeshBasicMaterial({ color:0xccff00, toneMapped:false, side:THREE.DoubleSide, alphaTest:.5 });
+fourPieces.forEach(m=>{ m.userData.dark = m.material; m.userData.flash = acidFlash.clone(); m.userData.flash.map = m.material.map; });
+function flash4(on){ fourPieces.forEach(m=>{ m.material = on ? m.userData.flash : m.userData.dark; }); }
+// the same 4, whole, as the key's inlay: acid, untouched by tone mapping
+const fourTex = (()=>{ const c=mkCanvas(512), g=c.getContext('2d'); g.fillStyle='#fff';
+  g.fillRect(300,76,58,360); g.fillRect(96,318,324,54); g.beginPath(); g.moveTo(300,76); g.lineTo(358,76); g.lineTo(160,318); g.lineTo(96,318); g.closePath(); g.fill(); return tex(c); })();
+const key4 = new THREE.Mesh(new THREE.PlaneGeometry(1,1), new THREE.MeshBasicMaterial({ map:fourTex, color:0xccff00, toneMapped:false, alphaTest:.5, side:THREE.DoubleSide }));
+key4.visible = false;
 // steel frame: 12 edge bars + 8 corner caps
 const bars = [], caps = [];
 {
-  const E = .946, L = 1.76, T = .1;
-  const geos = { x:new RoundedBoxGeometry(L,T,T,2,.022), y:new RoundedBoxGeometry(T,L,T,2,.022), z:new RoundedBoxGeometry(T,T,L,2,.022) };
+  const E = .942, L = 1.76, T = .124;
+  const grain = (geo, ax) => { const p = geo.attributes.position, uv = geo.attributes.uv, o = ['x','y','z'].filter(a=>a!==ax);
+    for (let i=0;i<p.count;i++){ const v={x:p.getX(i),y:p.getY(i),z:p.getZ(i)}; uv.setXY(i, v[ax]/L*1.4 + .5, (v[o[0]] + v[o[1]])*1.6 + .5); } uv.needsUpdate = true; return geo; };
+  const geos = { x:grain(new RoundedBoxGeometry(L,T,T,2,.022),'x'), y:grain(new RoundedBoxGeometry(T,L,T,2,.022),'y'), z:grain(new RoundedBoxGeometry(T,T,L,2,.022),'z') };
   for (const ax of ['x','y','z']) for (const a of [-1,1]) for (const b of [-1,1]){
     const m = new THREE.Mesh(geos[ax], steel);
     const p = ax==='x' ? [0,a*E,b*E] : ax==='y' ? [a*E,0,b*E] : [a*E,b*E,0];
     m.position.set(...p); m.userData.ax = ax; cube.add(m); bars.push(m);
   }
-  const cg = new RoundedBoxGeometry(.21,.21,.21,3,.045);
+  const cg = new RoundedBoxGeometry(.15,.15,.15,2,.015);
   for (const x of [-1,1]) for (const y of [-1,1]) for (const z of [-1,1]){
-    const m = new THREE.Mesh(cg, steel); m.position.set(x*.952,y*.952,z*.952); m.userData.home = m.position.clone(); cube.add(m); caps.push(m);
+    const m = new THREE.Mesh(cg, steel); m.position.set(x*.948,y*.948,z*.948); m.userData.home = m.position.clone(); cube.add(m); caps.push(m);
   }
 }
 // interior light: a lightbox, a core, a point light
-const lightbox = new THREE.Mesh(new THREE.BoxGeometry(1.7,1.7,1.7), new THREE.ShaderMaterial({
+const lightbox = new THREE.Mesh(new THREE.BoxGeometry(1.62,1.62,1.62), new THREE.ShaderMaterial({
   side:THREE.BackSide,
   uniforms:{ color:{ value:new THREE.Color(1,.95,.88) }, center:{ value:new THREE.Vector3() }, k:{ value:5.2 } },
   vertexShader:`varying vec3 vW; void main(){ vec4 w = modelMatrix*vec4(position,1.); vW = w.xyz; gl_Position = projectionMatrix*viewMatrix*w; }`,
@@ -734,18 +759,22 @@ async function buildTag(){
   g.strokeStyle='rgba(30,30,32,.55)'; g.lineWidth=3; g.beginPath(); g.arc(hx,hy,.118/W*cw,0,7); g.stroke();
   const fs=250, base=chh*.62, x0=cw*.24;
   g.font=`900 ${fs}px "Big Shoulders Display", "Arial Narrow", sans-serif`; g.textBaseline='alphabetic';
-  const parts=['P','4','CE']; let x=x0; const sp=fs*.05;
-  for (const p of parts){
-    const w=g.measureText(p).width;
-    if (p==='4'){ g.fillStyle='#ccff00'; g.fillText(p,x,base); gm.font=g.font; gm.fillStyle='#000'; gm.fillText(p,x,base); }
-    else { g.fillStyle='rgba(255,255,255,.6)'; g.fillText(p,x,base+3); g.fillStyle='rgba(0,0,0,.5)'; g.fillText(p,x,base-2); g.fillStyle='#17181b'; g.fillText(p,x,base); gm.font=g.font; gm.fillStyle='#4a4a4a'; gm.fillText(p,x,base); }
-    x += w + sp;
-  }
+  const capH = g.measureText('P').actualBoundingBoxAscent || fs*.72;
+  const slotW = capH*324/360; let x=x0; const sp=fs*.05;
+  const eng = (p)=>{ g.fillStyle='rgba(255,255,255,.6)'; g.fillText(p,x,base+3); g.fillStyle='rgba(0,0,0,.5)'; g.fillText(p,x,base-2); g.fillStyle='#17181b'; g.fillText(p,x,base); gm.font=g.font; gm.fillStyle='#4a4a4a'; gm.fillText(p,x,base); x += g.measureText(p).width + sp; };
+  eng('P');
+  const slotX = x; x += slotW + sp;
+  eng('CE');
+  // the inlay sits where the 4 goes: same glyph that was aligned in the glass
+  const s4 = capH*512/360, cxp = slotX + slotW/2 - (258-256)/512*s4, cyp = base - capH/2;
+  key4.scale.set(s4/cw*W, s4/cw*W, 1);
+  key4.userData.home = new THREE.Vector3(cxp/cw*W - W/2, H/2 - cyp/chh*H, .045);
   g.font='500 34px "Martian Mono", ui-monospace, monospace'; g.textAlign='right';
   g.fillStyle='rgba(255,255,255,.5)'; g.fillText('MEMBER 0047', cw*.94, chh*.86+1.5); g.fillStyle='#2b2d31'; g.fillText('MEMBER 0047', cw*.94, chh*.86);
   g.textAlign='left'; g.font='400 20px "Martian Mono", ui-monospace, monospace'; g.fillStyle='#45474c'; g.fillText('THE RESERVE', x0+6, chh*.86);
   const faceMat = new THREE.MeshPhysicalMaterial({ map:tex(col), metalnessMap:tex(met,false), metalness:.62, roughness:.36, roughnessMap:brushed, anisotropy:.6, envMap:steelEnv, envMapIntensity:1.1, clearcoat:.3, clearcoatRoughness:.25 });
-  const mesh = new THREE.Mesh(geo, [faceMat, steel]); tag.add(mesh);
+  const mesh = new THREE.Mesh(geo, [faceMat, steel]); tag.add(mesh); tag.userData.body = mesh;
+  key4.position.copy(key4.userData.home); tag.add(key4);
 }
 buildTag();
 
@@ -767,8 +796,8 @@ function idleFrame(){
 }
 function ritualFrame(){
   const a = innerWidth/innerHeight, sheet = P4.mode !== 'anchored';
-  const look = new THREE.Vector3(0, sheet ? -.12 : -.06, -.94);
-  const halfW = sheet ? 2.86/.93 : 2.86/.9, halfH = sheet ? 1.6 : 1.04/.52;
+  const look = new THREE.Vector3(0, sheet ? -.12 : -.3, -.94);
+  const halfW = sheet ? 2.86/.93 : 2.86/.95, halfH = sheet ? 1.6 : 1.35/.6;
   const d = Math.max(halfH/tan, halfW/(tan*a));
   return { pos:new THREE.Vector3(0, look.y + d*.07, look.z + d), look };
 }
@@ -786,7 +815,7 @@ const st = {
   offset:new THREE.Vector3(), offVel:new THREE.Vector3(), chase:new THREE.Vector3(),
   sq:1, sqVel:0, flick:0, lastInput:performance.now(), start:performance.now(), curious:false, hintShown:false,
   hold:0, wrongHold:0, lastWrong:0, kb:null, pointer:new THREE.Vector2(9,9), pointerIn:false, violentT:0, lastPlease:0,
-  firstDrag:true, glow:1, acid:0, open:null, chaseSaid:0,
+  firstDrag:true, glow:1, acid:0, click:0, hint:0, warmSaid:false, breath:0, coreDim:1, open:null, chaseSaid:0,
 };
 const q0 = new THREE.Quaternion().setFromEuler(new THREE.Euler(.36, Math.PI - .64, 0, 'XYZ'));
 cube.quaternion.copy(q0);
@@ -894,7 +923,7 @@ function openSequence(fast, path){
   st.angVel.set(0,0,0); st.kb=null; st.curious=false;
   const qFrom = cube.quaternion.clone(), qTo = new THREE.Quaternion(), o = { t:0 };
   const offFrom = st.offset.clone();
-  const tl = gsap.timeline({ defaults:{ ease:'power3.inOut' }, onComplete:()=>{ P4.showRitual(path); } });
+  const tl = gsap.timeline({ defaults:{ ease:'power3.inOut' }, onComplete:()=>{ if (P4.state==='ritual') document.getElementById('ritual').classList.remove('early'); else P4.showRitual(path); } });
   st.open = tl;
   if (RM){
     // crossfade: dim, set the end state, reveal
@@ -908,11 +937,12 @@ function openSequence(fast, path){
   tl.to(o, { t:1, duration:(fast?.7:.42), ease: fast ? 'power3.inOut' : 'back.out(2.6)', onUpdate:()=>{ cube.quaternion.slerpQuaternions(qFrom,qTo,o.t); st.offset.lerpVectors(offFrom, new THREE.Vector3(), o.t); } }, 0)
     .to(anim, { pieces:1, duration:.42, ease:'power4.out' }, 0);
   if (!fast){
-    tl.add(()=>{ P4.snd.fx('click'); st.acid = 1; }, .4)
-      .to(st, { acid:0, duration:1.1, ease:'power2.out' }, .55);
+    tl.add(()=>{ P4.snd.fx('click'); flash4(true); st.click = 1; }, .4)
+      .add(()=>flash4(false), .72)
+      .to(st, { click:0, duration:.9, ease:'power2.out' }, .45);
   } else tl.add(()=>P4.snd.fx('tick'), .5);
   const t0 = fast ? .6 : 1.35;
-  tl.add(()=>{ P4.snd.fx('open'); P4.say(fast ? 'Members may skip the formalities.' : 'It has decided to let you in.', {prio:6, hold:3000}); }, t0)
+  tl.add(()=>{ P4.snd.fx('open'); if (!fast) P4.say('It has decided to let you in.', {prio:6, hold:3000}); }, t0)
     .to(anim, { seam:1, duration:.5*sp, ease:'power2.inOut' }, t0)
     .to(anim, { bars:1, duration:.55*sp, ease:'power3.in' }, t0+.1*sp)
     .to(anim, { caps:1, duration:.5*sp, ease:'power3.in' }, t0+.35*sp)
@@ -931,17 +961,19 @@ const PATHX = { invite:-1.88, member:0, apply:1.88 };
 let pathX = 0;
 P4.gl = {
   ok:true,
-  open:({fast, path}={})=>{ if(P4.state!=='idle') return; P4.state='opening'; stage.classList.add('off'); openSequence(true, path); },
+  open:({fast, path}={})=>{ if(P4.state!=='idle' && P4.state!=='intro') return; P4.state='opening'; stage.classList.add('off'); openSequence(true, path); },
   setPath:(p)=>{ const x = p ? PATHX[p] : 0; if (RM) pathX = x; else gsap.to({v:pathX}, { v:x, duration:1.1, ease:'power3.inOut', onUpdate(){ pathX=this.targets()[0].v; } }); },
   nudge:()=>{ st.flick = .6; },
   success:(go)=>{
     const tl = gsap.timeline({ onComplete:go });
-    if (RM){ tl.to('#flood', { opacity:1, duration:.6, ease:'none' }); return; }
+    const fl = document.getElementById('flood');
+    if (RM){ tl.to(fl, { opacity:1, duration:.3, ease:'none' }).to(fl, { backgroundColor:'#030404', duration:.4, ease:'none' }, '+=.15'); return; }
     tag.visible = true;
-    tl.to(anim, { rise:1, duration:2.1, ease:'power3.inOut' }, 0)
-      .to(anim, { flood:1, duration:1.5, ease:'power2.in' }, .9)
-      .to('#flood', { opacity:1, duration:.75, ease:'power1.in' }, 2.05)
-      .to({}, { duration:.25 });
+    tl.to(anim, { rise:1, duration:2.6, ease:'power2.inOut' }, 0)
+      .to(anim, { flood:1, duration:1.4, ease:'power2.in' }, 1.5)
+      .to(fl, { opacity:1, duration:.32, ease:'power2.in' }, 2.75)
+      .to(fl, { backgroundColor:'#030404', duration:.55, ease:'power2.out' }, 3.22)
+      .to({}, { duration:.1 });
   }
 };
 
@@ -981,7 +1013,7 @@ function applyAnim(){
 const clock = new THREE.Clock();
 let running = true, raf = 0, frames = 0;
 const camPos = new THREE.Vector3(), camLook = new THREE.Vector3(), ACID = new THREE.Color(0xccff00), WARM = new THREE.Color(1,.93,.84), tmpC = new THREE.Color();
-const sheetEl = $('#ritual .sheet'), roAxis = $('#ro-axis'), reticle = $('#reticle'), retLbl = reticle.querySelector('span');
+const sheetEl = $('#ritual .sheet'), roWarm = $('#ro-warm'), roAxis = $('#ro-axis'), reticle = $('#reticle'), retLbl = reticle.querySelector('span');
 let lastRO = 0;
 function tick(){
   raf = requestAnimationFrame(tick);
@@ -997,17 +1029,19 @@ function tick(){
     } else if (!st.dragging){
       const w = st.angVel.length();
       if (w > 1e-4 && !RM){ tmpQ.setFromAxisAngle(tmpV.copy(st.angVel).normalize(), w*dt); cube.quaternion.premultiply(tmpQ); st.angVel.multiplyScalar(Math.exp(-dt*1.9)); }
-      // curious: after 8s alone it turns its eye to you, tilts its head and follows the cursor
-      if (!st.curious && !qs.has('nocurious') && now - st.lastInput > 8000 && w < .2){ st.curious = true; P4.say('It is looking at you.', {prio:2, hold:4000}); }
+      // curious: left alone, it turns most of the way round to show you the back, tilts its head and follows the cursor
+      const idleFor = now - Math.max(st.lastInput, st.start + 12000);
+      if (!st.curious && !qs.has('nocurious') && idleFor > 8000 && w < .2){ st.curious = true; P4.say('It is looking at you. Its back is nearly turned to you.', {prio:3, hold:5000}); }
       if (st.curious && !RM){
-        const look = new THREE.Quaternion().setFromEuler(new THREE.Euler(-st.pointer.y*.22*(st.pointerIn?1:0) + Math.sin(t*.7)*.03, Math.PI/2 + st.pointer.x*.3*(st.pointerIn?1:0), .16 + Math.sin(t*.45)*.04, 'YXZ'));
-        cube.quaternion.slerp(look, 1 - Math.exp(-dt*1.4));
+        const px = st.pointerIn ? st.pointer.x : 0, py = st.pointerIn ? st.pointer.y : 0;
+        const look = new THREE.Quaternion().setFromEuler(new THREE.Euler(-py*.18 + .2 + Math.sin(t*.7)*.03, .5 + px*.25, .14 + Math.sin(t*.45)*.04, 'YXZ'));
+        cube.quaternion.slerp(look, 1 - Math.exp(-dt*1.2));
       }
     }
     // alignment: the face with the 4, held squarely for 1.5 s
     const [fk, ang] = facingKey(cube.quaternion);
     const still = st.angVel.length() < .45 && !st.kb && (!st.dragging || now - st.lastMoveT > 140);
-    if (fk==='pz' && ang < 10 && still && !st.curious){
+    if (fk==='pz' && ang < 16 && still && !st.curious){
       if (st.hold === 0) { P4.say('Hold still.', {prio:4, hold:1800}); }
       st.hold += dt;
       if (!st.dragging) cube.quaternion.slerp(snapQuat(cube.quaternion), 1 - Math.exp(-dt*3.2));
@@ -1017,8 +1051,16 @@ function tick(){
       st.wrongHold += dt;
       if (st.wrongHold > 2.2 && now - st.lastWrong > 14000){ st.lastWrong = now; P4.say('Wrong face. It has six.', {prio:3}); }
     } else st.wrongHold = 0;
-    if (!st.hintShown && !qs.has('nocurious') && now - st.start > 25000){ st.hintShown = true; P4.say('It prefers to be looked at directly.', {prio:4, hold:7000, note:'Lab note'}); }
-    if (now - lastRO > 90){ lastRO = now; const [, a4] = [0, Math.acos(clamp(tmpV.set(0,0,1).applyQuaternion(cube.quaternion).z,-1,1))*180/Math.PI]; roAxis.textContent = a4.toFixed(1).padStart(5,'0') + '°'; roAxis.classList.toggle('acid', st.hold > 0); }
+    // hint ladder
+    if (!qs.has('nocurious')){
+      const since = now - st.start;
+      if (st.hint < 1 && since > 4000 && st.firstDrag){ st.hint = 1; P4.say('It can be turned. It would rather you didn\'t.', {prio:3, hold:6000}); }
+      if (st.hint < 2 && since > 15000){ st.hint = 2; P4.say('Something on the back is out of register.', {prio:4, hold:7000, note:'Lab note'}); }
+      if (st.hint < 3 && since > 34000){ st.hint = 3; P4.say('It prefers to be looked at directly.', {prio:4, hold:7000, note:'Lab note'}); }
+    }
+    if (now - lastRO > 90){ lastRO = now; const a4 = Math.acos(clamp(tmpV.set(0,0,1).applyQuaternion(cube.quaternion).z,-1,1))*180/Math.PI;
+      roAxis.textContent = a4.toFixed(1).padStart(5,'0') + '°'; const warm = a4 < 30; roAxis.classList.toggle('acid', warm); roWarm.hidden = !warm;
+      if (warm && !st.warmSaid && !st.curious){ st.warmSaid = true; P4.say('Warmer.', {prio:4, hold:2200}); } }
   }
 
   /* position dynamics: float, avoid the cursor, recoil */
@@ -1050,15 +1092,19 @@ function tick(){
   const holdP = clamp(st.hold/1.5, 0, 1);
   const flick = st.flick > 0 ? (1 - st.flick*.85*(.6+.4*Math.sin(t*90))) : 1;
   const breathe = RM ? 1 : 1 + Math.sin(t*1.3)*.04;
-  const g = (1 + holdP*.5) * flick * breathe;
-  tmpC.copy(WARM).lerp(ACID, st.acid);
-  lightbox.material.color.copy(tmpC).multiplyScalar(1.0*g); lightbox.material.uniforms.center.value.copy(core.getWorldPosition(tmpM));
-  core.material.color.copy(tmpC).multiplyScalar(7*g*(1+anim.flood*2));
-  coreLight.color.copy(tmpC); coreLight.intensity = 6*g*anim.core;
-  for (const s of glows){ s.material.color.copy(tmpC); s.material.opacity = s.userData.o * g * (1 - anim.core*.72) * (1+st.acid*.4) * (1 - smooth(anim.rise, 0, .4)); }
+  // it holds its breath while you align it: the hotspot drops, the glow flattens, the 4 goes crisp
+  st.breath = lerp(st.breath, Math.max(holdP > 0 ? .35 + holdP*.65 : 0, st.click), 1 - Math.exp(-dt*6));
+  st.coreDim = lerp(st.coreDim, P4.active ? .3 : 1, 1 - Math.exp(-dt*2.5));
+  const g = flick * breathe;
+  tmpC.copy(WARM);
+  lightbox.material.color.copy(tmpC).multiplyScalar(g*(1 - st.breath*.35)); lightbox.material.uniforms.center.value.copy(core.getWorldPosition(tmpM));
+  lightbox.material.uniforms.k.value = lerp(5.2, 1.1, st.breath);
+  core.material.color.copy(tmpC).multiplyScalar(7*g*(1 - st.breath*.85)*st.coreDim*(1+anim.flood*2));
+  coreLight.color.copy(tmpC); coreLight.intensity = 6*g*anim.core*st.coreDim;
+  for (const s of glows){ s.material.color.copy(tmpC); s.material.opacity = s.userData.o * g * (1 - anim.core*.72) * (1 - st.breath*.6) * lerp(1,.45,1-st.coreDim) * (1 - smooth(anim.rise, 0, .4)); }
   tagKey.intensity = 3*smooth(anim.rise, .1, .7); tagFill.intensity = 1.3*smooth(anim.rise, .1, .7);
-  floorGlow.material.color.copy(tmpC); floorGlow.material.opacity = .13*g*(1-anim.core*.45);
-  bloom.strength = .62 - anim.core*.24 + st.acid*.7 + holdP*.2 + anim.flood*.9;
+  floorGlow.material.color.copy(tmpC); floorGlow.material.opacity = .13*g*(1-anim.core*.45)*lerp(1,.5,1-st.coreDim);
+  bloom.strength = .62 - anim.core*.24 - st.breath*.4 + st.click*.35 + anim.flood*.9;
   bloom.threshold = .84 + smooth(anim.rise, .2, .8)*.6;
   // core sinks to the floor of the opened box, then rises as the key
   const coreFloor = new THREE.Vector3(0, -S, .05);  // sinks into the floor slab: the plinth glows
@@ -1094,14 +1140,19 @@ function tick(){
     const r = anim.rise, fwd = new THREE.Vector3(); camera.getWorldDirection(fwd);
     const a = innerWidth/innerHeight, dist = Math.max(.82/(.36*2*tan), 1.8/(.78*2*tan*a));
     const target = camera.position.clone().addScaledVector(fwd, dist);
-    const from = core.position.clone(); from.y = coreFloor.y;
-    tag.position.lerpVectors(from, target, smooth(r, 0, 1)); tag.position.y += Math.sin(r*Math.PI)*.4;
-    tag.quaternion.copy(camera.quaternion); tag.rotateY((1-r)*Math.PI*2.5); tag.rotateX((1-r)*.6 + Math.sin(t*1.2)*.03*r);
-    tag.scale.setScalar(Math.max(.001, smooth(r, 0, .45)));
+    const from = core.position.clone(); from.y = coreFloor.y + .15;
+    tag.position.lerpVectors(from, target, smooth(r, 0, 1)); tag.position.y += Math.sin(r*Math.PI)*.35;
+    // the 4 rises alone, turning once; the brushed tag forms around it on the way up
+    const turn = 1 - smooth(r, .05, .8);
+    tag.quaternion.copy(camera.quaternion); tag.rotateY(turn*Math.PI*2); tag.rotateX(turn*.35 + Math.sin(t*1.2)*.02*r);
+    const k4 = key4.userData.home;
+    if (k4){ const lead = 1 - smooth(r, .35, .8); key4.position.set(k4.x*(1-lead), k4.y*(1-lead), k4.z + lead*.05); key4.visible = true; }
+    if (tag.userData.body){ const b = smooth(r, .32, .8); tag.userData.body.scale.set(Math.max(.001,b), Math.max(.001,b), Math.max(.001, b)); tag.userData.body.visible = b > .002; }
+    tag.scale.setScalar(Math.max(.001, smooth(r, 0, .2)) * lerp(1.15, 1, smooth(r,.3,.8)));
   }
 
   /* ritual faces anchored to the opened panels */
-  if (P4.state!=='idle' && P4.mode==='anchored' && anim.doors > .98) anchorFaces();
+  if (P4.state!=='idle' && P4.mode==='anchored') anchorFaces();
 
   /* reticle: alignment progress */
   if (idle){
@@ -1121,13 +1172,17 @@ function tick(){
   if (++frames === 2){ canvas.classList.add('ready'); $('#poster').classList.add('gone'); }
 }
 const faceEls = { nx:$('#face-invite'), nz:$('#face-member'), px:$('#face-apply') };
-const corners = [[-.93,.93],[.93,.93],[-.93,-.93],[.93,-.93]];
+const FINALX = { nx:-1.88, nz:0, px:1.88 }, FINALZ = -S - .05 + SLAB/2;
+const ghost = camera.clone();
 function anchorFaces(){
+  // project the panels' final, opened pose through the final camera (sway included)
+  const rF = ritualFrame(); ghost.aspect = camera.aspect; ghost.updateProjectionMatrix();
+  const sway = RM || document.activeElement?.tagName==='INPUT' ? 0 : 1;
+  ghost.position.copy(rF.pos); ghost.position.x += V.sway.x*.06*sway; ghost.position.y += V.sway.y*.04*sway; ghost.lookAt(rF.look); ghost.updateMatrixWorld();
   for (const k in faceEls){
-    const slab = faces[k].slab; slab.updateWorldMatrix(true,false);
     let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
-    for (const [x,y] of corners){
-      tmpV.set(x,y,-SLAB/2).applyMatrix4(slab.matrixWorld).project(camera);
+    for (const [x,y] of [[-.93,.93],[.93,.93],[-.93,-.93],[.93,-.93]]){
+      tmpV.set(FINALX[k]+x, y, FINALZ).project(ghost);
       const sx=(tmpV.x*.5+.5)*innerWidth, sy=(-tmpV.y*.5+.5)*innerHeight;
       x0=Math.min(x0,sx); x1=Math.max(x1,sx); y0=Math.min(y0,sy); y1=Math.max(y1,sy);
     }
@@ -1137,7 +1192,8 @@ function anchorFaces(){
 tick();
 document.addEventListener('visibilitychange', ()=>{ if (document.hidden){ cancelAnimationFrame(raf); running=false; } else if(!running){ running=true; clock.getDelta(); tick(); } });
 canvas.addEventListener('webglcontextlost', e=>{ e.preventDefault(); cancelAnimationFrame(raf); P4.gl.ok=false; P4.fallback('lost'); });
-P4.state = 'idle';
+if (P4.state==='intro') P4.state = 'idle';
+else if (P4.state==='ritual'){ stage.classList.add('off'); document.getElementById('ritual').classList.add('early'); P4.chooseMode(); openSequence(true, P4.active); } // Members was pressed before the object loaded
 
 /* debug hooks for workshopping */
 window.__cube = {
@@ -1145,6 +1201,7 @@ window.__cube = {
   setEuler:(x,y,z=0)=>{ cube.quaternion.setFromEuler(new THREE.Euler(x,y,z)); st.angVel.set(0,0,0); },
   solve, curious:()=>{ st.lastInput = 0; }, anim, st,
   hold:()=>st.hold,
+  flashPreview:()=>{ cube.quaternion.identity(); st.angVel.set(0,0,0); anim.pieces=1; flash4(true); st.click=1; P4.state='preview'; },
   tagPreview:(r=1, f=0)=>{ P4.state='success'; document.getElementById('ritual').classList.remove('on'); tag.visible=true; anim.rise=r; anim.flood=f; },
 };
 if (qs.get('go')==='ritual') setTimeout(()=>P4.gl.open({fast:true, path:qs.get('path')||null}), 300);

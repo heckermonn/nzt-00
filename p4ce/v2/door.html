@@ -8,7 +8,7 @@
 <style>
 :root{
   --void:#040405; --night:#08090a; --steel-0:#0c0e0f; --steel-1:#131618; --steel-2:#1c2023; --steel-3:#2a2f33;
-  --text:#e6e9e4; --dim:#a3a9a3; --label:#8d938d; --faint:#6c716c;
+  --text:#e6e9e4; --dim:#a3a9a3; --label:#8d938d; --faint:#8d938d;
   --line:rgba(226,230,226,.12); --line-2:rgba(226,230,226,.24); --line-3:rgba(226,230,226,.5);
   --paper:#d9d4c8; --acid:#CCFF00; --err:#e9b98a; --white:#f7f7f4;
   --mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
@@ -46,6 +46,7 @@ button{background:none;border:0;padding:0;cursor:pointer;-webkit-appearance:none
   box-shadow:inset 0 0 0 1px rgba(255,255,255,.06),inset 0 6px 10px rgba(0,0,0,.35)}
 .c-slot{position:absolute;overflow:hidden;background:#000;box-shadow:inset 0 3px 6px rgba(0,0,0,.9),0 1px 0 rgba(255,255,255,.18)}
 .c-slot canvas{position:absolute;left:50%;top:50%;transform-origin:50% 50%}
+.c-cover span{position:absolute;right:6%;top:50%;transform:translateY(-50%);font:600 13px var(--sans);letter-spacing:.3em;color:rgba(0,0,0,.45);text-shadow:0 1px 0 rgba(255,255,255,.18)}
 .c-cover{position:absolute;inset:0;background:linear-gradient(180deg,#6a6e72,#4b4f53);box-shadow:inset 0 1px 0 rgba(255,255,255,.25)}
 .c-kick{position:absolute;background:linear-gradient(180deg,rgba(0,0,0,.15),rgba(0,0,0,.35)),repeating-linear-gradient(0deg,rgba(255,255,255,.04) 0 1px,transparent 1px 3px),#3e4245}
 .c-leak{background:linear-gradient(90deg,transparent,#fff 8%,#fff 92%,transparent)}
@@ -70,6 +71,7 @@ button{background:none;border:0;padding:0;cursor:pointer;-webkit-appearance:none
 #knock{cursor:pointer}
 #note,#four{z-index:11;cursor:pointer}
 .hit:focus-visible{outline:1px solid var(--acid);outline-offset:4px}
+html.close #knock:focus-visible{outline:none}
 #hint{position:fixed;left:0;top:0;z-index:20;pointer-events:none;font-size:10px;letter-spacing:.26em;text-transform:uppercase;color:var(--dim);
   opacity:0;transition:opacity .5s;white-space:nowrap;text-shadow:0 1px 2px #000}
 #hint.on{opacity:1}
@@ -78,7 +80,7 @@ button{background:none;border:0;padding:0;cursor:pointer;-webkit-appearance:none
 #taphint.on{opacity:.85}
 
 /* ---------- subtitles ---------- */
-#sub{position:fixed;left:0;top:0;z-index:25;transform:translateX(-50%);width:max-content;max-width:min(560px,calc(100vw - 32px));text-align:center;
+#sub{position:fixed;left:0;top:0;z-index:35;transform:translateX(-50%);width:max-content;max-width:min(560px,calc(100vw - 32px));text-align:center;
   font-size:13px;letter-spacing:.02em;line-height:1.45;color:var(--text);pointer-events:none;opacity:0;transition:opacity .5s;
   text-shadow:0 1px 2px #000,0 0 16px rgba(0,0,0,.9),0 0 30px rgba(0,0,0,.8);text-wrap:balance}
 #sub.on{opacity:1}
@@ -100,15 +102,13 @@ button{background:none;border:0;padding:0;cursor:pointer;-webkit-appearance:none
 @keyframes eq{0%{transform:scaleY(.25)}100%{transform:scaleY(1)}}
 
 /* ---------- the widened slot: access panel ---------- */
-#panel{position:fixed;left:0;top:0;z-index:30;width:min(600px,calc(100vw - 32px));color:var(--text);transform-origin:50% 0;
+#panel{position:fixed;left:0;top:0;z-index:30;width:520px;max-width:calc(100vw - 32px);color:var(--text);padding-top:46px;
   background:
-   linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0) 40%),
-   repeating-linear-gradient(90deg,rgba(255,255,255,.012) 0 1px,rgba(0,0,0,.02) 1px 3px),
-   linear-gradient(180deg,#171a1c,#0f1112);
-  border:1px solid rgba(226,230,226,.09);border-top-color:rgba(226,230,226,.2);border-radius:2px;
-  box-shadow:0 40px 90px -20px rgba(0,0,0,.85),0 12px 30px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.05)}
+   linear-gradient(180deg,#030404 0,#07080a 46px,#0d0f10 120px,#0f1112 100%);
+  border:1px solid rgba(226,230,226,.16);border-top:0;border-radius:0 0 2px 2px;
+  box-shadow:inset 0 22px 24px -14px rgba(0,0,0,.95),inset 1px 0 0 rgba(0,0,0,.7),inset -1px 0 0 rgba(0,0,0,.7),0 1px 0 rgba(255,255,255,.1)}
 #panel[hidden]{display:none}
-.p-paths{display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1px solid var(--line)}
+.p-paths{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:#0e1011}
 .path{position:relative;text-align:left;padding:16px 18px 15px;font-family:var(--sans);font-size:14px;font-weight:500;letter-spacing:.005em;color:var(--dim);
   transition:color .2s,background-color .2s;min-height:52px}
 .path+.path{border-left:1px solid var(--line)}
@@ -116,9 +116,7 @@ button{background:none;border:0;padding:0;cursor:pointer;-webkit-appearance:none
 .path[aria-pressed="true"]{color:var(--text);background:rgba(255,255,255,.035)}
 .path::after{content:"";position:absolute;left:18px;right:18px;bottom:-1px;height:1px;background:var(--text);transform:scaleX(0);transform-origin:0 50%;transition:transform .45s var(--out)}
 .path[aria-pressed="true"]::after{transform:scaleX(1)}
-.path i{display:block;font-style:normal;font-family:var(--mono);font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--faint);margin-bottom:5px}
-.path[aria-pressed="true"] i{color:var(--label)}
-.path[aria-pressed="true"] i::before{content:"";display:inline-block;width:5px;height:5px;background:var(--acid);margin-right:7px;vertical-align:1px}
+.path[aria-pressed="true"]::before{content:"";display:inline-block;width:5px;height:5px;background:var(--acid);margin-right:8px;vertical-align:2px}
 .p-body{padding:22px 18px 6px}
 .pf[hidden]{display:none}
 .pf .lede{font-family:var(--sans);font-size:15px;line-height:1.45;color:var(--text);margin:0 0 18px;max-width:46ch;text-wrap:balance}
@@ -142,6 +140,7 @@ button{background:none;border:0;padding:0;cursor:pointer;-webkit-appearance:none
 .hintline button:hover{border-color:var(--line-3)}
 .err{min-height:0;margin:12px 0 0;font-size:12px;line-height:1.5;color:var(--err)}
 .err:empty{display:none}
+.ferr{margin:8px 0 0}
 .go{height:44px;padding:0 20px;background:#dcdfdb;color:#0b0c0d;font-size:11px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;border-radius:1px;
   box-shadow:inset 0 1px 0 #fff,0 1px 2px rgba(0,0,0,.6);transition:background-color .2s,transform .1s}
 .go:hover{background:#fff}
@@ -155,9 +154,10 @@ button{background:none;border:0;padding:0;cursor:pointer;-webkit-appearance:none
 #step-back:hover{color:var(--text)}
 
 /* phone: the slot becomes a bottom sheet */
-.phone #panel{left:0!important;top:auto!important;bottom:0;width:100%;max-height:min(66dvh,600px);overflow-y:auto;border-radius:0;border-left:0;border-right:0;
+.phone #panel{left:0!important;top:auto!important;bottom:0;width:100%!important;max-width:none;max-height:min(66dvh,600px);overflow-y:auto;border-radius:0;border:0;border-top:1px solid rgba(226,230,226,.18);padding-top:0;background:#0f1112;box-shadow:0 -20px 40px rgba(0,0,0,.6);
   padding-bottom:env(safe-area-inset-bottom,0px);transform-origin:50% 100%;overscroll-behavior:contain}
-.phone .path{padding:14px 12px 13px;font-size:13px;min-height:62px}
+.phone .p-paths{position:sticky;top:0;z-index:3;border-top:0;background:#111315}
+.phone .path{padding:14px 12px 13px;font-size:13px;min-height:56px}
 .phone .path::after{left:12px;right:12px}
 .phone .p-body{padding:18px var(--gx) 4px var(--gxr)}
 .phone .grid{grid-template-columns:1fr;gap:14px}
@@ -180,7 +180,7 @@ html.shots *{transition:none!important}
   <div class="c-inside" id="c-inside"></div>
   <div class="c-leak" id="c-leak"></div>
   <div class="c-frame" id="c-frame"></div>
-  <div id="c-doorwrap"><div class="c-door" id="c-door"><div class="c-slot" id="c-slot"><div class="c-cover" id="c-cover"></div></div></div></div>
+  <div id="c-doorwrap"><div class="c-door" id="c-door"><div class="c-slot" id="c-slot"><div class="c-cover" id="c-cover"><span>P4CE</span></div></div></div></div>
   <div class="c-step" id="c-step"></div>
   <div class="c-spill" id="c-spill"></div>
   <div class="c-note" id="c-note"></div>
@@ -192,20 +192,21 @@ html.shots *{transition:none!important}
 <div id="vig"></div>
 <div id="grain"></div>
 
+<button class="corner" id="members" type="button"><span>Members</span></button>
 <h1 class="sr">P4CE</h1>
 <button class="hit" id="knock" type="button" aria-label="Knock on the door (K)"></button>
 <button class="hit" id="note" type="button" aria-label="A note, half under the door"></button>
 <button class="hit" id="four" type="button" aria-label="The number above the door"></button>
 <div id="hint" aria-hidden="true">Knock</div>
-<div id="taphint" aria-hidden="true">Tap the door</div>
+<div id="taphint" aria-hidden="true">Knock · K</div>
 <div id="sub" aria-hidden="true"></div>
 <div id="say" class="sr" aria-live="polite"></div>
 
 <section id="panel" aria-label="Through the slot" hidden>
   <div class="p-paths" role="group" aria-label="Choose a way in">
-    <button type="button" class="path" id="path-invite" data-path="invite" aria-pressed="false"><i>Code</i>I have an invitation</button>
-    <button type="button" class="path" id="path-member" data-path="member" aria-pressed="false"><i>Member</i>Member log in</button>
-    <button type="button" class="path" id="path-apply" data-path="apply" aria-pressed="false"><i>Stranger</i>Apply</button>
+    <button type="button" class="path" id="path-invite" data-path="invite" aria-pressed="false">I have an invitation</button>
+    <button type="button" class="path" id="path-member" data-path="member" aria-pressed="false">Member log in</button>
+    <button type="button" class="path" id="path-apply" data-path="apply" aria-pressed="false">Apply</button>
   </div>
   <div class="p-body">
     <form class="pf" id="form-invite" data-path="invite" novalidate>
@@ -266,7 +267,6 @@ html.shots *{transition:none!important}
 </section>
 
 <button class="corner" id="sound" type="button" aria-pressed="false"><svg viewBox="0 0 14 10" aria-hidden="true"><g class="bars"><rect x="0" y="0" width="2" height="10"/><rect x="6" y="0" width="2" height="10"/><rect x="12" y="0" width="2" height="10"/></g></svg><span id="sound-l">Sound off</span></button>
-<button class="corner" id="members" type="button"><span>Members</span></button>
 <div id="fade"></div>
 
 <script>
@@ -286,7 +286,7 @@ const D={B,openW:1.06,openH:2.415,doorW:1.05,doorZ:-0.014,slotY:B+1.52,slotW:0.4
   noteX:0.26,noteZ:0.02,eyeW:0.56,eyeH:0.1146};
 const S={slot:0,light:1,glow4:0,door:0,white:0,leak:1,feetX:-2.2,shakeT:-9,shakeA:0,hud:'UNVERIFIED',stare:0};
 const rig={x:0,y:1.47,z:7,fov:30};
-let shotName='wide';
+let shotName='wide',sheetTop=0;
 const isPhone=()=>innerWidth/innerHeight<0.8;
 
 function shots(){
@@ -296,12 +296,13 @@ function shots(){
   const wide={x:0,y:phone?1.4:1.47,z:(E/2)/t,fov};
   const E2=phone?1.42/a:Math.max(3.1,2.1/a);
   const entry={x:0,y:B+1.3,z:(E2/2)/t,fov};
-  const sw=phone?0.9*W:Math.min(0.44*W,720);
+  const sw=phone?0.96*W:Math.min(W-32,Math.max(500,Math.min(0.34*W,580)));
   const zf=D.slotW*f/sw;
   const yAt=(p,z)=>D.slotY-(0.5-p)*H*z/f;
-  const focus={x:0,y:yAt(phone?0.34:0.42,zf),z:zf,fov};
-  const zr=zf*(phone?1:1.12);
-  const ritual={x:0,y:yAt(phone?0.2:0.22,zr),z:zr,fov};
+  const focus={x:0,y:yAt(phone?0.36:0.4,zf),z:zf,fov};
+  const slotPx=D.slotH*f/zf;
+  const rp=phone?clamp(sheetTop?(sheetTop-58-slotPx/2)/H:.3,.12,.42):clamp((H*.17<slotPx/2+24?(slotPx/2+24)/H:.17),.1,.3);
+  const ritual={x:0,y:yAt(rp,zf),z:zf,fov};
   return {wide,entry,focus,ritual,f,phone};
 }
 function focal(){return (innerHeight/2)/Math.tan(rig.fov*Math.PI/360)}
@@ -378,6 +379,11 @@ const skin=mk(EW,EH);{
     const l=g.createRadialGradient(cx,EH*.5-70,10,cx,EH*.5-70,130);l.addColorStop(0,'rgba(255,240,226,.13)');l.addColorStop(1,'rgba(255,240,226,0)');
     g.fillStyle=l;g.beginPath();g.ellipse(cx,EH*.5-62,150,44,0,0,7);g.fill();
   }
+  // a hint of brow at the top edge
+  for(const [cx,dir] of [[EW/2-240,1],[EW/2+240,-1]]){
+    for(let i=0;i<420;i++){const t=r(),x=cx-150*dir+t*300*dir,y=38-Math.sin(t*Math.PI)*10+(r()-.5)*10+(t*dir>0?0:0);
+      g.strokeStyle=`rgba(14,10,8,${.25+r()*.45})`;g.lineWidth=.8+r()*1.2;g.beginPath();g.moveTo(x,y+6);g.lineTo(x+dir*(10+r()*12),y-2-r()*5);g.stroke()}
+  }
   // brow shadow at top
   const b=g.createLinearGradient(0,0,0,70);b.addColorStop(0,'rgba(0,0,0,.75)');b.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=b;g.fillRect(0,0,EW,70);
   // pores
@@ -389,7 +395,7 @@ const skin=mk(EW,EH);{
 const iris=mk(256,256);{
   const g=iris.getContext('2d'),r=rng(47),c=128,R=126;
   let gr=g.createRadialGradient(c,c,R*.16,c,c,R);
-  gr.addColorStop(0,'#4b3b2a');gr.addColorStop(.3,'#76695a');gr.addColorStop(.44,'#9b9d9b');gr.addColorStop(.74,'#757b7e');gr.addColorStop(.9,'#3d4245');gr.addColorStop(1,'#121314');
+  gr.addColorStop(0,'#4b3b2a');gr.addColorStop(.3,'#76695a');gr.addColorStop(.44,'#9b9d9b');gr.addColorStop(.74,'#757b7e');gr.addColorStop(.86,'#2d3134');gr.addColorStop(.94,'#0e0f10');gr.addColorStop(1,'#050505');
   g.fillStyle=gr;g.beginPath();g.arc(c,c,R,0,7);g.fill();
   for(let i=0;i<1100;i++){
     const a=r()*Math.PI*2,r1=R*(.2+r()*.16),r2=R*(.5+r()*.42),w=(r()-.5)*.08;
@@ -411,7 +417,7 @@ const vign=mk(EW,EH);{
   g.fillStyle=l;g.fillRect(0,0,EW,EH);
 }
 const bz=(a,b,c,d,t)=>{const u=1-t;return u*u*u*a+3*u*u*t*b+3*u*t*t*c+t*t*t*d};
-function drawEye(cx,cy,side,o,gx,gy,pupil){
+function drawEye(cx,cy,side,o,gx,gy,pupil,refl){
   const w=236,nose=side<0?1:-1;
   const inX=cx+nose*w/2,outX=cx-nose*w/2,inY=cy+8,outY=cy-4,dx=inX-outX;
   const lowC=cy+46,u1=lerp(lowC-4,cy-70,o),u2=lerp(lowC-6,cy-62,o);
@@ -424,7 +430,7 @@ function drawEye(cx,cy,side,o,gx,gy,pupil){
   ex.strokeStyle='rgba(18,12,9,.38)';ex.lineWidth=2;ex.stroke();
   if(o>0.03){
     ex.save();ex.clip(P);
-    const ix=cx+gx*w*.2,iy=cy+5+gy*16,R=52;
+    const ix=cx+gx*w*.2,iy=cy+5+gy*(16+14*eyes.away),R=52;
     let g=ex.createRadialGradient(ix,iy,R*.6,cx,cy,w*.62);g.addColorStop(0,'#dad6cf');g.addColorStop(.55,'#b9b3ab');g.addColorStop(1,'#6d6761');
     ex.fillStyle=g;ex.fillRect(cx-w,cy-120,w*2,240);
     // veins
@@ -441,9 +447,13 @@ function drawEye(cx,cy,side,o,gx,gy,pupil){
     // catchlight: the slot, reflected
     ex.fillStyle='rgba(255,255,252,.86)';ex.fillRect(ix-R*.5,iy-R*.42,R*.46,R*.11);
     ex.fillStyle='rgba(255,255,252,.18)';ex.fillRect(ix+R*.18,iy+R*.3,R*.22,R*.05);
+    // what you type, mirrored in the wet surface
+    if(refl){ex.save();ex.translate(ix,iy+R*.08);ex.scale(-1,1);ex.font='600 15px "JetBrains Mono",ui-monospace,monospace';ex.textAlign='center';ex.textBaseline='middle';
+      ex.fillStyle='rgba(255,255,250,.42)';ex.fillText(refl,0,0);ex.restore()}
     ex.restore();
     // wet line
-    ex.strokeStyle='rgba(255,250,244,.2)';ex.lineWidth=1.5;ex.beginPath();ex.moveTo(inX-nose*10,inY-2);ex.bezierCurveTo(L[2],L[3]-4,L[4],L[5]-5,outX+nose*8,outY+1);ex.stroke();
+    ex.strokeStyle='rgba(255,250,244,.42)';ex.lineWidth=1.6;ex.beginPath();ex.moveTo(inX-nose*10,inY-2);ex.bezierCurveTo(L[2],L[3]-4,L[4],L[5]-5,outX+nose*8,outY+1);ex.stroke();
+    ex.fillStyle='rgba(255,255,252,.7)';for(const t of [.3,.46,.62]){const x=bz(L[0],L[2]+0,L[4],L[6],t),y=bz(L[1],L[3]-4,L[5]-5,L[7],t)-1;ex.fillRect(x-1.5,y-.6,3,1.2)}
   }
   // caruncle
   let g=ex.createRadialGradient(inX-nose*6,inY-1,0,inX-nose*6,inY-1,12);g.addColorStop(0,'rgba(170,120,112,.75)');g.addColorStop(1,'rgba(170,120,112,0)');ex.fillStyle=g;ex.beginPath();ex.arc(inX-nose*6,inY-1,12,0,7);ex.fill();
@@ -480,7 +490,15 @@ function drawHUD(o,lx,rx,iy,R,gx,gy,pupil){
       ex.stroke();
     }
   }
-  // left callout
+  const d=new Date(),clock='SLOT 01  '+pad(d.getHours(),2)+':'+pad(d.getMinutes(),2);
+  const log=eyes.log?(eyes.log[0]+' '+(eyes.log[1]||'')+(Math.floor(now()/500)%2?'_':' ')):'';
+  if(isPhone()){
+    // phone: two labels big enough to read
+    ex.font='500 30px "JetBrains Mono",ui-monospace,Menlo,monospace';try{ex.letterSpacing='2px'}catch(e){}
+    ex.textAlign='center';let t=log||clock;if(t.length>14)t=t.slice(0,13)+'…';ex.fillText(t,EW/2,52);
+    ex.font='500 26px "JetBrains Mono",ui-monospace,Menlo,monospace';ex.fillText(S.hud,EW/2,136);
+    return;
+  }
   const X0=168,X1=EW-168;
   ex.textAlign='left';
   ex.fillText('OD',X0,96);ex.fillText('PUPIL '+(pupil*9.6).toFixed(1)+' MM',X0,118);
@@ -489,20 +507,23 @@ function drawHUD(o,lx,rx,iy,R,gx,gy,pupil){
   ex.textAlign='right';
   ex.fillText('OS',X1,96);ex.fillText('BLINK '+pad(eyes.blinks,4),X1,118);ex.fillText(S.hud,X1,140);
   ex.beginPath();ex.moveTo(X1,154);ex.lineTo(X1-124,154);ex.lineTo(rx+62,iy+30);ex.stroke();
-  // ipd
-  const y=222;ex.beginPath();ex.moveTo(lx,y-5);ex.lineTo(lx,y+5);ex.moveTo(rx,y-5);ex.lineTo(rx,y+5);ex.moveTo(lx,y);ex.lineTo(EW/2-66,y);ex.moveTo(EW/2+66,y);ex.lineTo(rx,y);ex.stroke();
+  const y=222;
+  ex.beginPath();ex.moveTo(lx,y-5);ex.lineTo(lx,y+5);ex.moveTo(rx,y-5);ex.lineTo(rx,y+5);ex.moveTo(lx,y);ex.lineTo(EW/2-66,y);ex.moveTo(EW/2+66,y);ex.lineTo(rx,y);ex.stroke();
   ex.textAlign='center';ex.fillText('IPD 63.'+pad((Math.abs(gx)*9)%10,1)+' MM',EW/2,y+1);
-  const d=new Date();ex.fillText('SLOT 01  '+pad(d.getHours(),2)+':'+pad(d.getMinutes(),2),EW/2,42);
+  if(log){ex.font='500 19px "JetBrains Mono",ui-monospace,Menlo,monospace';const tw=ex.measureText(log).width;
+    ex.fillStyle='rgba(0,0,0,.55)';ex.fillRect(EW/2-tw/2-10,30,tw+20,26);ex.fillStyle=c;ex.fillText(log,EW/2,44)}
+  else ex.fillText(clock,EW/2,42);
   if(Math.floor(now()/600)%2){ex.fillRect(X1+10-136,90,6,6)}
 }
 function drawEyes(){
   ex.globalCompositeOperation='source-over';
   ex.drawImage(skin,0,0);
-  const o=Math.max(0,eyes.open*(1-eyes.blink)*(1-eyes.away*.25));
+  const o=Math.max(0,eyes.open*(1-eyes.blink)*(1-eyes.away*.15));
   const lx=EW/2-240,rx=EW/2+240,cy=EH*.5+2;
   const gx=clamp(eyes.gx+eyes.sx,-1.5,1.5),gy=clamp(eyes.gy+eyes.sy,-1,1);
-  drawEye(lx,cy,-1,o,gx,gy,eyes.pupil);
-  drawEye(rx,cy,1,o,gx,gy,eyes.pupil);
+  const refl=eyes.log&&eyes.log[2]?eyes.log[2].slice(-9):'';
+  drawEye(lx,cy,-1,o,gx,gy,eyes.pupil,refl);
+  drawEye(rx,cy,1,o*.88,gx,gy,eyes.pupil,refl);
   ex.drawImage(vign,0,0);
   drawHUD(o,lx+gx*236*.2,rx+gx*236*.2,cy+5+gy*16,52,gx,gy,eyes.pupil);
   eyes.dirty=true;
@@ -516,7 +537,7 @@ function updateEyes(dt,t){
   eyes.away+=(eyes.awayT-eyes.away)*(1-Math.exp(-dt*6));
   // saccades: snap to target, then hold
   if(t>eyes.nextSac){eyes.sx=(Math.random()-.5)*.06;eyes.sy=(Math.random()-.5)*.08;eyes.nextSac=t+400+Math.random()*1400}
-  const tx=lerp(eyes.tgx,1.5,eyes.away),ty=lerp(eyes.tgy,-.7,eyes.away);
+  const tx=lerp(eyes.tgx,1.5,eyes.away),ty=lerp(eyes.tgy,-1,eyes.away);
   const k=1-Math.exp(-dt*22);eyes.gx+=(tx-eyes.gx)*k;eyes.gy+=(ty-eyes.gy)*k;
 }
 function blinkNow(){eyes.blinkT0=now();eyes.blinks++}
@@ -672,10 +693,11 @@ function layout(){
   slotRect={x:sx0,y:sy0,w:sx1-sx0,h:sy1-sy0};
   subEl.style.left=((sx0+sx1)/2)+'px';
   const phone=isPhone();
-  subEl.style.top=(shotName==='wide'||shotName==='entry'?Math.min(H-110,sy1+28):sy1+(phone?18:22))+'px';
+  subEl.style.top=(shotName==='wide'||shotName==='entry'?Math.min(H-110,sy1+28):sy1+(phone?18:15))+'px';
   if(!panel.hidden&&!phone){
-    const pw=panel.offsetWidth;let left=clamp((sx0+sx1)/2-pw/2,16,W-16-pw);
-    panel.style.left=left+'px';panel.style.top=(sy1+62)+'px';
+    const pw=Math.min(W-32,Math.max(500,Math.round(sx1-sx0)));
+    if(panel._w!==pw){panel.style.width=pw+'px';panel._w=pw}
+    panel.style.left=clamp((sx0+sx1)/2-pw/2,16,W-16-pw)+'px';panel.style.top=(sy1-1)+'px';
   }
 }
 
@@ -720,9 +742,10 @@ function endGroup(){
   const recent=knocks.filter(k=>now()-k<4500).length;
   if(state==='closed'){
     closedKnocks+=g.n;
-    if(closedKnocks===1){ // nothing. (someone inside walks over, quietly)
-      later(900,()=>{if(state==='closed')tween(S,'feetX',0.04,RM?10:1700,E.out)});
-      later(14000,()=>{if(state==='closed'&&closedKnocks===1)tween(S,'feetX',2.4,RM?10:2200,E.in)});
+    if(closedKnocks===1){ // nothing opens. Someone inside walks over.
+      later(250,()=>{if(state==='closed')tween(S,'feetX',0.04,RM?10:1300,E.out)});
+      later(450,()=>{if(state==='closed')say('Footsteps.',1800)});
+      later(1800,()=>{if(state==='closed'&&closedKnocks===1)openSlot()});
       return;
     }
     return openSlot();
@@ -784,10 +807,9 @@ function openRitual(path,line,gaze){
   lastAct=now();
   if(state==='ritual'){selectPath(path,true);if(line)say(line);return}
   clearLater();
-  if(S.slot<.5){state='open';tween(S,'feetX',0.04,RM?10:600,E.out);moveTo('focus',RM?0:1000,E.inOut);openSlotVisual(RM?0:380);
-    if(gaze){later(500,()=>{eyes.tgy=gaze;})}
-    later(RM?300:900,()=>line&&say(line,4200));later(RM?400:1350,()=>openPanel(path))}
-  else{if(line)say(line,4200);later(350,()=>openPanel(path))}
+  if(S.slot<.5){state='open';tween(S,'feetX',0.04,RM?10:400,E.out);moveTo('ritual',RM?0:600,E.inOut);openSlotVisual(RM?0:150);
+    later(RM?200:320,()=>line&&say(line,4200));later(RM?300:560,()=>openPanel(path))}
+  else{if(line)say(line,4200);later(250,()=>openPanel(path))}
 }
 
 /* ---------- the panel (the slot, widened) ---------- */
@@ -802,6 +824,7 @@ function selectPath(p,focus){
   if(p==='apply'&&applied)show='apply-done';
   $(show).hidden=false;
   if(focus&&!TOUCH){const i=$(show).querySelector('input,select');i&&i.focus({preventScroll:true})}
+  if(isPhone()&&!panel.hidden&&state==='ritual'){const t=panel.offsetTop;if(Math.abs(t-sheetTop)>8){sheetTop=t;moveTo('ritual',RM?0:450,E.out)}}
   layout();
 }
 let inviteOK=false,applied=false;
@@ -809,26 +832,26 @@ function openPanel(path){
   if(state==='entering')return;
   const wasHidden=panel.hidden;
   state='ritual';
-  moveTo('ritual',RM?0:1100,E.inOut);
+  const phone=isPhone();
+  document.documentElement.classList.toggle('phone',phone);
   panel.hidden=false;selectPath(path,false);
-  document.documentElement.classList.toggle('phone',isPhone());
+  if(phone){sheetTop=panel.offsetTop;moveTo('ritual',RM?0:700,E.inOut)}
+  else if(shotName!=='ritual')moveTo('ritual',RM?0:800,E.inOut);
   layout();
   if(wasHidden){
-    const phone=isPhone();
     if(RM){panel.animate([{opacity:0},{opacity:1}],{duration:300,fill:'none'})}
     else if(phone){panel.animate([{transform:'translateY(100%)'},{transform:'none'}],{duration:620,easing:'cubic-bezier(.16,1,.3,1)'})}
     else{
-      const ph=panel.offsetHeight,pw=panel.offsetWidth;
-      const sx=Math.max(.05,slotRect.w/pw),sy=Math.max(.01,slotRect.h/ph);
-      panel.animate([{transform:`translateY(${-62-slotRect.h}px) scale(${sx},${sy})`,opacity:.0},{transform:`translateY(${-62-slotRect.h}px) scale(${sx},${sy})`,opacity:1,offset:.08},{transform:'translateY(0) scale(1,1)',opacity:1}],{duration:820,easing:'cubic-bezier(.16,1,.3,1)'});
-      for(const el of panel.children)el.animate([{opacity:0},{opacity:0,offset:.45},{opacity:1}],{duration:900,easing:'ease-out'});
+      // the opening grows downward out of the slot
+      panel.animate([{clipPath:'inset(0 0 100% 0)'},{clipPath:'inset(0 0 0 0)'}],{duration:760,easing:'cubic-bezier(.16,1,.3,1)'});
+      for(const el of panel.children)el.animate([{opacity:0},{opacity:0,offset:.35},{opacity:1}],{duration:820,easing:'ease-out'});
     }
     later(RM?50:700,()=>{if(!TOUCH){const f=panel.querySelector('.pf:not([hidden]) input,.pf:not([hidden]) select');f&&f.focus({preventScroll:true})}});
   }
 }
 function hidePanel(fast){
   if(panel.hidden)return;
-  const a=panel.animate(isPhone()?[{transform:'none'},{transform:'translateY(100%)'}]:[{opacity:1,transform:'none'},{opacity:0,transform:`translateY(${-30}px) scale(.96,.2)`}],{duration:fast?160:420,easing:'cubic-bezier(.7,0,.84,0)'});
+  const a=panel.animate(isPhone()?[{transform:'none'},{transform:'translateY(100%)'}]:[{clipPath:'inset(0 0 0 0)'},{clipPath:'inset(0 0 100% 0)'}],{duration:fast?160:420,easing:'cubic-bezier(.7,0,.84,0)'});
   a.finished.then(()=>{panel.hidden=true}).catch(()=>{panel.hidden=true});
   if(document.activeElement&&panel.contains(document.activeElement))knockBtn.focus({preventScroll:true});
 }
@@ -842,8 +865,10 @@ function stepBack(){
 
 /* ---------- forms ---------- */
 const emailOK=v=>/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v);
-function fail(errId,inputId,msg){const e=$(errId);e.textContent=msg;const i=$(inputId);i.setAttribute('aria-invalid','true');i.focus();eyes.mood=.6;later(1300,()=>eyes.mood=1)}
-function clearErr(form){form.querySelectorAll('[aria-invalid]').forEach(i=>i.removeAttribute('aria-invalid'));const e=form.querySelector('.err');if(e)e.textContent=''}
+function fail(errId,inputId,msg){const i=$(inputId),f=i.closest('.f');let p=f.querySelector('.ferr');
+  if(!p){p=document.createElement('p');p.className='err ferr';p.id=inputId+'-ferr';p.setAttribute('role','alert');f.appendChild(p);i.setAttribute('aria-describedby',p.id)}
+  p.textContent=msg;i.setAttribute('aria-invalid','true');i.focus();eyes.mood=.6;later(1300,()=>eyes.mood=1);layout()}
+function clearErr(form){form.querySelectorAll('[aria-invalid]').forEach(i=>i.removeAttribute('aria-invalid'));form.querySelectorAll('.err').forEach(e=>e.textContent='')}
 $('form-invite').addEventListener('submit',e=>{e.preventDefault();clearErr(e.target);
   const v=$('invite-code').value.replace(/\s+/g,'').toUpperCase();
   if(!v)return fail('invite-err','invite-code','Enter the code from your invitation card. For this demo, use 0047RSRV.');
@@ -884,8 +909,8 @@ document.querySelectorAll('.path').forEach(b=>b.addEventListener('click',()=>{se
 $('step-back').addEventListener('click',stepBack);
 // eyes look at whatever you are typing into; they look away for passwords
 panel.addEventListener('focusin',e=>{const el=e.target;if(!el.matches('input,select'))return;
-  if(el.type==='password'){eyes.awayT=1;if(!once.has('pw')){once.add('pw');say("I'm not looking.",2400)}}else eyes.awayT=0});
-panel.addEventListener('focusout',()=>{eyes.awayT=0});
+  if(el.type==='password'){eyes.mood=.03;later(420,()=>{eyes.awayT=1;eyes.mood=.85});if(!once.has('pw')){once.add('pw');say("I'm not looking.",2400)}}else{eyes.awayT=0;eyes.mood=1}});
+panel.addEventListener('focusout',()=>{eyes.awayT=0;eyes.mood=1});
 panel.addEventListener('input',()=>{lastAct=now()});
 
 /* ---------- entering ---------- */
@@ -894,18 +919,17 @@ function enter(line){
   state='entering';clearLater();
   try{sessionStorage.setItem('p4ce.v2.entry','1')}catch(e){}
   hidePanel();eyes.awayT=0;S.hud='ADMITTED';say(line,2600);eyes.mood=.9;
-  later(1100,()=>{blinkNow();tween(S,'slot',0,RM?10:420,E.inOut);Snd.slide(false);later(300,()=>{eyes.openT=0})});
+  blinkNow();tween(S,'slot',0,RM?10:300,E.inOut);Snd.slide(false);later(200,()=>{eyes.openT=0});
   if(RM){
-    later(1700,()=>{Snd.clack();tween(S,'leak',2.2,300)});
-    later(2300,()=>fadeTo(1,900,'#f7f7f4'));
-    later(3400,go);return;
+    later(300,()=>{Snd.clack();tween(S,'leak',2.2,200)});
+    later(500,()=>fadeTo(1,450,'#f7f7f4').then(()=>{S.door=1;S.white=1;fadeEl.animate([{background:'#f7f7f4'},{background:'#030404'}],{duration:600,fill:'forwards'})}));
+    later(1800,go);return;
   }
-  later(1500,()=>moveTo('entry',1700,E.inOut));
-  later(2700,()=>{Snd.clack();shakeDoor(1.6);tween(S,'leak',2.4,180,E.out)});
-  later(3300,()=>{Snd.swing();Snd.setClub(1,5200,2.4);tween(S,'door',1,2800,E.inOut);tween(S,'white',1,2400,E.inOut);tween(S,'feetX',-2.4,400)});
-  later(4100,()=>{const s=shots().entry;tween(rig,'z',-1.4,2600,E.inOut);tween(rig,'y',B+1.45,2600,E.inOut);tween(rig,'x',0.08,2600,E.inOut);void s});
-  later(5600,()=>fadeTo(1,900,'#f7f7f4'));
-  later(6600,go);
+  later(330,()=>{Snd.clack();shakeDoor(1.6);tween(S,'leak',2.4,160,E.out)});
+  later(520,()=>{Snd.swing();Snd.setClub(1,5200,1.6);tween(S,'door',1,1600,E.inOut);tween(S,'white',1,1300,E.inOut);tween(S,'feetX',-2.4,300)});
+  later(820,()=>{tween(rig,'z',-1.3,1900,E.inOut);tween(rig,'y',B+1.45,1900,E.inOut);tween(rig,'x',0.1,1900,E.inOut)});
+  later(2250,()=>fadeTo(1,650,'#030404'));
+  later(3000,go);
 }
 function go(){if(SHOTS){console.log('[door] would navigate to enter.html');return}location.href='enter.html'}
 
@@ -947,7 +971,9 @@ addEventListener('pointermove',e=>{
 },{passive:true});
 document.documentElement.addEventListener('mouseleave',()=>{
   pointer=null;if((state==='open'||state==='ritual')&&!once.has('leave')){once.add('leave');say('Leaving is also an option.')}});
-if(TOUCH)setTimeout(()=>{if(firstKnock)$('taphint').classList.add('on')},3500);
+$('taphint').textContent=TOUCH?'Tap the door':'Knock · K';
+setTimeout(()=>{if(firstKnock&&state==='closed')$('taphint').classList.add('on')},4000);
+knockBtn.addEventListener('focus',()=>{if(firstKnock&&state==='closed')$('taphint').classList.add('on')});
 
 knockBtn.addEventListener('click',e=>{
   let pt=null;
@@ -967,7 +993,7 @@ addEventListener('keydown',e=>{
 });
 
 /* ---------- loop ---------- */
-let last=now(),parX=0,parY=0,running=true;
+let last=now(),parX=0,parY=0,running=true,wasClose=false;
 function frame(t){
   if(!running)return;
   window.__frames=(window.__frames||0)+1;
@@ -984,6 +1010,7 @@ function frame(t){
     const cx=slotRect.x+slotRect.w/2,cy=slotRect.y+slotRect.h/2;
     let tx=0,ty=0;
     const fe=document.activeElement;
+    eyes.log=fe&&panel.contains(fe)&&fe.matches('input,select')?typedLog(fe):null;
     if(fe&&panel.contains(fe)&&fe.matches('input,select')){const r=fe.getBoundingClientRect();tx=(r.left+Math.min(r.width,(fe.value||'').length*9+20)-cx)/(innerWidth*.5);ty=(r.top+r.height/2-cy)/(innerHeight*.45)}
     else if(pointer){tx=(pointer[0]-cx)/(innerWidth*.5);ty=(pointer[1]-cy)/(innerHeight*.5)}
     if(!eyes.forceGaze){eyes.tgx=clamp(tx,-1,1);eyes.tgy=clamp(ty,-.8,1)}
@@ -996,10 +1023,19 @@ function frame(t){
     }
     if(state==='ritual'&&once.has('still')&&!once.has('still2')&&t-lastAct>22000){once.add('still2');say('Take your time. We have plenty of it.')}
   }
+  const cl=shotName!=='wide';if(cl!==wasClose){wasClose=cl;document.documentElement.classList.toggle('close',cl);if(cl)$('taphint').classList.remove('on')}
   layout();
   view.frame(t,dt);
   if(view!==cssView&&cssLive)cssView.frame(t,dt);
   requestAnimationFrame(frame);
+}
+const LOGL={'invite-code':'CODE','create-email':'EMAIL','member-email':'EMAIL','apply-name':'NAME','apply-email':'EMAIL','apply-city':'CITY','apply-why':'WHY','apply-heard':'HEARD'};
+function typedLog(fe){
+  if(fe.type==='password')return ['PASSWORD','NOT RECORDED',''];
+  const v=fe.tagName==='SELECT'?(fe.selectedIndex>0?fe.options[fe.selectedIndex].text:''):(fe.value||'');
+  let shown=fe.id==='invite-code'?v.replace(/\s+/g,'').toUpperCase().slice(0,4)+'·'.repeat(Math.max(0,Math.min(4,v.length-4))):v.toUpperCase();
+  if(shown.length>18)shown='…'+shown.slice(-17);
+  return [LOGL[fe.id]||'FIELD',shown,fe.id==='invite-code'?'':v];
 }
 function tweensBusy(){for(const tw of tweens)if(tw.obj===rig)return true;return false}
 let cssLive=true;
@@ -1075,12 +1111,12 @@ async function boot(){
     let b=boxBlurRows(n,W,H,41);
     normalize(a);normalize(b);
     const h=new Float32Array(W*H);for(let i=0;i<h.length;i++)h[i]=a[i]*.5+b[i]*.35+n[i]*.15;
-    for(let s=0;s<70;s++){const len=80+r()*600,ang=(r()-.5)*.02;let x=r()*W,y=r()*H;const dx=Math.cos(ang),dy=Math.sin(ang),dep=.12+r()*.18;
+    for(let s=0;s<70;s++){const len=80+r()*600,ang=(r()-.5)*.02;let x=r()*W,y=r()*H;const dx=Math.cos(ang),dy=Math.sin(ang),dep=.04+r()*.04;
       for(let k=0;k<len;k++){const i=(((y|0)+H)%H)*W+((x|0)+W)%W;h[i]-=dep;x+=dx;y+=dy}}
     return normalize(h);
   }
   const BW=1024,bh=brushed(BW,BW,21),blow=fbm(BW,BW,4,3,23);
-  const brough=toCanvas(BW,BW,i=>[0,Math.max(.1,Math.min(1,.44+(bh[i]-.5)*.22+(blow[i]-.5)*.1))*255,255]);
+  const brough=toCanvas(BW,BW,i=>[0,Math.max(.1,Math.min(1,.35+(bh[i]-.5)*.18+(blow[i]-.5)*.08))*255,255]);
   const bnorm=normalMap(bh,BW,BW,1.6);
   const doorRough=tex(brough),doorNorm=tex(bnorm);
   for(const t of [doorRough,doorNorm])t.repeat.set(1/0.5,1/0.5);
@@ -1135,7 +1171,7 @@ async function boot(){
 
   /* ---------- materials ---------- */
   const steel=new THREE.MeshPhysicalMaterial({color:0x9a9ea2,metalness:1,roughness:1,map:doorMap,roughnessMap:doorRough,normalMap:doorNorm,normalScale:new THREE.Vector2(.25,.25),
-    anisotropy:.6,anisotropyRotation:Math.PI/2,envMap:env,envMapIntensity:.35});
+    anisotropy:.9,anisotropyRotation:Math.PI/2,envMap:env,envMapIntensity:.35});
   const steelEdge=new THREE.MeshStandardMaterial({color:0x6c7074,metalness:1,roughness:.42,envMap:env,envMapIntensity:.3});
   const frameMat=new THREE.MeshStandardMaterial({color:0x4f5357,metalness:1,roughness:1,envMap:env,envMapIntensity:.22,roughnessMap:doorRough});
   const wallMat=new THREE.MeshStandardMaterial({color:0xffffff,roughness:1,metalness:0,map:wallMap,roughnessMap:wallRough,normalMap:wallNorm,normalScale:new THREE.Vector2(.6,.6),envMap:env,envMapIntensity:.05});
@@ -1176,7 +1212,12 @@ async function boot(){
   // shift caps' UVs: ExtrudeGeometry uses shape xy as uv; our texture transform handles metres (door-local x from 0..1.05)
   const door=new THREE.Mesh(dg,[steel,steelEdge]);door.castShadow=door.receiveShadow=true;pivot.add(door);
   // slot cover: slides up, inside the door
-  const cover=new THREE.Mesh(new THREE.BoxGeometry(D.slotW+.03,D.slotH+.03,.006),new THREE.MeshPhysicalMaterial({color:0x585c60,metalness:1,roughness:1,roughnessMap:doorRough,normalMap:doorNorm,normalScale:new THREE.Vector2(.25,.25),envMap:env,envMapIntensity:.3,anisotropy:.6,anisotropyRotation:Math.PI/2}));
+  const cg=new THREE.BoxGeometry(D.slotW+.03,D.slotH+.03,.006);{const p=cg.attributes.position,uv=cg.attributes.uv;for(let i=0;i<p.count;i++)uv.setXY(i,p.getX(i)+D.doorW/2,p.getY(i)+D.slotY)}
+  const cover=new THREE.Mesh(cg,steel);
+  const engr=mk(512,96);{const g=engr.getContext('2d');g.font='600 58px Archivo,"Helvetica Neue",Arial,sans-serif';try{g.letterSpacing='22px'}catch(e){}g.textAlign='center';g.textBaseline='middle';
+    g.fillStyle='rgba(255,255,255,.3)';g.fillText('P4CE',258,51);g.fillStyle='rgba(8,9,10,.78)';g.fillText('P4CE',256,48)}
+  const engrave=new THREE.Mesh(new THREE.PlaneGeometry(.075,.014),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(engr),transparent:true,depthWrite:false,toneMapped:false}));
+  engrave.position.set(.15,0,.0032);cover.add(engrave);
   cover.position.set(D.doorW/2,D.slotY,.05-.0055);pivot.add(cover);
   // what you see through the slot
   const eyeTex=new THREE.CanvasTexture(eyeCanvas);eyeTex.colorSpace=THREE.SRGBColorSpace;eyeTex.minFilter=THREE.LinearFilter;eyeTex.generateMipmaps=false;
@@ -1285,7 +1326,7 @@ async function boot(){
       plaqueMat.emissiveIntensity=S.glow4*2.2;glow.intensity=S.glow4*.16;
       feet.position.x=S.feetX;
       const fe=Math.exp(-S.feetX*S.feetX/.06);
-      leak.intensity=(.18*(1-.7*fe))*S.leak+S.white*.4;spillMat.opacity=(.16*(1-.6*fe))*Math.min(S.leak,2.5)*(1+S.white*2);
+      leak.intensity=(.26*(1-.9*fe))*S.leak+S.white*.4;spillMat.opacity=(.22*(1-.85*fe))*Math.min(S.leak,2.5)*(1+S.white*2);
       flood.intensity=S.white*S.white*24;
       renderer.toneMappingExposure=1+S.white*.5;
       scene.fog.density=.05*(1-S.white*.6);
