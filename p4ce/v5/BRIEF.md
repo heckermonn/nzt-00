@@ -32,6 +32,9 @@ v4 used a frost veil at every chapter boundary. Behind it, the photo, the light 
 - Going back plays the same move in reverse.
 - Reduced motion: each move becomes a short crossfade.
 
+## Update (28 Oct, evening)
+The owner chose **Object 0047** (the frosted cube from v2/cube.html: turn it until the 4 lines up) as the gate instead of the Door. Object 0047 is the default gate (js/gates/object.js); the Door stays behind `?gate=door` (js/gates/door.js). The hand-off rule is unchanged: the cube fills with light that becomes the Atlas sky at #EEEAE7. Prices stay in USD.
+
 ## What phase 1 must prove (one flow, end to end, desktop + phone)
 1. **The gate (decoy front): The Door, rebuilt at v4 quality.**
    - Guests see only this. It must give nothing away: no product, no store, no "supplements". Make the `<title>` neutral.

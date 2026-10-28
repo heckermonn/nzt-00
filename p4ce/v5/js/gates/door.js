@@ -1,8 +1,35 @@
-/* P4CE v5 · The Door (mechanic from v2/door.html, rebuilt). Guests see only this.
+/* P4CE v5 · Gate: The Door, behind ?gate=door (mechanic from v2/door.html, rebuilt). Guests see only this.
    You knock; footsteps; a slot opens; eyes look back; the key ritual appears under the slot.
    Gate art: path-traced renders in assets/gate/ (spec in BRIEF.md), read from assets/gate/manifest.json.
    Until that folder exists, a plain dark placeholder door (#gPh, CSS) stands in, with the same slot and the same open move. */
-import {$, $$, Q, RM, store, isPhone, tween, E, clamp, wait, CLOCK} from './util.js';
+import {$, $$, Q, RM, store, isPhone, tween, E, clamp, wait, CLOCK} from '../util.js';
+
+/* the Door's own markup, written into the shared #gate section before anything reads it */
+const ROOT = $('#gate');
+ROOT.className = 'door'; ROOT.setAttribute('aria-label', 'A door');
+ROOT.innerHTML = `
+  <div class="g-art" id="gArt" aria-hidden="true">
+    <div class="g-ph" id="gPh"><div class="g-wall"></div><div class="g-light"></div><div class="g-door" id="gDoor"><i class="g-seam"></i><i class="g-plate"></i></div><div class="g-frame"></div><div class="g-floor"></div><div class="g-lamp"></div></div>
+    <img class="g-img" id="gImg" alt="" decoding="async">
+    <canvas class="g-seq" id="gSeq"></canvas>
+    <div class="g-slot" id="gSlot"><img id="gEyes" alt="" decoding="async"></div>
+  </div>
+  <button class="g-knock" id="gKnock" type="button" aria-label="Knock on the door (K)"></button>
+  <p class="g-sub" id="gSub" aria-live="polite"></p>
+  <p class="g-hint" id="gHint" aria-hidden="true">Knock</p>
+  <form class="g-form" id="gForm" autocomplete="off" novalidate hidden>
+    <label class="sr" for="gCode">Invitation code</label>
+    <input id="gCode" name="code" type="text" inputmode="text" autocapitalize="characters" spellcheck="false" maxlength="16" placeholder="Code">
+    <button type="submit" class="g-go" aria-label="Present the code"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h12M11.5 5.5L16 10l-4.5 4.5"/></svg></button>
+    <p class="g-demo" id="gDemo">0047RSRV</p>
+    <div class="g-alt"><button type="button" id="gTap">Tap your key</button><button type="button" id="gMem">Members</button></div>
+  </form>
+  <form class="g-form g-mem" id="gMemForm" autocomplete="on" novalidate hidden>
+    <label class="sr" for="gEmail">Email</label><input id="gEmail" type="email" autocomplete="username" spellcheck="false" placeholder="Email">
+    <label class="sr" for="gPass">Password</label><input id="gPass" type="password" autocomplete="current-password" placeholder="Password">
+    <div class="g-alt"><button type="submit" class="g-in">Log in</button><button type="button" id="gBack">Back</button></div>
+  </form>
+  <div class="g-tap" id="gTapUI" hidden aria-hidden="true"><i></i><i></i><span>Hold your key to the door</span></div>`;
 
 const GBASE = 'assets/gate/';
 /* where the ritual can sit legibly in the renders (normalised image coords): beside the alcove on the dark wall
@@ -208,7 +235,7 @@ g.mem.addEventListener('submit', e => {
 $('#gTap').addEventListener('click', () => { hideRitual(); g.tapUI.hidden = false; g.tapUI.classList.add('on'); later(1500, () => { g.tapUI.classList.remove('on'); success('Come in.'); }); });
 
 /* ------------------------------------------------------------ boot */
-export const Gate = {
+export const gate = {
   async init(onEnter, o = {}) {
     g.onEnter = onEnter;
     const art = await loadArt();

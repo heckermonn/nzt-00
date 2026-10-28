@@ -10,7 +10,7 @@ import {loadManifest, frames, img} from './renders.js';
 import {CAT, byId, colOf} from './catalog.js';
 import {collectionView, productView, formularyView, collView, memberView} from './views.js';
 import {Protocol} from './protocol.js';
-import {Gate} from './gate.js';
+import {Gate} from './gates/index.js';
 
 const HTML = document.documentElement, VIEWS = $('#views'), BAR = $('#bar'), WORLD = $('#world'), AUI = $('#atlasUI');
 const LEAD = '08-3', LEAD_CI = 7;
@@ -356,7 +356,7 @@ function toGate(o = {}) {
   settle(); $$('.view', VIEWS).forEach(v => v.remove()); Stage.each(a => a.hide()); S.cur = null;
   if (S.world) { S.world.setVisible(false); S.world.canvas.style.opacity = 0; }
   AUI.classList.remove('on'); Tone.set('night');
-  Gate.show(o);
+  Gate.init(enter).then(() => Gate.show(o));
 }
 /* the reveal: the door opened onto light, and that light is the Atlas's sky and haze */
 const enter = {
@@ -475,7 +475,8 @@ window.P4V5 = {
   /* hold the virtual clock (every authored move stops where it is), and step it by ms */
   hold: (on = true) => { CLOCK.held = on; return CLOCK.now(); },
   step: ms => {
-    for (let t = 0; t < ms; t += 16) { const d = Math.min(16, ms - t); CLOCK.t += d; stepTweens(); Stage.step(d / 1000); if (S.cur && S.cur.view.frame) S.cur.view.frame(d / 1000); }
+    for (let t = 0; t < ms; t += 16) { const d = Math.min(16, ms - t); CLOCK.t += d; stepTweens(); Stage.step(d / 1000); if (S.cur && S.cur.view.frame) S.cur.view.frame(d / 1000); if (Gate.live) Gate.frame(CLOCK.now(), true); }
+    if (Gate.live) Gate.frame(CLOCK.now());
     if (S.world && S.world.visible) { S.world.force = true; S.world.frame(CLOCK.now(), .016); stepTweens(); Stage.step(0); }
     return CLOCK.now();
   },

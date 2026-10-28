@@ -8,7 +8,15 @@ All photos are from Unsplash and used under the Unsplash License (https://unspla
 |---|---|---|---|---|
 | gate/eyes.webp | The gate: the eyes behind the slot (cropped to a 4.8:1 band, levelled, graded cool and dark, edges fall to black) | https://unsplash.com/photos/a-serious-man-stares-directly-at-the-camera-7mHRIPLCrcE | M_pxio (@m_pxio) | Unsplash License |
 
-## Textures and HDRIs
+## The gate: Object 0047 (`object/`)
+
+| File | Used for | Source | Author | Licence |
+|---|---|---|---|---|
+| object/studio.hdr (512 × 256 Radiance RGBE, 413 KB) | The reflections in the glass block: the umbrella and the overhead panel write the bevels | Studio Small 03, https://polyhaven.com/a/studio_small_03 (1k .hdr, box-downsampled to 512 × 256; the white floor below the horizon darkened to 3% so the studio reads as a black room; lamps clamped at 400) | Greg Zaal, Poly Haven | CC0 |
+
+Everything else in Object 0047 (the glass, the 4, the engravings, the light, the contact shadow) is drawn in real time by `js/gates/object.js`.
+
+## Textures and HDRIs (the Door, `?gate=door`)
 
 From Poly Haven (https://polyhaven.com), CC0 (public domain); credit given as a courtesy. Used only as inputs to the path-traced gate renders in `gate/` (built by `../blender/build_gate.py`).
 
