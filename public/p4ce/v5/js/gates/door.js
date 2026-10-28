@@ -169,6 +169,7 @@ function success(line) {
   if (g.state === 'entering') return;
   clearLater(); g.state = 'entering'; g.el.classList.add('going'); hideRitual(); g.tapUI.hidden = true;
   store.put('p4ce.v5.member', '1');
+  if (g.onEnter && g.onEnter.load) g.onEnter.load();   /* the member bundle loads behind the opening */
   sub(line || 'Come in.', 0);
   later(500, () => eyesTo(0));
   later(900, () => { g.el.classList.remove('slot-open'); showStill('closed'); });

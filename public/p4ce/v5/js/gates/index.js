@@ -1,10 +1,11 @@
 /* P4CE v5 · the gate, chosen. Guests see exactly one gate; main.js talks to it only through this interface:
-     init(onEnter) → Promise<{art, light}>   load what the gate needs (onEnter = {prepare(lightHex), go(lightHex)})
+     init(onEnter) → Promise<{art, light}>   load what the gate needs (onEnter = {load(), prepare(lightHex), go(lightHex)})
      show({key})                             put the gate up (key: a valid ?key= arrived, so let them straight in)
      frame(now)                              called every animation frame while live
      live                                    true while the gate is on screen
      state()                                 a plain object for the test hooks
-   The gate owns its markup (it writes it into #gate) and its success: it stores membership, then hands its last
+   The gate owns its markup (it writes it into #gate) and its success: it stores membership, calls onEnter.load() (the
+   member bundle is fetched only now, behind the gate's light), then hands its last
    frame of light to onEnter.prepare(light) and onEnter.go(light), and the Atlas resolves out of that light.
    Object 0047 (gates/object.js) is the default; ?gate=door brings back the Door (gates/door.js) for comparison.
    A future gate is one more module with the same five members, and one more line in KINDS. */
