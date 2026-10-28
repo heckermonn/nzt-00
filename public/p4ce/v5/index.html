@@ -27,31 +27,8 @@
 <!-- the world (WebGL) sits at the back; every view floats over it on the same colour -->
 <div id="world" aria-hidden="true"></div>
 
-<!-- The Door: the only thing a guest sees -->
-<section id="gate" aria-label="A door">
-  <div class="g-art" id="gArt" aria-hidden="true">
-    <div class="g-ph" id="gPh"><div class="g-wall"></div><div class="g-light"></div><div class="g-door" id="gDoor"><i class="g-seam"></i><i class="g-plate"></i></div><div class="g-frame"></div><div class="g-floor"></div><div class="g-lamp"></div></div>
-    <img class="g-img" id="gImg" alt="" decoding="async">
-    <canvas class="g-seq" id="gSeq"></canvas>
-    <div class="g-slot" id="gSlot"><img id="gEyes" alt="" decoding="async"></div>
-  </div>
-  <button class="g-knock" id="gKnock" type="button" aria-label="Knock on the door (K)"></button>
-  <p class="g-sub" id="gSub" aria-live="polite"></p>
-  <p class="g-hint" id="gHint" aria-hidden="true">Knock</p>
-  <form class="g-form" id="gForm" autocomplete="off" novalidate hidden>
-    <label class="sr" for="gCode">Invitation code</label>
-    <input id="gCode" name="code" type="text" inputmode="text" autocapitalize="characters" spellcheck="false" maxlength="16" placeholder="Code">
-    <button type="submit" class="g-go" aria-label="Present the code"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h12M11.5 5.5L16 10l-4.5 4.5"/></svg></button>
-    <p class="g-demo" id="gDemo">0047RSRV</p>
-    <div class="g-alt"><button type="button" id="gTap">Tap your key</button><button type="button" id="gMem">Members</button></div>
-  </form>
-  <form class="g-form g-mem" id="gMemForm" autocomplete="on" novalidate hidden>
-    <label class="sr" for="gEmail">Email</label><input id="gEmail" type="email" autocomplete="username" spellcheck="false" placeholder="Email">
-    <label class="sr" for="gPass">Password</label><input id="gPass" type="password" autocomplete="current-password" placeholder="Password">
-    <div class="g-alt"><button type="submit" class="g-in">Log in</button><button type="button" id="gBack">Back</button></div>
-  </form>
-  <div class="g-tap" id="gTapUI" hidden aria-hidden="true"><i></i><i></i><span>Hold your key to the door</span></div>
-</section>
+<!-- The gate: the only thing a guest sees. Each gate (js/gates/) writes its own markup into this section. -->
+<section id="gate" aria-label="Closed"></section>
 
 <!-- members -->
 <a class="skip" href="#views">Skip to content</a>
