@@ -14,6 +14,8 @@ export const Tone = {
   rgb: hex2rgb(STOPS.paper), name: 'paper', tw: null,
   get hex() { return rgb2hex(this.rgb); },
   set(name) { if (this.tw) this.tw.tw.cancel(); this.name = name; this.rgb = hex2rgb(STOPS[name] || name); this.apply(); },
+  /* set the colour directly (a move that computes it per frame), cancelling any drift in progress */
+  put(rgb, name) { if (this.tw) { this.tw.tw.cancel(); this.tw = null; } this.rgb = rgb; if (name) this.name = name; this.apply(); },
   to(name, dur = 1200, ease = E.io, delay = 0) {
     const a = this.rgb.slice(), b = hex2rgb(STOPS[name] || name); this.name = name;
     if (this.tw) this.tw.tw.cancel();

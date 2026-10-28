@@ -129,9 +129,10 @@ float aaf=1.-smoothstep(.03,.085,fwz);
   /* ------------------------------------------------------------ the paper sweep: rises around the station at the hinge */
   const sweepMat = new THREE.MeshBasicMaterial({vertexColors: true, toneMapped: false, fog: false, side: THREE.DoubleSide, transparent: true, opacity: 0, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2});
   const sweep = (() => {
-    const pr = [], Rw = 7.5, Rc = 2.6, Hh = 14; pr.push([0, 0]); for (let r = .5; r <= Rw - Rc; r += .5) pr.push([r, 0]);
-    for (let k = 1; k <= 16; k++) { const a = k / 16 * Math.PI / 2; pr.push([Rw - Rc + Rc * Math.sin(a), Rc - Rc * Math.cos(a)]); } pr.push([Rw, Hh * .5], [Rw, Hh]);
-    const g = new THREE.LatheGeometry(pr.map(p => new THREE.Vector2(p[0], p[1])), 72, 0, Math.PI * 2);
+    /* the back half of a cyclorama (curved floor-to-wall), turned to face the camera every frame; it rises from the sand */
+    const pr = [], Rw = 7.5, Rc = 2.6, Hh = 14; pr.push([Rw - Rc - 1.2, 0]);
+    for (let k = 0; k <= 16; k++) { const a = k / 16 * Math.PI / 2; pr.push([Rw - Rc + Rc * Math.sin(a), Rc - Rc * Math.cos(a)]); } pr.push([Rw, Hh * .5], [Rw, Hh]);
+    const g = new THREE.LatheGeometry(pr.map(p => new THREE.Vector2(p[0], p[1])), 64, Math.PI * .2, Math.PI * 1.6);
     const p = g.attributes.position, col = new Float32Array(p.count * 3);
     for (let i = 0; i < p.count; i++) { const y = p.getY(i), r = Math.hypot(p.getX(i), p.getZ(i)); const v = .955 + .05 * sm(0, Rc * 1.4, y) - .012 * (1 - sm(0, Rw - Rc, r)); col[i * 3] = col[i * 3 + 1] = col[i * 3 + 2] = v; }
     g.setAttribute('color', new THREE.BufferAttribute(col, 3));
@@ -202,8 +203,18 @@ float aaf=1.-smoothstep(.03,.085,fwz);
     ui.labels.appendChild(a); return a; });
   const stH = stLabels.map(() => 0), stW = stLabels.map(() => 0);
   let labelsOn = 1;
+  /* screen boxes of every station (plinth disc plus the sculpture over it), so labels can keep off them */
+  const _bx = new THREE.Vector3();
+  function stationBox(s) {
+    let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+    const pts = [[1.62, 0, 0], [-1.62, 0, 0], [0, 0, 1.62], [0, 0, -1.62], [.7, s.H, 0], [-.7, s.H, 0]];
+    for (const p of pts) { const q = scr(_bx.set(s.pos.x + p[0], p[1], s.pos.z + p[2])); x0 = Math.min(x0, q[0]); x1 = Math.max(x1, q[0]); y0 = Math.min(y0, q[1]); y1 = Math.max(y1, q[1]); }
+    return {x0, x1, y0, y1};
+  }
+  const hit = (a, b, m = 6) => a.x0 < b.x1 + m && a.x1 > b.x0 - m && a.y0 < b.y1 + m && a.y1 > b.y0 - m;
+  let heldW = 0, heldOn = null;
   function labelsUpdate() {
-    const lead = PH ? 20 : 30;
+    const lead = PH ? 20 : 30, L = [];
     stations.forEach((s, i) => {
       const a = stLabels[i]; let vis = labelsOn > .5 && fx.push < .05 && fx.rise < .05 && fx.haze < .3;
       if (want.st === i) vis = false;
@@ -211,18 +222,44 @@ float aaf=1.-smoothstep(.03,.085,fwz);
       if (q[2] > 1 || q[0] < -120 || q[0] > innerWidth + 40 || q[1] < 70 || q[1] > innerHeight - 40) vis = false;
       if (want.st >= 0 && i !== want.st) { const c = scr(_w2.set(stations[want.st].pos.x, 1.6, stations[want.st].pos.z)); if (Math.abs(q[0] - c[0]) < innerWidth * .32 && Math.abs(q[1] - c[1]) < innerHeight * .45) vis = false; }
       if (!stH[i]) { stH[i] = a.offsetHeight; stW[i] = a.offsetWidth; }
-      a.style.transform = 'translate(' + Math.round(clamp(q[0] - stW[i] / 2, 8, innerWidth - 8 - stW[i])) + 'px,' + Math.round(q[1] - stH[i] - lead) + 'px)';
-      a.classList.toggle('on', vis); a.classList.toggle('far', want.st >= 0); a.tabIndex = vis ? 0 : -1;
-      a.classList.toggle('hov', hov.st === i);
+      L.push({i, a, q, vis, box: vis ? stationBox(s) : null});
     });
-    /* the line beside the held product */
+    /* nearest first; each label takes the place along its own leader (a little higher, or nudged sideways while its
+       leader still drops onto its own station) that overlaps least with the labels already placed and every other station */
+    const placed = [], ov = (a, b) => Math.max(0, Math.min(a.x1, b.x1 + 4) - Math.max(a.x0, b.x0 - 4)) * Math.max(0, Math.min(a.y1, b.y1 + 4) - Math.max(a.y0, b.y0 - 4));
+    L.filter(l => l.vis).sort((p, q) => q.q[1] - p.q[1]).forEach(l => {
+      const w = stW[l.i], h = stH[l.i], x0 = clamp(l.q[0] - w / 2, 8, innerWidth - 8 - w), m = Math.max(0, w / 2 - 10);
+      let best = null;
+      for (const dy of [0, -14, -28, -42, -58]) for (const f of [0, -.5, .5, -1, 1]) {
+        const dx = f * m, r = {x0: x0 + dx, x1: x0 + dx + w, y0: l.q[1] - h - lead + dy, y1: l.q[1] - lead + dy};
+        let c = -dy * 1.2 + Math.abs(dx) * .6;
+        placed.forEach(p => { c += ov(r, p) * 3; });
+        L.forEach(o => { if (o.vis && o.i !== l.i) c += ov(r, o.box); });
+        if (!best || c < best.c) best = {c, dx, dy, r};
+      }
+      l.dx = best.dx; l.dy = best.dy; placed.push(best.r);
+    });
+    L.forEach(l => {
+      const a = l.a, w = stW[l.i], h = stH[l.i], dy = l.dy || 0, dx = l.dx || 0;
+      a.style.transform = 'translate(' + Math.round(clamp(l.q[0] - w / 2, 8, innerWidth - 8 - w) + dx) + 'px,' + Math.round(l.q[1] - h - lead + dy) + 'px)';
+      a.style.setProperty('--ll', (14 - dy) + 'px'); a.style.setProperty('--lx', Math.round(-dx) + 'px');
+      a.classList.toggle('on', l.vis); a.classList.toggle('far', want.st >= 0); a.tabIndex = l.vis ? 0 : -1;
+      a.classList.toggle('hov', hov.st === l.i);
+    });
+    /* the line beside the held product: on the side away from the cairn, pointing at the jar */
     if (ui.held) {
       const r = heldRect(), on = want.st === LEAD_CI && !travel.on && fx.push < .02 && fx.haze < .1 && held.vis;
-      ui.held.style.transform = `translate(${Math.round(r.x + r.w * .86)}px,${Math.round(r.y + r.h * .5)}px)`;
+      if (!heldW || on !== heldOn) { heldW = ui.held.offsetWidth; heldOn = on; } /* measured when it appears: fonts may have loaded since */
+      const b = Stage0(r);
+      /* beside the jar on the side away from the cairn; where that side is too tight (phone), just under it, without the rule */
+      const below = b.x - 10 - heldW < 8; ui.held.classList.toggle('below', below);
+      ui.held.style.transform = below ? `translate(${Math.round(clamp(b.x + b.w / 2 - heldW / 2, 8, innerWidth - 8 - heldW))}px,${Math.round(b.y + b.h + 30)}px)` : `translate(${Math.round(b.x - 10 - heldW)}px,${Math.round(b.y + b.h * .5)}px)`;
       ui.held.classList.toggle('on', on); ui.held.tabIndex = on ? 0 : -1;
-      if (ui.heldHit) { const b = {x: r.x + r.w * .2, y: r.y + r.h * .22, w: r.w * .6, h: r.h * .56}; Object.assign(ui.heldHit.style, {transform: `translate(${b.x}px,${b.y}px)`, width: b.w + 'px', height: b.h + 'px'}); ui.heldHit.hidden = !(want.st === LEAD_CI && held.vis); }
+      if (ui.heldHit) { Object.assign(ui.heldHit.style, {transform: `translate(${b.x}px,${b.y}px)`, width: b.w + 'px', height: b.h + 'px'}); ui.heldHit.hidden = !(want.st === LEAD_CI && held.vis); }
     }
   }
+  /* the jar inside its frame (alpha bbox of the render) */
+  const Stage0 = r => ({x: r.x + r.w * .2189, y: r.y + r.h * .232, w: r.w * (.7811 - .2189), h: r.h * (.7547 - .232)});
 
   /* ------------------------------------------------------------ input: drag to look, click or hold to travel */
   const HOLD = PH ? 560 : 640;
@@ -286,20 +323,22 @@ float aaf=1.-smoothstep(.03,.085,fwz);
     holdUpdate(now);
     /* the instrument: rest over the stones, or present at 08; the held product turns slowly */
     arm.update(now, dt);
-    arm.gwGoal = .208 + fx.release * .09;
+    arm.gwGoal = .208 + fx.release * .035;
     if (held.spin && !RM && fx.release < .01 && !travel.on) held.frame = (held.frame + dt * 5) % 48;
-    held.off.set(0, 0, 0); if (fx.release > 0) { const toCam = _f.copy(cam.position).sub(arm.e).setY(0).normalize(); held.off.addScaledVector(toCam, fx.release * .35).addScaledVector(_up, -fx.release * .05); }
+    held.off.set(0, 0, 0);
     heldPoint(sprite.position); sprite.material.opacity = Math.pow(1 - fx.haze, 3); /* unfogged, so it emerges last */ sprite.visible = held.vis && fx.haze < .995; if (sprite.visible) drawSprite();
     camUpdate(now, dt);
     /* colour: the tone is the sky, the fog and the sweep */
     BG.setRGB(Tone.rgb[0] / 255, Tone.rgb[1] / 255, Tone.rgb[2] / 255, THREE.SRGBColorSpace);
+    /* three mixes fog after tone mapping and the sRGB conversion (and uploads its colour in that space), so a fully
+       hazed mesh is exactly the tone: --bg */
     scene.fog.color.copy(BG); skyU.uH.value.copy(BG); skyU.uZ.value.copy(BG).lerp(WHITE, .45 * (1 - fx.haze));
-    sweepMat.color.copy(BG); sweep.visible = fx.sweep > .001; sweep.scale.set(1, Math.max(.001, fx.sweep), 1); sweepMat.opacity = sm(0, .35, fx.sweep);
-    sweep.position.set(presentP.x, .012, presentP.z);
+    sweepMat.color.copy(BG); sweep.visible = fx.sweep > .001; sweep.scale.set(1, Math.max(.001, fx.sweep), 1); sweepMat.opacity = sm(0, .45, fx.sweep) * (1 - sm(13, 22, cam.position.distanceTo(presentP))); /* only close in: from high above it would read as a bowl */
+    sweep.position.set(presentP.x, .012, presentP.z); sweep.rotation.y = Math.atan2(cam.position.x - presentP.x, cam.position.z - presentP.z);
     { const G = fogGoal(), a = 1 - Math.pow(travel.on ? .08 : .2, dt); fogS.n = lerp(fogS.n, G[0], a); fogS.f = lerp(fogS.f, G[1], a);
-      /* haze collapses the fog onto the camera: the whole world goes to the tone (the product is a DOM actor by then) */
-      const h = Math.pow(fx.haze, .7);
-      scene.fog.near = lerp(fogS.n, .2, h); scene.fog.far = lerp(fogS.f, 1.2, h); }
+      /* haze: every mesh takes the tone in proportion to its distance, the far ones first; at 1 all of it is --bg */
+      const h = fx.haze, d0 = Math.min(8, cam.position.distanceTo(heldPoint(_v)));
+      scene.fog.near = lerp(fogS.n, 0, h); scene.fog.far = h > 1e-3 ? Math.max(scene.fog.near + .3, Math.min(fogS.f, d0 / h)) : fogS.f; }
     const fxp = camS.tgt; sun.target.position.set(fxp.x, 0, fxp.z); sun.position.copy(sun.target.position).addScaledVector(SUNDIR, 50); setShadow(lerp(shHalf, want.st < 0 ? 27 : 10, .06));
     sky.position.copy(cam.position);
     stations.forEach(s => s.tags.forEach(t => { t.getWorldPosition(_w2); const d = _w2.distanceTo(cam.position); t.material.opacity = .8 * sm(7, 12, d) * (want.st < 0 || want.st === s.i ? 1 : 0) * (1 - fx.haze); }));
@@ -326,6 +365,14 @@ float aaf=1.-smoothstep(.03,.085,fwz);
       if (o.instant) snap(); else startTravel(o.dur);
     },
     snap, heldRect, presentRect: heldRect,
+    /* the held product's rect as it will be once the camera and the arm reach where they are going */
+    heldRectGoal() {
+      const P = poseFor(), sp = cam.position.clone(), sq = cam.quaternion.clone(), sf = cam.fov, se = arm.e.clone();
+      cam.position.copy(P.pos); cam.lookAt(P.tgt); cam.fov = P.fov; cam.updateProjectionMatrix(); arm.e.copy(want.st === LEAD_CI ? presentP : restP);
+      const r = heldRect();
+      arm.e.copy(se); cam.position.copy(sp); cam.quaternion.copy(sq); cam.fov = sf; cam.updateProjectionMatrix(); cam.updateMatrixWorld();
+      return r;
+    },
     set pushL(v) { pushL = v; }, heldDist: () => { const P = poseFor(); return P.pos.distanceTo(heldPoint(_c)); },
     setVisible(v) { this.visible = v; canvas.style.visibility = v ? '' : 'hidden'; if (v) W.force = true; },
     set onTravel(f) { onTravel = f; }, set onHeld(f) { onHeld = f; },

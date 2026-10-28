@@ -71,7 +71,7 @@ function layout() {
   if (g.art0) {
     const k = g.ori === g.art0.land ? 'land' : 'port', Z = ZONE[k], wall = imgPt(Z.wallX, 0).x, floor = imgPt(0, Z.floorY).y;
     if (innerWidth - wall >= 300 + 72) { side = true; fw = Math.min(300, innerWidth - wall - 72); fx = wall + 44; fy = r.y - 6; subY = Math.min(innerHeight - 56, floor + 34); }
-    else { fy = Math.min(innerHeight - 132, floor + 22); subY = fy + 4; fw = Math.min(innerWidth - 48, 300); }
+    else { fy = Math.min(innerHeight - 172, floor + 22); subY = fy + 4; fw = Math.min(innerWidth - 48, 300); }
   }
   g.el.classList.toggle('rit-side', side);
   E.setProperty('--fx', fx + 'px'); E.setProperty('--fy', fy + 'px'); E.setProperty('--fw', fw + 'px'); E.setProperty('--suby', subY + 'px');

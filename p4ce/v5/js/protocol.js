@@ -2,7 +2,7 @@
    Lines are keyed by id + mode + frequency; one-time and subscription lines never merge. localStorage p4ce.v5.protocol */
 import {byId, keyLine, SLOTS, slotsFor, PACK} from './catalog.js';
 import {$, $$, esc, money, pad2, store, ic, say, RM, isPhone, tween, E} from './util.js';
-import {frames, hasRender} from './renders.js';
+import {frames, hasRender, cleanImgs} from './renders.js';
 import {Stage, rectOf} from './stage.js';
 
 const KEY = 'p4ce.v5.protocol';
@@ -43,34 +43,35 @@ let isOpen = false, NEW = null, back = null;
 function render() {
   const R = ritual(), n = count();
   const now = new Date(), t = hm(now.getHours() * 60 + now.getMinutes());
-  const firstSeen = new Set();
-  const card = (c) => {
-    const l = c.l, p = c.p, k = keyOf(l.id, l.m, l.fr), first = !firstSeen.has(k); firstSeen.add(k);
-    const [h, mi] = c.time.split(':').map(Number), dayF = ((h * 60 + mi) / 1440 * 100).toFixed(1), pr = (l.m === 'sub' ? p.ps : p.po) * l.q;
-    const vis = hasRender(p.id) ? `<img src="${esc(frames(p.id)[0] || '')}" alt="" decoding="async">` : `<span class="nocv mono">${p.id}</span>`;
-    return `<article class="card${NEW === k && first ? ' new' : ''}" data-key="${esc(k)}" aria-label="${c.S.w} ${c.code}, ${ap(c.time)}: ${esc(p.n)}">
+  /* one card per line, under the first part of the day it slots into, carrying every slot it takes */
+  const lines = new Map();
+  SLOTS.forEach(S => R[S.k].forEach(c => { const e = lines.get(c.l); if (e) e.at.push(c); else lines.set(c.l, {first: S.k, at: [c], l: c.l, p: c.p}); }));
+  const card = e => {
+    const l = e.l, p = e.p, k = keyOf(l.id, l.m, l.fr), pr = (l.m === 'sub' ? p.ps : p.po) * l.q;
+    const dayF = c => { const [h, mi] = c.time.split(':').map(Number); return ((h * 60 + mi) / 1440 * 100).toFixed(1); };
+    const vis = hasRender(p.id) ? `<img src="${esc(frames(p.id)[0] || '')}" data-clean="280" alt="" decoding="async">` : `<span class="nocv mono">${p.id}</span>`;
+    return `<article class="card${NEW === k ? ' new' : ''}" data-key="${esc(k)}" aria-label="${e.at.map(c => `${c.S.w} ${c.code}, ${ap(c.time)}`).join('; ')}: ${esc(p.n)}">
       <div class="cv" data-cv="${esc(k)}" aria-hidden="true">${vis}</div>
       <div class="cb">
-        <h3 class="cd mono">${c.S.w.toUpperCase()} ${c.code}</h3>
-        <p class="crow mono"><span>[${c.S.tag.toUpperCase()}]</span><span>${ap(c.time)}</span></p>
-        <div class="tln" aria-hidden="true"><i style="left:${dayF}%"></i></div>
+        ${e.at.map(c => `<p class="cd mono"><span>${c.S.w.toUpperCase()} ${c.code}</span><span class="ct">[${c.S.tag.toUpperCase()}] ${ap(c.time)}</span></p>`).join('')}
+        <div class="tln" aria-hidden="true">${e.at.map(c => `<i style="left:${dayF(c)}%"></i>`).join('')}</div>
         <p class="nm">${esc(p.n)}</p>
-        <p class="ing mono">${esc(keyLine(p))}</p>
-        <div class="cf mono"><span>[${l.m === 'sub' ? '&#8635;' : '1'}] ${l.m === 'sub' ? 'Every ' + l.fr + ' days' : 'One-time'}</span>
-          ${first ? `<span class="step" role="group" aria-label="Quantity of ${esc(p.n)}, ${l.m === 'sub' ? 'every ' + l.fr + ' days' : 'one-time'}"><button type="button" data-k="${esc(k)}" data-d="-1" aria-label="Decrease">${ic('minus', 's')}</button><output>${l.q}</output><button type="button" data-k="${esc(k)}" data-d="1" aria-label="Increase">${ic('plus', 's')}</button></span><span class="pr">${money(pr)}</span><button class="rm" type="button" data-rm="${esc(k)}">Remove<span class="sr"> ${esc(p.n)}</span></button>` : `<span class="same">Same line as above</span>`}
-        </div>
+        <p class="ing mono">${esc(keyLine(p))}${p.top ? ' <span class="sample">Sample</span>' : ''}</p>
+        <p class="md mono">[${l.m === 'sub' ? '&#8635;' : '1'}] ${l.m === 'sub' ? 'Every ' + l.fr + ' days' : 'One-time'}</p>
+        <div class="cf mono"><span class="step" role="group" aria-label="Quantity of ${esc(p.n)}, ${l.m === 'sub' ? 'every ' + l.fr + ' days' : 'one-time'}"><button type="button" data-k="${esc(k)}" data-d="-1" aria-label="Decrease">${ic('minus', 's')}</button><output>${l.q}</output><button type="button" data-k="${esc(k)}" data-d="1" aria-label="Increase">${ic('plus', 's')}</button></span><span class="pr">${money(pr)}</span><button class="rm" type="button" data-rm="${esc(k)}">Remove<span class="sr"> ${esc(p.n)}</span></button></div>
       </div></article>`;
   };
   const tOnce = L.filter(l => l.m !== 'sub').reduce((s, l) => s + byId(l.id).po * l.q, 0), tSub = L.filter(l => l.m === 'sub').reduce((s, l) => s + byId(l.id).ps * l.q, 0);
   dw.innerHTML = `<header class="dw-h"><h2 id="dwH" tabindex="-1">Your <em>Protocol</em></h2><span class="dw-clock" role="img" aria-label="Now ${t}">${dotMatrix(t)}</span><button class="dw-x" type="button" data-close aria-label="Close your Protocol">${ic('x')}</button></header>
-  <div class="dw-b">${n ? SLOTS.filter(S => R[S.k].length).map(S => `<section class="dw-g" aria-label="${S.w}, ${S.tag}"><h3 class="mono"><span>${S.w} · ${S.code}</span><span>${S.tag}</span></h3>${R[S.k].map(card).join('')}</section>`).join('')
+  <div class="dw-b">${n ? SLOTS.map(S => [S, [...lines.values()].filter(e => e.first === S.k)]).filter(g => g[1].length).map(([S, es]) => `<section class="dw-g" aria-label="${S.w}, ${S.tag}"><h3 class="mono"><span>${S.w} · ${S.code}</span><span>${S.tag}</span></h3>${es.map(card).join('')}</section>`).join('')
     : `<p class="dw-empty">Nothing in your day yet. Products slot in by the time their directions give: morning, daily or evening.</p>`}</div>
   <footer class="dw-f">${n ? `<dl><div><dt>One-time</dt><dd class="mono">${money(tOnce)}</dd></div><div><dt>Subscription, per dispatch</dt><dd class="mono">${money(tSub)}</dd></div><div class="tot"><dt>Subtotal</dt><dd class="mono">${money(tOnce + tSub)}</dd></div></dl>
     <button class="btn wide" type="button" data-checkout>Checkout</button><p class="dw-note" role="status"></p>` : ''}<p class="fine">Sample prices. Saved on this device.</p></footer>`;
+  cleanImgs(dw);
   $$('[data-close]', dw).forEach(b => b.onclick = () => close(true));
   $$('[data-d]', dw).forEach(b => b.onclick = () => { const l = L.find(x => keyOf(x.id, x.m, x.fr) === b.dataset.k); if (!l) return; l.q += +b.dataset.d; if (l.q <= 0) { L.splice(L.indexOf(l), 1); say('Removed ' + byId(l.id).n + '.'); } NEW = null; save(); render(); const nb = $(`[data-k="${CSS.escape(b.dataset.k)}"][data-d="${b.dataset.d}"]`, dw); (nb || $('#dwH', dw)).focus(); });
   $$('[data-rm]', dw).forEach(b => b.onclick = () => { const i = L.findIndex(x => keyOf(x.id, x.m, x.fr) === b.dataset.rm); if (i < 0) return; const nm = byId(L[i].id).n; L.splice(i, 1); NEW = null; save(); render(); say('Removed ' + nm + '.'); $('#dwH', dw).focus(); });
-  const co = $('[data-checkout]', dw); if (co) co.onclick = () => { $('.dw-note', dw).textContent = 'Checkout opens with Shopify in phase 4. Nothing has been charged.'; };
+  const co = $('[data-checkout]', dw); if (co) co.onclick = () => { $('.dw-note', dw).textContent = 'Checkout is not live in this preview. Nothing has been charged.'; };
 }
 function open(o = {}) {
   render();
@@ -117,9 +118,8 @@ export const Protocol = {
     if (!from || RM) { cv.classList.add('in'); return; }
     const im = cv.querySelector('img'); if (im) im.style.opacity = '0';
     /* the copy: the same frame, small, falling into the card it becomes */
-    const tr = rectOf(cv), fr2 = {x: tr.x + (tr.w - tr.h * .8) / 2, y: tr.y, w: tr.h * .8, h: tr.h};
-    const s = Math.min(1, 240 / from.h), start = {x: from.x + from.w * (1 - s) / 2, y: from.y + from.h * (1 - s) / 2, w: from.w * s, h: from.h * s};
-    await Stage.ghost(id, start, () => { const r = rectOf(cv); return {x: r.x + (r.w - r.h * .8) / 2, y: r.y, w: r.h * .8, h: r.h}; }, {dur: 900, arc: .5});
+    const fa = Stage.has(id) && Stage.get(id);
+    await Stage.ghost(id, from, () => { const r = rectOf(cv); return {x: r.x + (r.w - r.h * .8) / 2, y: r.y, w: r.h * .8, h: r.h}; }, {dur: 900, arc: .35, frame: fa ? fa.frame : 0});
     if (im) im.style.opacity = '';
     cv.closest('.card').classList.add('landed');
   }

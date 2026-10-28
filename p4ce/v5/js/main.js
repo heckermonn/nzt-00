@@ -3,7 +3,7 @@
    camera or object move; the chosen product stays on screen (an actor, see stage.js); nothing covers the screen;
    the colour drifts sand → stone → paper (tone.js); text only fades; back plays the same move reversed;
    reduced motion turns each move into a short crossfade. */
-import {Q, $, $$, esc, RM, CLOCK, tween, stepTweens, E, wait, store, clamp, isPhone, ic, say} from './util.js';
+import {Q, $, $$, esc, RM, CLOCK, tween, stepTweens, E, wait, store, clamp, isPhone, ic, say, sm, hex2rgb, mixRGB} from './util.js';
 import {Tone, STOPS} from './tone.js';
 import {Stage, rectOf} from './stage.js';
 import {loadManifest, frames, img} from './renders.js';
@@ -86,6 +86,7 @@ function mount(nv, r) {
   HTML.dataset.view = r.v; document.title = 'P4CE · ' + TITLE(r);
   $$('[data-nav]', BAR).forEach(a => a.toggleAttribute('aria-current', a.dataset.nav === r.v));
   AUI.classList.toggle('on', isAtlas(r) && !!S.world);
+  if (nv.prep) nv.prep();
 }
 function unmountLater(old, ms) {
   if (!old) return;
@@ -115,7 +116,7 @@ function flipActors(oldV, nv, o = {}) {
     if (th && onScreen(rectOf(th)) && onScreen(r) && !RM) { th.style.visibility = 'hidden'; a.fly(() => rectOf(th), {from: r, dur: D, stayFloating: true}).then(ok => { if (ok) { th.style.visibility = ''; a.hide(); } }); return; }
     a.float(r);
     if (o.dir) a.fly({...r, x: r.x - o.dir * innerWidth * .1}, {from: r, dur: 800, ease: E.out, stayFloating: true});
-    a.lookTo({blur: 16, op: 0, sc: .95, sat: .5, shadow: a.goal.shadow}, RM ? 99 : 3.4);
+    a.lookTo({blur: 16, op: 0, sc: .95, sat: .5, shadow: a.goal.shadow}, RM ? 99 : 5);
     wait(RM ? 0 : 900).then(() => { if (a.mode === 'fly' && !a.fl && a.look.op < .05) a.hide(); });
   });
   for (const slot of slots) {
@@ -150,7 +151,7 @@ async function transition(to, o = {}) {
     if (!instant) { HTML.classList.add('xfade'); await new Promise(r => setTimeout(r, 170)); if (!alive(my)) return; }
     if (old) { Stage.each(a => { if (a.mode === 'slot' && old.el.contains(a.slot)) a.hide(); }); if (old.destroy) old.destroy(); old.el.remove(); }
     mount(nv, to); nv.el.classList.remove('entering'); scrollTo(0, S.scroll[rkey(to)] || 0);
-    Tone.set(toneOf(to));
+    Tone.set(toneOf(to)); HG.live = false; HG.k = isAtlas(to) ? 0 : 1;
     if (W) { W.go(toGL ? to.st : LEAD_CI, {instant: true}); Object.assign(W.fx, {push: 0, rise: 0, haze: 0, sweep: 0, release: 0}); W.held.vis = true; W.canvas.style.opacity = toGL ? 1 : 0; W.setVisible(toGL); }
     $$('[data-slot]', nv.el).forEach(s => { const a = Stage.get(s.dataset.slot); a.dock(s); a.lookNow(nv.lookFor(s.dataset.slot)); });
     Stage.each(a => { if (a.mode === 'slot' && !nv.el.contains(a.slot)) a.hide(); else if (a.mode === 'fly') a.hide(); });
@@ -162,14 +163,16 @@ async function transition(to, o = {}) {
     S.busy = false; return;
   }
 
+  const hingeMove = fromGL && to.v === 'collection' || toGL && from.r.v === 'collection';
   mount(nv, to);
   const sy = S.scroll[rkey(to)] || 0;
-  unmountLater(old, 1700); textOut(old);
+  unmountLater(old, fromGL || toGL ? 1700 : 650); textOut(old);
   scrollTo(0, sy);
+  /* a hinge cut short by a move that is not its reverse: let the world go quietly */
+  if (W && HG.live && !hingeMove && !toGL && !fromGL) abandonHinge();
 
   if (fromGL && toGL) await atlasMove(from.r, to, nv, my);
-  else if (fromGL && to.v === 'collection') await hinge(1, old, nv, my);
-  else if (toGL && from.r.v === 'collection') await hinge(-1, old, nv, my);
+  else if (hingeMove) await hinge(fromGL ? 1 : -1, old, nv, my);
   else if (fromGL) await haze(1, old, nv, my);
   else if (toGL) await haze(-1, old, nv, my);
   else await paper(from.r, to, old, nv, my);
@@ -179,69 +182,113 @@ async function transition(to, o = {}) {
   S.busy = false;
 }
 
-/* --- atlas to atlas: the camera travels; the tone drifts sand ↔ stone */
-async function atlasMove(a, b, nv, my) {
-  const W = S.world;
-  W.go(b.st); Tone.to(toneOf(b), 1300);
-  textIn(nv, 700, my);
-  await wait(1300);
+/* tween one transition parameter from wherever it stands now (so a move cut short never snaps) */
+function fxTo(key, to, dur, ease = E.io, delay = 0) {
+  const fx = S.world.fx, a = fx[key];
+  if (Math.abs(a - to) < 1e-4) { fx[key] = to; return Promise.resolve(true); }
+  return run(tween(RM ? 0 : dur, e => { fx[key] = a + (to - a) * e; }, ease, delay));
+}
+/* the held product, carried by its DOM actor back into the arm */
+function handBack() {
+  const W = S.world, a = Stage.get(LEAD);
+  if (W.held.vis || a.mode !== 'fly') { W.held.vis = true; return; }
+  a.lookTo({shadow: 0}, 4);
+  a.fly(() => W.heldRect(), {from: a.screenRect(), dur: 900, stayFloating: true}).then(ok => { if (ok) { W.held.frame = a.frame; W.held.vis = true; W.force = true; a.hide(); } });
+}
+function abandonHinge() {
+  const W = S.world; HG.live = false;
+  glOpacity(0, 320).then(ok => { if (ok) { Object.assign(W.fx, {push: 0, haze: 0, sweep: 0, release: 0}); W.held.vis = true; W.go(LEAD_CI, {instant: true}); } });
 }
 
-/* --- THE HINGE: Atlas ↔ Collection 08. The camera pushes in on the product in the arm while the colour drifts
-   to paper and a seamless sweep rises around it; the held product (the same render) flies into its slot in the
-   lineup and the other five come out of the haze beside it. dir = -1 plays the same move backwards. */
+/* --- atlas to atlas: the camera travels; the tone drifts sand ↔ stone */
+async function atlasMove(a, b, nv, my) {
+  const W = S.world, D = 1300;
+  if (HG.live) { HG.live = false; HG.k = 0; handBack(); glOpacity(1, 360); Stage.each(x => { if (x.id !== LEAD && x.mode === 'fly') { x.lookTo({blur: 16, op: 0, sc: .95, sat: .5}, 4); wait(900).then(() => { if (x.mode === 'fly' && !x.fl && x.look.op < .05) x.hide(); }); } }); }
+  W.go(b.st); Tone.to(toneOf(b), D);
+  for (const k of ['rise', 'haze', 'push', 'sweep', 'release']) fxTo(k, 0, D * .8, E.io);
+  textIn(nv, 700, my);
+  await wait(D);
+}
+
+/* --- THE HINGE: Atlas ↔ Collection 08. One value, k, carries the whole move (0 = the Atlas, 1 = the lineup on its
+   sweep): the camera pushes in on the product in the arm while the colour drifts to paper and a seamless sweep
+   rises behind it; the held product (the same render) rides the camera and is eased onto its slot in the lineup;
+   the other five come out of the haze beside it. Back runs k down from wherever it stands. */
+const HG = {k: 0, live: false, sw: 0};
+const CUR = {
+  push: k => E.move(clamp((k - .03) / .97)),
+  haze: k => E.io(clamp((k - .08) / .8)),
+  sweep: k => E.io(clamp((k - .1) / .62)),
+  release: k => E.out(clamp(k / .24)),
+  tone: k => E.io(clamp((k - .04) / .84)),
+  gl: k => 1 - E.io(clamp((k - .42) / .32)),
+  sw: k => E.io(clamp((k - .48) / .44)),
+  blend: k => E.io(clamp((k - .36) / .64)),
+  shadow: k => sm(.8, .97, k)
+};
+/* progress of a curve between two values of k, as 0..1 (so a value that starts off its curve still lands exactly) */
+const prog = (c, k0, k1) => { const a = c(k0), d = c(k1) - a; return k => d * d > 1e-8 ? (c(k) - a) / d : clamp((k - k0) / ((k1 - k0) || 1)); };
 async function hinge(dir, old, nv, my) {
   const W = S.world, fx = W.fx, D = 1350, lead = Stage.get(LEAD);
-  const blendIn = k => E.io(clamp((k - .28) / .72)), blendOut = k => E.io(clamp(k / .72));
-  const t0 = CLOCK.now(), kOf = () => clamp((CLOCK.now() - t0) / D);
-  /* the push ends where the product, seen through the camera, is the size of its slot in the lineup */
-  const pushFor = sr => { const r0 = W.heldRect(); W.pushL = W.heldDist() * clamp(r0.h / Math.max(40, sr.h), .2, 1); return r0; };
+  const col = dir > 0 ? nv : old, slot = $(`[data-slot="${LEAD}"]`, col.el), sw = $('.sweep', col.el);
+  const k1 = dir > 0 ? 1 : 0, mid = HG.live && HG.k > .002 && HG.k < .998, k0 = mid ? HG.k : 1 - k1;
+  const atlasSt = dir > 0 ? W.route.st : nv.r.st;
+  /* the push ends a little past the product's lineup size, so the world visibly closes in; the blend settles it */
+  const pushFor = sr => { W.pushL = W.heldDist() * clamp(W.heldRectGoal().h / Math.max(40, sr.h) * .62, .14, 1); return W.heldRect(); };
   if (dir > 0) {
-    const slot = $(`[data-slot="${LEAD}"]`, nv.el), sw = $('.sweep', nv.el);
-    sw.style.opacity = 0;
-    $$('[data-slot]', nv.el).forEach(s => { if (s.dataset.slot === LEAD) return; const a = Stage.get(s.dataset.slot); a.dock(s); a.lookNow({blur: 18, op: 0, sc: .95, sat: .5}); });
-    W.canvas.style.opacity = 1;
-    /* the hand-off: the WebGL sprite and the DOM actor are the same frame of the same render, at the same rect */
-    lead.frame = W.held.frame; const r0 = pushFor(rectOf(slot));
-    lead.lookNow({shadow: 0}); W.held.vis = false; W.force = true;
-    run(tween(320, e => fx.release = e, E.out));
-    run(tween(D, e => fx.push = e, E.move, 40));
-    run(tween(D * .8, e => fx.haze = e, E.io, 110));
-    run(tween(D * .7, e => fx.sweep = e, E.io, 150));
-    Tone.to('paper', D * .85, E.io, 60);
-    /* the product rides the camera (it IS the held product) and is eased onto its slot as the world turns to paper */
-    const f = lead.fly(() => lerpRect(W.heldRect(), rectOf(slot), blendIn(kOf())), {from: r0, dur: D, ease: () => 1, frame: 0, stayFloating: true});
-    lead.lookTo({...nv.lookFor(LEAD), shadow: 1}, 1.6);
-    wait(D * .42).then(() => { if (alive(my)) $$('[data-slot]', nv.el).forEach(s => { if (s.dataset.slot !== LEAD) Stage.get(s.dataset.slot).lookTo(nv.lookFor(s.dataset.slot), 2.1); }); });
-    textIn(nv, D * .74, my);
-    run(tween(D * .45, e => sw.style.opacity = e.toFixed(3), E.io, D * .55));
-    glOpacity(0, D * .24, D * .76);
-    const ok = await f;
-    if (!alive(my)) return;
-    if (ok) lead.dock(slot);
-    await wait(D * .05);
-    Object.assign(fx, {push: 0, haze: 0, sweep: 0, release: 0}); W.held.vis = true; W.go(LEAD_CI, {instant: true});
+    sw.style.opacity = mid ? HG.sw : 0;
+    $$('[data-slot]', nv.el).forEach(s => { if (s.dataset.slot === LEAD) return; const a = Stage.get(s.dataset.slot); if (a.mode === 'fly' && a.look.op > .02) a.fly(s, {dur: 500}); else { a.dock(s); a.lookNow({blur: 18, op: 0, sc: .95, sat: .5}); } });
+    if (!mid) {
+      W.canvas.style.opacity = 1; W.setVisible(true);
+      /* from anywhere else on the plane, the camera travels to 08 as part of the same push */
+      if (W.route.st !== LEAD_CI) W.go(LEAD_CI, {dur: D * .9});
+      /* the hand-off: the WebGL sprite and the DOM actor are the same frame of the same render, at the same rect */
+      lead.frame = W.held.frame; const r0 = pushFor(rectOf(slot));
+      lead.lookNow({shadow: 0}); lead.float(r0); W.held.vis = false; W.force = true;
+    } else { lead.cancelFly(); if (lead.mode !== 'fly') lead.float(lead.screenRect()); }
+    lead.turnTo(0, D * (1 - k0) + 100);
+    lead.lookTo({...nv.lookFor(LEAD)}, 1.6);
+    fxTo('rise', 0, D * .7, E.io);
+    wait(Math.max(0, .42 - k0) * D).then(() => { if (alive(my)) $$('[data-slot]', nv.el).forEach(s => { if (s.dataset.slot !== LEAD) Stage.get(s.dataset.slot).lookTo(nv.lookFor(s.dataset.slot), 2.1); }); });
+    textIn(nv, Math.max(0, .74 - k0) * D, my);
   } else {
-    const st = nv.r.st, sw = $('.sweep', old.el), slot = $(`[data-slot="${LEAD}"]`, old.el);
-    const from = slot ? rectOf(slot) : lead.screenRect();
-    W.go(st, {instant: true}); Object.assign(fx, {push: 0, haze: 0, sweep: 0, release: 0}); W.held.vis = false;
-    W.frame(CLOCK.now(), 0); pushFor(from);
-    Object.assign(fx, {push: 1, haze: 1, sweep: 1, release: 1});
-    W.canvas.style.opacity = 0; W.setVisible(true); W.force = true;
-    glOpacity(1, D * .2);
-    if (sw) run(tween(D * .35, e => sw.style.opacity = (1 - e).toFixed(3), E.io));
-    run(tween(D, e => fx.push = 1 - e, E.move));
-    run(tween(D * .8, e => fx.haze = 1 - e, E.io, D * .14));
-    run(tween(D * .7, e => fx.sweep = 1 - e, E.io, D * .2));
-    run(tween(320, e => fx.release = 1 - e, E.io, D - 300));
-    Tone.to(toneOf(nv.r), D * .85, E.io, D * .12);
+    if (!mid) {
+      W.go(atlasSt, {instant: true}); Object.assign(fx, {push: 0, haze: 0, sweep: 0, release: 0, rise: 0}); W.held.vis = false;
+      W.frame(CLOCK.now(), 0); pushFor(rectOf(slot));
+      Object.assign(fx, {push: 1, haze: 1, sweep: 1, release: 1});
+      W.canvas.style.opacity = 0; HG.sw = sw.style.opacity === '' ? 1 : +sw.style.opacity;
+      lead.float(lead.screenRect());
+    } else { lead.cancelFly(); if (lead.mode !== 'fly') lead.float(lead.screenRect()); if (W.route.st !== atlasSt) W.go(atlasSt); }
+    W.setVisible(true); W.force = true;
     flipActors(old, nv, {skip: LEAD});
-    lead.lookTo({shadow: 0, blur: 0, op: 1, sc: 1, sat: 1}, 3);
-    const f = lead.fly(() => lerpRect(from, W.heldRect(), blendOut(kOf())), {from, dur: D, ease: () => 1, frame: W.held.frame, stayFloating: true});
-    textIn(nv, D * .72, my);
-    const ok = await f;
-    if (!alive(my) || !ok) return;
-    W.held.frame = lead.frame; W.held.vis = true; W.force = true; lead.hide();
+    lead.lookTo({blur: 0, op: 1, sc: 1, sat: 1}, 3);
+    textIn(nv, Math.max(0, k0 - .3) * D, my);
+  }
+  /* every channel runs from where it stands to where k1 puts it */
+  const ch = ['push', 'haze', 'sweep', 'release'].map(key => { const p = prog(CUR[key], k0, k1), v0 = fx[key], v1 = CUR[key](k1); return k => { fx[key] = v0 + (v1 - v0) * p(k); }; });
+  const tp = prog(CUR.tone, k0, k1), t0 = Tone.rgb.slice(), t1 = hex2rgb(STOPS[dir > 0 ? 'paper' : toneOf(nv.r)]);
+  const gp = prog(CUR.gl, k0, k1), g0 = +(W.canvas.style.opacity || 0), g1 = CUR.gl(k1);
+  const sp = prog(CUR.sw, k0, k1), s0 = mid ? HG.sw : dir > 0 ? 0 : HG.sw, s1 = CUR.sw(k1);
+  const toneName = dir > 0 ? 'paper' : toneOf(nv.r);
+  HG.live = true;
+  const drive = run(tween(Math.max(220, D * Math.abs(k1 - k0)), e => {
+    const k = k0 + (k1 - k0) * e; HG.k = k;
+    ch.forEach(f => f(k));
+    Tone.put(mixRGB(t0, t1, tp(k)), toneName);
+    W.canvas.style.opacity = (g0 + (g1 - g0) * gp(k)).toFixed(3);
+    HG.sw = s0 + (s1 - s0) * sp(k); sw.style.opacity = HG.sw.toFixed(3);
+    if (lead.mode === 'fly' && !lead.fl) lead.place(lerpRect(W.heldRect(), rectOf(slot), CUR.blend(k)));
+    /* no shadow while it is held in the air; it gains one only over the sweep's floor */
+    lead.goal.shadow = lead.look.shadow = CUR.shadow(k);
+  }, E.lin));
+  const ok = await drive;
+  if (!ok || !alive(my)) return;
+  HG.live = false;
+  if (dir > 0) {
+    lead.dock(slot); lead.lookTo({...nv.lookFor(LEAD)}, 4); sw.style.opacity = 1; HG.k = 1;
+    Object.assign(fx, {push: 0, haze: 0, sweep: 0, release: 0}); W.held.vis = true; W.go(LEAD_CI, {instant: true}); W.setVisible(false);
+  } else {
+    W.held.frame = lead.frame; W.held.vis = true; W.force = true; lead.hide(); HG.k = 0;
   }
 }
 
@@ -250,21 +297,29 @@ async function hinge(dir, old, nv, my) {
 async function haze(dir, old, nv, my) {
   const W = S.world, fx = W.fx, D = 1350;
   if (dir > 0) {
-    run(tween(D, e => fx.rise = e, E.move));
-    run(tween(D, e => fx.haze = e, t => Math.pow(t, 1.7)));
+    if (HG.live) { HG.live = false; HG.k = 0; }
+    /* the held product goes with the move when the page has a place for it on screen */
+    const th = $(`[data-thumb="${LEAD}"],[data-slot="${LEAD}"]`, nv.el), hr = W.heldRect();
+    if (W.held.vis && th && onScreen(rectOf(th)) && onScreen(hr) && !hr.behind) { const a = Stage.get(LEAD); a.frame = W.held.frame; a.lookNow({shadow: 0}); a.float(hr); W.held.vis = false; W.force = true; }
+    fxTo('rise', 1, D, E.move); fxTo('haze', 1, D, t => Math.pow(t, 1.5));
+    for (const k of ['push', 'sweep', 'release']) fxTo(k, 0, D * .6, E.io);
     Tone.to('paper', D, E.io);
-    flipActors(old, nv, {emerge: D * .55});
-    textIn(nv, D * .66, my);
-    await glOpacity(0, D * .32, D * .68); if (!alive(my)) return;
-    Object.assign(fx, {rise: 0, haze: 0});
+    flipActors(old, nv, {emerge: D * .3});
+    textIn(nv, D * .4, my);
+    await glOpacity(0, D * .34, D * .56); if (!alive(my)) return;
+    Object.assign(fx, {rise: 0, haze: 0, push: 0, sweep: 0, release: 0}); W.held.vis = true;
   } else {
-    W.go(nv.r.st, {instant: true}); Object.assign(fx, {rise: 1, haze: 1}); W.canvas.style.opacity = 0; W.setVisible(true); W.force = true;
+    HG.live = false; HG.k = 0;
+    const vis = W.visible && +(W.canvas.style.opacity || 0) > .02;
+    if (!vis) { W.go(nv.r.st, {instant: true}); Object.assign(fx, {rise: 1, haze: 1, push: 0, sweep: 0, release: 0}); W.held.vis = true; W.canvas.style.opacity = 0; W.setVisible(true); }
+    else { if (W.route.st !== nv.r.st) W.go(nv.r.st); handBack(); }
+    W.force = true;
     glOpacity(1, 300);
-    run(tween(D, e => fx.rise = 1 - e, E.move, 60));
-    run(tween(D, e => fx.haze = 1 - e, t => 1 - Math.pow(1 - t, 1.7), 60));
+    fxTo('rise', 0, D, E.move, 60); fxTo('haze', 0, D, t => 1 - Math.pow(1 - t, 1.7), 60);
+    for (const k of ['push', 'sweep', 'release']) fxTo(k, 0, D * .6, E.io);
     Tone.to(toneOf(nv.r), D, E.io, 60);
-    flipActors(old, nv, {});
-    textIn(nv, D * .7, my);
+    flipActors(old, nv, {skip: W.held.vis ? null : LEAD});
+    textIn(nv, D * .6, my);
     await wait(D + 60);
   }
 }
@@ -272,12 +327,13 @@ async function haze(dir, old, nv, my) {
 /* --- paper to paper: shared products fly; the rest haze; the text crossfades */
 async function paper(a, b, old, nv, my) {
   const dir = a.v === 'product' && b.v === 'product' ? Math.sign(byId(b.id).k - byId(a.id).k) * (Math.abs(byId(b.id).k - byId(a.id).k) > 3 ? -1 : 1) : 0;
-  const tone = toneOf(b); if (Tone.name !== tone) Tone.to(tone, 1100);
+  const tone = toneOf(b); if (Tone.hex !== STOPS[tone]) Tone.to(tone, 1100);
   if (nv.setFocusId && a.v === 'product') nv.setFocusId(a.id);
+  if (old) old.el.classList.add('sw-out');
   const isProd = a.v === 'collection' && b.v === 'product' || a.v === 'product' && b.v === 'collection';
-  const p = flipActors(old, nv, {dir, dur: isProd ? 1200 : 1100, emerge: isProd ? 420 : 260});
+  const p = flipActors(old, nv, {dir, dur: isProd ? 1200 : 1100, emerge: isProd ? 300 : 40});
   if (b.v === 'product') nv.el.classList.add('arriving');
-  textIn(nv, isProd ? 640 : 300, my);
+  textIn(nv, isProd ? 520 : 70, my);
   await Promise.race([p, wait(1300)]);
   nv.el.classList.remove('arriving');
 }
@@ -321,10 +377,10 @@ const enter = {
       Tone.to('sand', D, E.io, 120);
       textIn(nv, D * .62, my);
       wait(D * .66).then(() => BAR.classList.remove('arrive'));
-      await wait(D); if (W) W.interactive = true;
+      await wait(D); if (W && alive(my)) W.interactive = true;
     } else { Tone.to('sand', 900); textIn(nv, 500, my); }
     wait(60).then(() => BAR.classList.remove('arrive'));
-    focusView(nv);
+    if (alive(my)) focusView(nv);
   }
 };
 
@@ -336,7 +392,9 @@ bSearch.addEventListener('click', () => { const on = search.hidden; closeMenus()
 const ALLP = CAT.flatMap(c => c.it);
 function renderSearch() {
   const q = sQ.value.trim().toLowerCase();
-  const hits = !q ? ALLP.filter(p => p.c === '08') : ALLP.filter(p => (p.n + ' ' + p.g + ' ' + p.cn + ' ' + p.id + ' ' + p.act.map(a => a.name).join(' ') + ' ' + p.oth).toLowerCase().includes(q)).slice(0, 12);
+  /* names first (a name that starts with the query before one that contains it), then everything else that mentions it */
+  const rank = p => { const n = p.n.toLowerCase(); return n.startsWith(q) ? 0 : n.split(/\s+/).some(w => w.startsWith(q)) ? 1 : n.includes(q) ? 2 : 3; };
+  const hits = !q ? ALLP.filter(p => p.c === '08') : ALLP.filter(p => (p.n + ' ' + p.g + ' ' + p.cn + ' ' + p.id + ' ' + p.act.map(a => a.name).join(' ') + ' ' + p.oth).toLowerCase().includes(q)).map((p, i) => [rank(p), i, p]).sort((x, y) => x[0] - y[0] || x[1] - y[1]).map(x => x[2]).slice(0, 12);
   sRes.innerHTML = hits.length ? hits.map(p => `<li><a href="${p.c === '08' ? '#/p/' + p.id : '#/c/' + p.c}"><span class="mono">${p.id}</span><b>${esc(p.n)}</b><span>${esc(p.g)} · ${esc(p.cn)}</span></a></li>`).join('') : `<li class="none">Nothing in the Formulary matches “${esc(sQ.value)}”.</li>`;
 }
 sQ.addEventListener('input', renderSearch);

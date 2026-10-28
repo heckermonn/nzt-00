@@ -41,8 +41,8 @@ export const still = (id, v) => (R.still[id] && R.still[id][v]) || null;
 /* the detail stills a product page can tilt through, in the order the camera would find them */
 export function details(id) {
   const out = [];
-  const add = (v, t) => { const s = still(id, v); if (s) out.push({src: s.src, t, w: s.w, h: s.h, view: s.view}); };
-  add('macro-cap-hero', 'The cap'); add('macro-label-hero', 'The label'); add('top-hero', 'From above'); add('lying', 'At rest');
+  const add = (v, t, k) => { const s = still(id, v); if (s) out.push({src: s.src, t, k, w: s.w, h: s.h, view: s.view}); };
+  add('macro-cap-hero', 'The cap', 'cap'); add('macro-label-hero', 'The label', 'label'); add('top-hero', 'From above', 'top'); add('lying', 'At rest', 'lying');
   return out;
 }
 
@@ -86,4 +86,21 @@ export function clipped(im) {
     g.putImageData(d, 0, 0);
   } catch (e) {}
   CLIP.set(im, c); return c;
+}
+
+/* a still or a thumbnail with the render's shadow catcher cut away (it reads as a grey card on paper): blob URL, cached */
+const CLEAN = new Map();
+export function cleanSrc(src, maxH = 2000) {
+  const key = src + '|' + maxH; if (CLEAN.has(key)) return CLEAN.get(key);
+  const p = img(src).then(im => new Promise(res => {
+    if (!im) return res(src);
+    const k = Math.min(1, maxH / im.naturalHeight), w = Math.round(im.naturalWidth * k), h = Math.round(im.naturalHeight * k);
+    const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d', {willReadFrequently: true}); g.drawImage(im, 0, 0, w, h);
+    try { const d = g.getImageData(0, 0, w, h), a = d.data; for (let i = 3; i < a.length; i += 4) { const v = a[i]; a[i] = v < 150 ? 0 : v < 230 ? v * (v - 150) / 80 : v; } g.putImageData(d, 0, 0); } catch (e) { return res(src); }
+    c.toBlob(b => res(b ? URL.createObjectURL(b) : src), 'image/webp', .92);
+  }));
+  CLEAN.set(key, p); return p;
+}
+export function cleanImgs(root) {
+  root.querySelectorAll('img[data-clean]').forEach(i => { if (i.dataset.cleaned) return; i.dataset.cleaned = '1'; cleanSrc(i.getAttribute('src'), +i.dataset.clean || 2000).then(u => { i.src = u; i.classList.add('cl'); }); });
 }

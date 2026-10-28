@@ -2,8 +2,8 @@
    slots ([data-slot=id]) where product actors dock, thumbs ([data-thumb=id]) actors can fly from,
    and .tx text blocks that fade (never wipe) on arrival and departure. */
 import {CAT, ALL, byId, colOf, PACK, keyIng, keyLine, purpose, directions, cautions, fullList, servingSize, batch, SLOTS, slotsFor, CONC, MIN} from './catalog.js';
-import {$, $$, esc, money, pad2, clamp, ic, isPhone, RM, sm, CLOCK} from './util.js';
-import {frames, details, bboxOf, img, still} from './renders.js';
+import {$, $$, esc, money, pad2, clamp, ic, isPhone, RM, sm, CLOCK, wait} from './util.js';
+import {frames, details, bboxOf, img, still, cleanImgs} from './renders.js';
 import {Stage} from './stage.js';
 import {Protocol} from './protocol.js';
 
@@ -23,7 +23,7 @@ export function collectionView(go) {
   <div class="col-hero">
     <div class="sweep" aria-hidden="true"></div>
     <header class="col-head tx">
-      <h1 id="colH" tabindex="-1"><span class="code">08</span> <em>Renew</em></h1>
+      <h1 id="colH" tabindex="-1"><span class="h-code">08</span> <em>Renew</em></h1>
       <p class="desc">${esc(co.d)}</p>
     </header>
     <p class="col-meta tx mono">Six products<span>Sample prices</span></p>
@@ -31,24 +31,31 @@ export function collectionView(go) {
       ${co.it.map((p, i) => `<a class="li" role="listitem" href="#/p/${p.id}" data-id="${p.id}" data-i="${i}" aria-label="${esc(p.n)}, ${esc(p.g)}, ${esc(p.q)}, ${money(p.po)}"><span class="slot" data-slot="${p.id}"></span><span class="hit" aria-hidden="true"></span></a>`).join('')}
     </div>
     <div class="col-focus tx" aria-live="polite"><p class="fn"></p><p class="fm mono"></p><a class="fv" href="#/p/08-3">View <span class="sr">the product</span>${ic('arrow', 's')}</a></div>
-    <p class="col-hint tx mono" aria-hidden="true">${isPhone() ? 'Swipe the lineup' : 'Hover to bring one forward'}</p>
   </div>
   <section class="col-grid tx" aria-labelledby="cgH">
-    <h2 id="cgH">All six, <em>in order</em></h2>
+    <h2 id="cgH">All six, in order</h2>
     <ul class="rows" role="list">
       ${co.it.map(p => `<li class="row" data-id="${p.id}">
-        <a class="r-main" href="#/p/${p.id}"><img class="r-th" data-thumb="${p.id}" src="${thumb(p.id)}" alt="" loading="lazy" decoding="async"><span class="r-id mono">${p.id}</span><span class="r-n">${esc(p.n)}</span><span class="r-f">${esc(p.g)}</span><span class="r-q mono">${esc(p.q)}</span><span class="r-p mono">${money(p.po)}</span></a>
+        <a class="r-main" href="#/p/${p.id}"><img class="r-th" data-thumb="${p.id}" data-clean="240" src="${thumb(p.id)}" alt="" loading="lazy" decoding="async"><span class="r-id mono">${p.id}</span><span class="r-n">${esc(p.n)}</span><span class="r-f">${esc(p.g)}</span><span class="r-q mono">${esc(p.q)}</span><span class="r-p mono">${money(p.po)}</span></a>
         <button class="r-add" type="button" data-add="${p.id}" aria-label="Add ${esc(p.n)} to your Protocol, one-time, ${money(p.po)}">${ic('plus', 's')}<span>Add</span></button></li>`).join('')}
     </ul>
   </section>`;
-  const items = $$('.li', el);
+  const items = $$('.li', el), lu = $('.lineup', el), fcs = $('.col-focus', el);
+  let focus = 2;
   /* real scale, standing on one floor line */
   function size() {
     const ph = isPhone(), k = ph ? Math.min(innerHeight * .0024, innerWidth * .0047) : Math.min(innerHeight * .0028, innerWidth * .00155);
     items.forEach(a => { const id = a.dataset.id, s = $('.slot', a), h = frameH(id, k), b = BOT[PACK[id].kind]; s.style.height = h + 'px'; s.style.width = h * .8 + 'px'; s.style.marginBottom = -(h * (1 - b)) + 'px'; });
+    place();
   }
-  size();
-  let focus = 2;
+  /* desktop: the lineup stands so the lead product is at the centre; the caption sits under whichever is in focus */
+  function place() {
+    if (isPhone()) { lu.style.transform = ''; fcs.style.left = ''; return; }
+    const mid = a => a.offsetLeft + a.offsetWidth / 2, dx = Math.round(lu.clientWidth / 2 - mid(items[2]));
+    lu.style.transform = `translateX(${dx}px)`;
+    const half = Math.min(280, innerWidth * .45) / 2 + 24;
+    fcs.style.left = Math.round(clamp(mid(items[focus]) + dx, half, innerWidth - half)) + 'px';
+  }
   const lookFor = id => {
     const i = co.it.findIndex(p => p.id === id), d = Math.abs(i - focus);
     if (d === 0) return {sc: 1.035, ty: -4};
@@ -56,22 +63,23 @@ export function collectionView(go) {
   };
   function setFocus(i, quiet) {
     focus = clamp(i, 0, 5);
+    if (el.isConnected) place();
     items.forEach((a, k) => { a.classList.toggle('f', k === focus); const ac = Stage.has(a.dataset.id) && Stage.get(a.dataset.id); if (ac && (ac.mode === 'slot' && ac.slot && el.contains(ac.slot) || ac.mode === 'fly' && el.isConnected && !el.classList.contains('leaving'))) ac.lookTo(lookFor(a.dataset.id), 6); });
     const p = co.it[focus], f = $('.col-focus', el);
-    const fill = () => { $('.fn', f).innerHTML = nameHTML(p.n); $('.fm', f).innerHTML = `<span>${p.id}</span><span>${esc(PACK[p.id].fmt)} · ${esc(p.q)}</span><span>${money(p.po)}</span>`; $('.fv', f).href = '#/p/' + p.id; };
+    const fill = () => { $('.fn', f).textContent = p.n; $('.fm', f).innerHTML = `<span>${p.id}</span><span>${esc(PACK[p.id].fmt)} · ${esc(p.q)}</span><span>${money(p.po)}</span>`; $('.fv', f).href = '#/p/' + p.id; };
     if (quiet || RM) { fill(); return; }
     f.classList.add('swap'); clearTimeout(f._t); f._t = setTimeout(() => { fill(); f.classList.remove('swap'); }, 160);
   }
   setFocus(2, true);
   items.forEach((a, i) => { a.addEventListener('pointerenter', () => setFocus(i)); a.addEventListener('focus', () => setFocus(i)); });
   /* phone: the lineup is a horizontal swipe; the item nearest the centre is the focus */
-  const lu = $('.lineup', el);
   lu.addEventListener('scroll', () => { if (!isPhone()) return; const c = lu.scrollLeft + lu.clientWidth / 2; let best = 0, bd = 1e9; items.forEach((a, i) => { const m = a.offsetLeft + a.offsetWidth / 2, d = Math.abs(m - c); if (d < bd) { bd = d; best = i; } }); if (best !== focus) setFocus(best); }, {passive: true});
   $$('[data-add]', el).forEach(b => b.addEventListener('click', e => { const id = b.dataset.add, th = $(`[data-thumb="${id}"]`, el); Protocol.add(id, 'once', 30, 1, th); }));
   addEventListener('resize', size);
   return {
     el, lookFor, kind: 'collection',
-    shown() { if (isPhone()) { const a = items[focus]; lu.scrollLeft = a.offsetLeft - (lu.clientWidth - a.offsetWidth) / 2; } },
+    /* before anything measures a slot: the lineup centred on the focus (phone: scrolled; desktop: offset) */
+    prep() { size(); if (isPhone()) { const a = items[focus]; lu.scrollLeft = a.offsetLeft - (lu.clientWidth - a.offsetWidth) / 2; } cleanImgs(el); },
     setFocusId(id) { const i = co.it.findIndex(p => p.id === id); if (i >= 0) setFocus(i, true); },
     destroy() { removeEventListener('resize', size); }
   };
@@ -95,19 +103,19 @@ export function productView(id, go) {
     <div class="pd-stick">
       <div class="pd-info tx">
         <a class="pd-back mono" href="#/c/08">${ic('back', 's')}08 Renew</a>
-        <p class="code mono"><span>${p.id}</span><span>${esc(P.fmt)}</span></p>
+        <p class="pd-code mono"><span>${p.id}</span><span>${esc(P.fmt)}</span></p>
         <h1 id="pdH" tabindex="-1">${nameHTML(p.n)}</h1>
         <p class="what">${esc(p.w)}</p>
         <dl class="facts">
           <div><dt>Format</dt><dd>${esc(p.g)}</dd></div>
           <div><dt>Quantity</dt><dd>${esc(p.q)}</dd></div>
-          ${ki ? `<div><dt>Key ingredient</dt><dd>${esc(ki.n)}<span class="mono"> ${esc(ki.v)}</span></dd></div>` : ''}
+          ${ki ? `<div><dt>Key ingredient</dt><dd>${esc(ki.n)}<span class="mono"> ${esc(ki.v)}</span>${p.top ? ' <span class="sample">Sample</span>' : ''}</dd></div>` : ''}
           <div><dt>Use</dt><dd>${esc(p.s.replace('2 to 3', '2–3'))}</dd></div>
         </dl>
       </div>
       <div class="pd-stage" tabindex="0" role="img" aria-label="${esc(p.n)}, ${esc(P.fmt.toLowerCase())}, ${esc(p.q)}. Drag, or use the left and right arrow keys, to turn it.">
         <span class="slot" data-slot="${id}"></span>
-        ${det.map((d, k) => `<figure class="pd-det" data-k="${k}"><img src="${esc(d.src)}" alt="" loading="lazy" decoding="async"><figcaption class="mono">Fig. ${pad2(k + 2)} · ${esc(d.t)}</figcaption></figure>`).join('')}
+        ${det.map((d, k) => `<figure class="pd-det" data-k="${k}" data-kind="${d.k}"><img src="${esc(d.src)}" data-clean="1400" alt="" decoding="async"><figcaption class="mono">Fig. ${pad2(k + 1)} · ${esc(d.t)}</figcaption></figure>`).join('')}
         <p class="pd-turn mono tx" aria-hidden="true"><span>Drag to turn</span><span class="rot">000°</span></p>
       </div>
       <div class="pd-buy tx">
@@ -127,7 +135,7 @@ export function productView(id, go) {
   <div class="pd-body tx">
     <nav class="pd-idx" aria-label="Sections">${[['ov', 'Overview'], ['in', 'Ingredients'], ['di', 'Directions'], ['ca', 'Cautions'], ['ev', 'Evidence'], ['ts', 'Testing & Sourcing']].map(x => `<a href="#s-${x[0]}" data-jump="s-${x[0]}">${x[1]}</a>`).join('')}</nav>
     <div class="pd-secs">
-      ${sec('s-ov', 'Overview', `<p class="lede">${esc(p.w)}</p><p>${esc(purpose(p))} ${esc(PACK[id].mat)}, Ø ${P.d} × ${P.h} mm.</p><p class="fine">${p.id} sits in 08 Renew, which the Formulary describes as ${esc(co.d.toLowerCase())}. The collection name says where it sits, not what it does.</p>`)}
+      ${sec('s-ov', 'Overview', `<p class="lede">${esc(p.w)}</p><p>${esc(purpose(p))} ${esc(PACK[id].mat)}, Ø ${P.d} × ${P.h} mm.</p>`)}
       <figure class="band" aria-hidden="true"><img src="../v4/assets/photos/hand-linen-1200.webp" alt="" loading="lazy" decoding="async"></figure>
       ${sec('s-in', 'Ingredients', `<table class="tbl"><thead><tr><th scope="col">${p.top ? 'Key ingredient' : 'Ingredient'}</th><th scope="col" class="r">${p.top ? 'Concentration' : 'Per serving'}</th></tr></thead><tbody>${conc.map(c => `<tr><th scope="row">${esc(c[0])}</th><td class="r mono">${esc(c[1])}</td></tr>`).join('')}</tbody></table><p class="fine">${p.top ? 'Concentrations are sample formulation values, confirmed before launch.' : 'Per serving of ' + esc(servingSize(p)) + '.'}</p><p class="inci"><b>Full ingredient list.</b> ${esc(fullList(p))}</p>`)}
       ${sec('s-di', 'Directions', ol(directions(p)))}
@@ -171,9 +179,13 @@ export function productView(id, go) {
   stage.addEventListener('keydown', e => { if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return; e.preventDefault(); const a = actor(); a.turnTo(Math.round(a.frame) + (e.key === 'ArrowLeft' ? -2 : 2), 260); });
   img(frames(id)[0]).then(() => Stage.preload(id, 0));
 
-  /* scroll: the product turns and tilts through its detail stills (desktop), Ormaie-style */
-  const hero = $('.pd-hero', el), figs = $$('.pd-det', el), info = $('.pd-info', el), buy = $('.pd-buy', el), turn = $('.pd-turn', el);
-  let lastStep = -2, barOn = null;
+  /* scroll: the product itself moves toward each detail still's view (closer to the cap, over onto its side, up to
+     look down on it), and only then gives way to the still, which settles in where it went (desktop, Ormaie-style) */
+  const hero = $('.pd-hero', el), figs = $$('.pd-det', el), turn = $('.pd-turn', el);
+  const bb = bboxOf(id), cy = (bb[1] + bb[3]) / 2, ty = (c, sc) => (.5 - .82 - (c - .82) * sc);
+  const POSE = {cap: {sc: 1.7, c: bb[1] + (bb[3] - bb[1]) * .16}, label: {sc: 1.35, c: cy}, top: {sc: .98, sy: .8, c: cy}, lying: {sc: .94, rot: -88, c: cy}};
+  const pose = kind => { const q = POSE[kind] || POSE.label, h = slot.clientHeight || 600; return {sc: q.sc, sy: q.sy || 1, rot: q.rot || 0, ty: (kind === 'lying' ? -.12 : ty(q.c, q.sc)) * h}; };
+  let lastStep = -2, barOn = null, stepTok = 0;
   function frame(dt) {
     const a = Stage.has(id) ? actor() : null;
     if (a && !T.drag && Math.abs(T.coast) > .01) { a.frame += T.coast; T.coast *= .93; if (Math.abs(T.coast) < .02) { T.coast = 0; } }
@@ -189,15 +201,25 @@ export function productView(id, go) {
       const det = step >= 1 && step <= nd;
       figs.forEach((f, k) => f.classList.toggle('on', det && k === step - 1));
       el.classList.toggle('detailing', det);
-      if (a && a.mode === 'slot') a.lookTo(det ? {op: 0, blur: 10, sc: .96} : {}, 5);
+      if (a && a.mode === 'slot') {
+        const my = ++stepTok;
+        if (det) { const q = pose(figs[step - 1].dataset.kind); a.lookTo({...q, op: a.look.op > .5 ? 1 : 0}, 4.2); wait(RM ? 0 : 220).then(() => { if (my === stepTok) a.lookTo({...q, op: 0, blur: 3}, 8); }); }
+        else a.lookTo({}, 4.2);
+      }
     }
     /* during the first half-step the product turns a quarter as the page begins to move */
     if (a && !T.drag && !T.coast && !ph && step === 0 && !el.classList.contains('arriving')) { const want = seg * 2 * 12; if (Math.abs(T.scrollF - want) > .01) { a.frame += want - T.scrollF; T.scrollF = want; } }
-    info.classList.toggle('quiet', !ph && pr > .04 && pr < .97); buy.classList.toggle('quiet', !ph && pr > .04 && pr < .97); turn.classList.toggle('quiet', !ph && pr > .04);
+    turn.classList.toggle('quiet', !ph && pr > .04);
     const on = ph || r.bottom < innerHeight * .35;
     if (on !== barOn) { barOn = on; bar.classList.toggle('on', on); }
   }
-  return {el, kind: 'product', id, lookFor: () => ({}), frame, destroy() { Protocol.off(upd); }};
+  /* the index shows which section you are in */
+  const idx = $$('.pd-idx a', el), io = 'IntersectionObserver' in window ? new IntersectionObserver(es => {
+    const vis = $$('.ps', el).filter(x => { const r = x.getBoundingClientRect(); return r.top < innerHeight * .45 && r.bottom > innerHeight * .2; });
+    const cur = vis.length ? vis[0].id : null; idx.forEach(x => x.toggleAttribute('aria-current', x.dataset.jump === cur));
+  }, {rootMargin: '-20% 0px -55% 0px', threshold: [0, .01, .5, 1]}) : null;
+  if (io) $$('.ps', el).forEach(x => io.observe(x));
+  return {el, kind: 'product', id, lookFor: () => ({}), frame, prep() { cleanImgs(el); }, destroy() { Protocol.off(upd); if (io) io.disconnect(); }};
 }
 
 /* ================================================================ The Formulary: the index of all nine */
@@ -205,13 +227,13 @@ export function formularyView() {
   const el = document.createElement('section');
   el.className = 'view v-fx'; el.dataset.view = 'formulary'; el.setAttribute('aria-labelledby', 'fxH');
   el.innerHTML = `<div class="page tx">
-    <header class="pg-head"><h1 id="fxH" tabindex="-1">The <em>Formulary</em></h1><p class="desc">Nine collections, and every product in them. 08 Renew is open in full; the others list their products and sample prices.</p></header>
+    <header class="pg-head"><h1 id="fxH" tabindex="-1">The <em>Formulary</em></h1><p class="desc">Nine collections, and every product in them, with sample prices.</p></header>
     <ol class="fx-list" role="list">${CAT.map(co => `<li class="fx-row${co.c === '08' ? ' open' : ''}">
       <a class="fx-main" href="#/c/${co.c}"><span class="fx-c mono">${co.c}</span><span class="fx-n">${esc(co.n)}</span><span class="fx-d">${esc(co.d)}</span><span class="fx-k mono">${pad2(co.it.length)}</span></a>
-      ${co.c === '08' ? `<div class="fx-th" aria-hidden="true">${co.it.map(p => `<img data-thumb="${p.id}" src="${thumb(p.id)}" alt="" decoding="async">`).join('')}</div>` : `<p class="fx-p">${co.it.map(p => esc(p.n)).join('<i>/</i>')}</p>`}
+      ${co.c === '08' ? `<div class="fx-th" aria-hidden="true">${co.it.map(p => `<img data-thumb="${p.id}" data-clean="300" src="${thumb(p.id)}" alt="" decoding="async">`).join('')}</div>` : `<p class="fx-p">${co.it.map(p => `<span class="nw">${esc(p.n)}</span>`).join('\u00a0<i>/</i> ')}</p>`}
       <a class="fx-at mono" href="#/atlas/${co.c}">In the Atlas${ic('arrow', 's')}</a></li>`).join('')}</ol>
   </div>`;
-  return {el, kind: 'formulary', lookFor: () => ({})};
+  return {el, kind: 'formulary', lookFor: () => ({}), prep() { cleanImgs(el); }};
 }
 
 /* ================================================================ any other collection: calm, text-only rows */
@@ -219,10 +241,10 @@ export function collView(c) {
   const co = colOf(c) || CAT[0], el = document.createElement('section');
   el.className = 'view v-cl'; el.dataset.view = 'coll'; el.setAttribute('aria-labelledby', 'clH');
   el.innerHTML = `<div class="page tx">
-    <header class="pg-head"><a class="pd-back mono" href="#/formulary">${ic('back', 's')}Formulary</a><h1 id="clH" tabindex="-1"><span class="code">${co.c}</span> <em>${esc(co.n)}</em></h1><p class="desc">${esc(co.d)}</p></header>
+    <header class="pg-head"><a class="pd-back mono" href="#/formulary">${ic('back', 's')}Formulary</a><h1 id="clH" tabindex="-1"><span class="h-code">${co.c}</span> <em>${esc(co.n)}</em></h1><p class="desc">${esc(co.d)}</p></header>
     <ul class="rows plain" role="list">${co.it.map(p => `<li class="row"><div class="r-main"><span class="r-id mono">${p.id}</span><span class="r-n">${esc(p.n)}</span><span class="r-f">${esc(p.g)}</span><span class="r-q mono">${esc(p.q)}</span><span class="r-p mono">${money(p.po)}</span></div>
       <button class="r-add" type="button" data-add="${p.id}" aria-label="Add ${esc(p.n)} to your Protocol, one-time, ${money(p.po)}">${ic('plus', 's')}<span>Add</span></button></li>`).join('')}</ul>
-    <p class="fine">Sample prices. Full product pages for ${esc(co.n)} follow the 08 Renew pattern.</p>
+    <p class="fine">Sample prices.</p>
     <nav class="cl-nav mono" aria-label="Collections">${CAT.map(x => `<a href="#/c/${x.c}"${x.c === co.c ? ' aria-current="page"' : ''}>${x.c}</a>`).join('')}</nav>
   </div>`;
   $$('[data-add]', el).forEach(b => b.addEventListener('click', () => Protocol.add(b.dataset.add, 'once', 30, 1, b)));
@@ -232,10 +254,10 @@ export function collView(c) {
 /* ================================================================ member pages (stubs with real, plain content) */
 const STUB = {
   dispatches: ['Dispatches', 'Your <em>dispatches</em>', p => `<p class="lede">Every dispatch is built from your Protocol on the day it leaves.</p><ul class="rows plain">${Protocol.lines().length ? Protocol.lines().map(l => { const q = byId(l.id); return `<li class="row"><div class="r-main"><span class="r-id mono">${q.id}</span><span class="r-n">${esc(q.n)}</span><span class="r-f">${l.m === 'sub' ? 'Every ' + l.fr + ' days' : 'One-time'}</span><span class="r-q mono">× ${l.q}</span></div></li>`; }).join('') : '<li class="row empty">Nothing is due to leave yet. Add a product to your Protocol and it will appear here.</li>'}</ul>`],
-  cabinet: ['Cabinet', 'The <em>Cabinet</em>', () => `<p class="lede">Products you keep, between dispatches. Saving arrives with accounts in a later phase.</p>`],
-  nominations: ['Nominations', '<em>Nominations</em>', () => `<p class="lede">Members may nominate two people a year. You have two nominations left.</p><p class="fine">Nominations open with accounts in a later phase.</p>`],
+  cabinet: ['Cabinet', 'The <em>Cabinet</em>', () => `<p class="lede">Products you keep, between dispatches.</p><p class="fine">Not open yet.</p>`],
+  nominations: ['Nominations', '<em>Nominations</em>', () => `<p class="lede">Membership is by invitation. This is where members will put someone forward.</p><p class="fine">Not open yet.</p>`],
   record: ['Member Record', 'Member <em>Record</em>', () => `<dl class="dl2"><dt>Member</dt><dd class="mono">0047</dd><dt>Admitted</dt><dd>With an invitation card</dd><dt>Protocol</dt><dd>${Protocol.count()} items</dd></dl>`],
-  liaison: ['Liaison', 'Member <em>Liaison</em>', () => `<p class="lede">A person, not a ticket. Write and someone who knows the Formulary replies within a working day.</p><p class="fine">Messaging arrives in a later phase.</p>`],
+  liaison: ['Liaison', 'Member <em>Liaison</em>', () => `<p class="lede">A person, not a ticket: someone who knows the Formulary.</p><p class="fine">Not open yet.</p>`],
   key: ['Your Key', 'Your <em>Key</em>', () => `<p class="lede">The card in your box opens the door. Hold it to your phone and it carries you past the gate.</p><dl class="dl2"><dt>Key</dt><dd class="mono">0047 · NFC</dd><dt>Code</dt><dd class="mono">On the card</dd></dl>`]
 };
 export function memberView(k) {

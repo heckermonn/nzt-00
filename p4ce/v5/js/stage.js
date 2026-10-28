@@ -7,9 +7,7 @@ import {frames, frameNear, img, bboxOf, preloadTurn, clipped} from './renders.js
 
 const layer = document.getElementById('stage');
 const DPR = () => Math.min(2, devicePixelRatio || 1);
-const edgeX = (g, W) => { const l = g.createLinearGradient(0, 0, W, 0); l.addColorStop(0, 'rgba(0,0,0,0)'); l.addColorStop(.17, '#000'); l.addColorStop(.83, '#000'); l.addColorStop(1, 'rgba(0,0,0,0)'); return l; };
-const edgeY = (g, H) => { const l = g.createLinearGradient(0, 0, 0, H); l.addColorStop(0, 'rgba(0,0,0,0)'); l.addColorStop(.06, '#000'); l.addColorStop(.92, '#000'); l.addColorStop(1, 'rgba(0,0,0,0)'); return l; };
-const LOOK0 = {blur: 0, op: 1, sat: 1, sc: 1, ty: 0, shadow: 1};
+const LOOK0 = {blur: 0, op: 1, sat: 1, sc: 1, ty: 0, tx: 0, rot: 0, sy: 1, shadow: 1};
 
 export const rectOf = el => { const r = el.getBoundingClientRect(); return {x: r.left, y: r.top, w: r.width, h: r.height}; };
 const lerpR = (a, b, t) => ({x: lerp(a.x, b.x, t), y: lerp(a.y, b.y, t), w: lerp(a.w, b.w, t), h: lerp(a.h, b.h, t)});
@@ -84,7 +82,7 @@ class Actor {
     const L = this.look, s = this.el.style;
     s.opacity = L.op.toFixed(3);
     s.filter = (L.blur > .05 ? `blur(${L.blur.toFixed(2)}px) ` : '') + (Math.abs(L.sat - 1) > .01 ? `saturate(${L.sat.toFixed(3)}) contrast(${(.82 + .18 * L.sat).toFixed(3)})` : '');
-    const tr = (Math.abs(L.sc - 1) > .001 ? `scale(${L.sc.toFixed(4)}) ` : '') + (Math.abs(L.ty) > .05 ? `translateY(${L.ty.toFixed(2)}px)` : '');
+    const tr = (Math.abs(L.tx) > .05 || Math.abs(L.ty) > .05 ? `translate(${L.tx.toFixed(2)}px,${L.ty.toFixed(2)}px) ` : '') + (Math.abs(L.rot) > .01 ? `rotate(${L.rot.toFixed(2)}deg) ` : '') + (Math.abs(L.sc - 1) > .001 || Math.abs(L.sy - 1) > .001 ? `scale(${L.sc.toFixed(4)},${(L.sc * L.sy).toFixed(4)})` : '');
     this.cv.style.transform = tr;
   }
   /* --- frames */
@@ -108,10 +106,18 @@ class Actor {
     if (!force && k === this.drawn && im === this.drawnImg && sh === this.drawnSh) return;
     const g = this.g, W = this.cv.width, H = this.cv.height;
     g.clearRect(0, 0, W, H);
-    if (sh >= 1) g.drawImage(im, 0, 0, W, H);
-    else { g.drawImage(clipped(im), 0, 0, W, H); if (sh > 0) { g.globalAlpha = sh; g.drawImage(im, 0, 0, W, H); g.globalAlpha = 1; } }
-    /* the render's contact shadow runs to the frame's edges; feather it so no frame edge ever shows */
-    if (sh > 0) { g.globalCompositeOperation = 'destination-in'; g.fillStyle = edgeX(g, W); g.fillRect(0, 0, W, H); g.fillStyle = edgeY(g, H); g.fillRect(0, 0, W, H); g.globalCompositeOperation = 'source-over'; }
+    /* the render's shadow catcher reads as a grey slab: keep only the product (full resolution, masked by the
+       thresholded half-res alpha), then lay a soft elliptical contact shadow under its base */
+    g.globalCompositeOperation = 'source-over'; g.drawImage(im, 0, 0, W, H);
+    g.globalCompositeOperation = 'destination-in'; g.drawImage(clipped(im), 0, 0, W, H);
+    if (sh > 0) {
+      const b = bboxOf(this.id), cx = (b[0] + b[2]) / 2 * W, by = b[3] * H, rw = (b[2] - b[0]) * W * .62, rh = Math.max(4, rw * .16);
+      g.globalCompositeOperation = 'destination-over';
+      g.save(); g.translate(cx, by - rh * .25); g.scale(1, rh / rw);
+      const rg = g.createRadialGradient(0, 0, 0, 0, 0, rw); rg.addColorStop(0, `rgba(40,34,28,${(.30 * sh).toFixed(3)})`); rg.addColorStop(.45, `rgba(40,34,28,${(.14 * sh).toFixed(3)})`); rg.addColorStop(1, 'rgba(40,34,28,0)');
+      g.fillStyle = rg; g.fillRect(-rw, -rw, rw * 2, rw * 2); g.restore();
+    }
+    g.globalCompositeOperation = 'source-over';
     this.drawn = k; this.drawnImg = im; this.drawnSh = sh;
   }
   step(dt) {
@@ -135,7 +141,7 @@ export const Stage = {
   /* a small copy that flies somewhere and is gone (the Protocol drop) */
   async ghost(id, from, to, o = {}) {
     const a = new Actor(id + '~g'); a.id = id; a.frame = o.frame || 0;
-    a.el.classList.add('ghost'); a.float(from); a.lookNow({});
+    a.el.classList.add('ghost'); a.float(from); a.lookNow({shadow: 0});
     a.paint(true);
     const tgt = () => typeof to === 'function' ? to() : to instanceof Element ? rectOf(to) : to;
     const s = {...from};
