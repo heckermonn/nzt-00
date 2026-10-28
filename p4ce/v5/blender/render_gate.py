@@ -284,14 +284,20 @@ def cmd_publish(a):
     if light:
         man["lightHex"] = light.get("land", list(light.values())[0])[0]
     man["notes"] = [
-        "Slot rect is normalised 0-1 image coords (x, y from top-left, w, h), measured from the renders: "
-        "the region where closed.webp and slot.webp differ.",
+        "slot is normalised 0-1 image coords (x, y from top-left, w, h) of the dark letterbox opening, measured "
+        "from the renders: where closed and slot differ (the plate leaves), grown to the full dark opening. "
+        "slotPx is the same in pixels. Place eyes.webp to cover it.",
         "open/f_000 is identical in framing and pose to closed.webp; the leaf swings inward (hinge left), "
         "then the camera dollies through the doorway into the light.",
         "lightHex is the median colour of the last frame; uniformFraction is the share of its pixels within "
         "6/255 of that colour. Light target was " + G.LIGHT_HEX_TARGET + " (Atlas sky).",
-        "No signage: the only mark is a small engraved '4' plate beside the door (the v2 door's number).",
-        "Fixed render seed: no frame-to-frame shimmer. Encode WebP q" + str(a.q) + ".",
+        "No signage: the only mark is a small engraved '4' plate above the door (the v2 door's number).",
+        "Sequence timing: f_001-f_003 barely move (a heavy leaf starting), the leaf is fully open by about f_015, "
+        "the camera crosses the doorway at about f_016 and the frames are near-uniform light from about f_021. "
+        "Suggested playback about 24 fps (1.2 s).",
+        "Frames after f_007 were rendered at 70% (dolly, motion-blurred) and 50% (uniform tail), then upsampled.",
+        "Fixed render seed: no frame-to-frame shimmer. Encoded WebP q" + str(a.q) + " (q82 smeared the brushed "
+        "steel grain in the dark frames; q" + str(a.q) + " keeps it and the set stays small).",
     ]
     os.makedirs(ASSETS, exist_ok=True)
     json.dump(man, open(os.path.join(ASSETS, "manifest.json"), "w"), indent=2)
@@ -367,7 +373,7 @@ def main():
     r.add_argument("--force", action="store_true")
     p = sub.add_parser("publish")
     p.add_argument("--out", default=SCRATCH)
-    p.add_argument("--q", type=int, default=82)
+    p.add_argument("--q", type=int, default=90)  # q82 smeared the brushed grain in the dark frames
     v = sub.add_parser("preview")
     v.add_argument("orient", choices=["land", "port"])
     v.add_argument("--out", default=SCRATCH)
