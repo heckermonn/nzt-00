@@ -5,6 +5,9 @@
 import {$, $$, Q, RM, store, isPhone, tween, E, clamp, wait, CLOCK} from './util.js';
 
 const GBASE = 'assets/gate/';
+/* where the ritual can sit legibly in the renders (normalised image coords): beside the alcove on the dark wall
+   (landscape), or on the dark floor in front of the step (portrait). Measured from closed.webp. */
+const ZONE = {land: {wallX: .668, floorY: .835}, port: {wallX: .82, floorY: .815}};
 const CODE = '0047RSRV';
 const g = {
   el: $('#gate'), art: $('#gArt'), ph: $('#gPh'), img: $('#gImg'), seq: $('#gSeq'), slot: $('#gSlot'), eyes: $('#gEyes'), knock: $('#gKnock'),
@@ -45,9 +48,9 @@ async function loadArt() {
   const land = parseOri(m, 'land'), port = parseOri(m, 'port');
   if (!land && !port) return null;
   const v = m.v || m.version ? '?v=' + (m.v || m.version) : '';
-  return {land: land || port, port: port || land, light: m.lightHex || m.light || (land && land.light) || null, eyes: m.eyes || 'eyes.webp', v};
+  return {land: land || port, port: port || land, light: m.lightHex || m.light || (land && land.light) || null, eyes: typeof m.eyes === 'string' ? m.eyes : (m.eyes && m.eyes.file) || 'eyes.webp', v};
 }
-const im = src => new Promise(res => { const i = new Image(); i.decoding = 'async'; i.onload = () => res(i); i.onerror = () => res(null); i.src = src; });
+const im = src => new Promise(res => { const i = new Image(); i.decoding = 'async'; i.onload = () => (i.decode ? i.decode().catch(() => {}) : Promise.resolve()).then(() => res(i)); i.onerror = () => res(null); i.src = src; });
 
 /* ------------------------------------------------------------ layout: cover-fit the art, place the slot and the ritual under it */
 function cover(iw, ih) { const vw = innerWidth, vh = innerHeight, s = Math.max(vw / iw, vh / ih); return {s, ox: (vw - iw * s) / 2, oy: (vh - ih * s) / 2}; }
@@ -59,15 +62,22 @@ function slotPx() {
   const d = $('.g-door', g.ph).getBoundingClientRect();
   return {x: d.left + d.width * .28, y: d.top + d.height * .36, w: d.width * .44, h: Math.max(14, d.height * .05)};
 }
+function imgPt(nx, ny) { const o = g.ori, [iw, ih] = o.dims || o.size, c = cover(iw, ih); return {x: c.ox + nx * iw * c.s, y: c.oy + ny * ih * c.s}; }
 function layout() {
-  if (g.art0) { const want = innerWidth / innerHeight < 1 ? 'port' : 'land'; if (g.ori !== g.art0[want]) { g.ori = g.art0[want]; if (g.live) showStill(g.state === 'closed' ? 'closed' : 'slot', true); } }
-  const r = slotPx();
+  if (g.art0) { const want = innerWidth / innerHeight < 1 ? 'port' : 'land'; if (g.ori !== g.art0[want]) { g.ori = g.art0[want]; if (g.live) preloadOpen(); if (g.live) showStill(g.state === 'closed' || g.state === 'waiting' ? 'closed' : 'slot', true); } }
+  const r = slotPx(), E = g.el.style, ph = isPhone();
   Object.assign(g.slot.style, {left: r.x + 'px', top: r.y + 'px', width: r.w + 'px', height: r.h + 'px'});
-  const fw = Math.min(isPhone() ? innerWidth - 48 : 300, Math.max(240, r.w * 1.25));
-  g.el.style.setProperty('--fx', (r.x + r.w / 2) + 'px'); g.el.style.setProperty('--fy', (r.y + r.h + (isPhone() ? 26 : 34)) + 'px'); g.el.style.setProperty('--fw', fw + 'px');
-  g.el.style.setProperty('--sy', (r.y - 46) + 'px');
-  const k = g.knock; const d = g.art0 ? {left: r.x - r.w * .2, top: r.y - r.h * 14, width: r.w * 1.4, height: r.h * 40} : $('.g-door', g.ph).getBoundingClientRect();
-  Object.assign(k.style, {left: d.left + 'px', top: d.top + 'px', width: d.width + 'px', height: d.height + 'px'});
+  let fw = Math.min(ph ? innerWidth - 48 : 300, Math.max(240, r.w * 1.25)), fx = r.x + r.w / 2, fy = r.y + r.h + (ph ? 26 : 34), side = false, subY = innerHeight * .89 - 20;
+  if (g.art0) {
+    const k = g.ori === g.art0.land ? 'land' : 'port', Z = ZONE[k], wall = imgPt(Z.wallX, 0).x, floor = imgPt(0, Z.floorY).y;
+    if (innerWidth - wall >= 300 + 72) { side = true; fw = Math.min(300, innerWidth - wall - 72); fx = wall + 44; fy = r.y - 6; subY = Math.min(innerHeight - 56, floor + 34); }
+    else { fy = Math.min(innerHeight - 132, floor + 22); subY = fy + 4; fw = Math.min(innerWidth - 48, 300); }
+  }
+  g.el.classList.toggle('rit-side', side);
+  E.setProperty('--fx', fx + 'px'); E.setProperty('--fy', fy + 'px'); E.setProperty('--fw', fw + 'px'); E.setProperty('--suby', subY + 'px');
+  E.setProperty('--sy', (r.y - 46) + 'px');
+  const kb = g.knock; const d = g.art0 ? (() => { const a = imgPt(g.ori === g.art0.land ? .405 : .29, g.ori === g.art0.land ? .2 : .22), b = imgPt(g.ori === g.art0.land ? .595 : .71, g.ori === g.art0.land ? .8 : .73); return {left: a.x, top: a.y, width: b.x - a.x, height: b.y - a.y}; })() : $('.g-door', g.ph).getBoundingClientRect();
+  Object.assign(kb.style, {left: d.left + 'px', top: d.top + 'px', width: d.width + 'px', height: d.height + 'px'});
 }
 async function showStill(which, instant) {
   if (!g.art0) { g.el.classList.toggle('slot-open', which === 'slot'); return; }
@@ -111,7 +121,7 @@ function openSlot() {
   showStill('slot'); g.el.classList.add('slot-open');
   later(260, () => eyesTo(1));
   later(700, () => sub(g.opens > 1 ? "We're still closed." : "We're closed.", 2400));
-  later(2600, showRitual);
+  later(3000, showRitual);
   preloadOpen();
 }
 function showRitual() {
@@ -138,25 +148,31 @@ function success(line) {
   later(1500, openDoor);
 }
 /* ------------------------------------------------------------ the door opens inward onto light; the camera goes through */
-async function preloadOpen() {
-  if (!g.art0 || g.imgs.length) return;
-  const list = g.ori.open; g.imgs = new Array(list.length);
-  await Promise.all(list.map((f, i) => im(GBASE + f + g.art0.v).then(x => { g.imgs[i] = x; })));
+function preloadOpen() {
+  if (!g.art0) return Promise.resolve();
+  const o = g.ori; if (o.pre) return o.pre;
+  o.imgs = new Array(o.open.length);
+  return (o.pre = Promise.all(o.open.map((f, i) => im(GBASE + f + g.art0.v).then(x => { o.imgs[i] = x; }))));
 }
 async function openDoor() {
   g.sub.classList.remove('on');
   const light = g.lightHex;
+  g.el.classList.add('opening');
   if (g.art0 && g.ori.open.length) {
     await preloadOpen();
-    const cv = g.seq, c = cv.getContext('2d'), n = g.imgs.length, dur = RM ? 0 : Math.max(1800, n * 42);
-    cv.width = innerWidth * Math.min(1.5, devicePixelRatio || 1); cv.height = innerHeight * Math.min(1.5, devicePixelRatio || 1); cv.classList.add('on');
-    const draw = i => { const x = g.imgs[clamp(Math.round(i), 0, n - 1)]; if (!x) return; const s = Math.max(cv.width / x.naturalWidth, cv.height / x.naturalHeight); c.drawImage(x, (cv.width - x.naturalWidth * s) / 2, (cv.height - x.naturalHeight * s) / 2, x.naturalWidth * s, x.naturalHeight * s); };
+    /* the path-traced sequence (28 frames, ~24 fps): drawn to a canvas, eased in (the leaf is heavy), with adjacent
+       frames blended by the fraction so a 60 Hz display never steps; f_000 is closed.webp, so play from f_001 */
+    const imgs = g.ori.imgs.filter(Boolean), cv = g.seq, c = cv.getContext('2d'), n = imgs.length, f0 = 1, dur = RM ? 0 : Math.round((n - f0) / 24 * 1000 * 1.3);
+    const dpr = Math.min(1.5, devicePixelRatio || 1); cv.width = Math.round(innerWidth * dpr); cv.height = Math.round(innerHeight * dpr);
+    const put = (x, a) => { const s2 = Math.max(cv.width / x.naturalWidth, cv.height / x.naturalHeight), w = x.naturalWidth * s2, h = x.naturalHeight * s2; c.globalAlpha = a; c.drawImage(x, (cv.width - w) / 2, (cv.height - h) / 2, w, h); c.globalAlpha = 1; };
+    const draw = fi => { const i = clamp(Math.floor(fi), 0, n - 1), fr = fi - i; put(imgs[i], 1); if (fr > .02 && i + 1 < n) put(imgs[i + 1], fr); };
+    draw(f0); cv.classList.add('on');
+    const easeIn = t => t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
     let handed = false;
-    await tween(dur, (e, k) => { draw(e * (n - 1)); if (!handed && k > .72) { handed = true; g.onEnter && g.onEnter.prepare(light); } }, E.io);
+    await tween(dur, (e, k) => { draw(f0 + e * (n - 1 - f0)); if (!handed && k > .78) { handed = true; g.onEnter && g.onEnter.prepare(light); } }, easeIn);
     if (!handed) g.onEnter && g.onEnter.prepare(light);
   } else {
     /* placeholder: the door swings in, the camera dollies through the doorway into the light */
-    g.el.classList.add('opening');
     let handed = false;
     await tween(RM ? 0 : 2600, (e, k) => {
       const sw = E.out(clamp(k / .45)), dolly = E.io(clamp((k - .18) / .82));
@@ -196,11 +212,11 @@ export const Gate = {
   async init(onEnter, o = {}) {
     g.onEnter = onEnter;
     const art = await loadArt();
-    if (art) { g.art0 = art; g.ori = innerWidth / innerHeight < 1 ? art.port : art.land; g.lightHex = art.light; if (art.eyes) g.eyes.src = GBASE + art.eyes + art.v; g.el.classList.add('has-art'); await showStill('closed', true); }
+    if (art) { g.art0 = art; g.ori = innerWidth / innerHeight < 1 ? art.port : art.land; g.lightHex = art.light; if (art.eyes) g.eyes.src = GBASE + art.eyes + art.v; g.el.classList.add('has-art'); await showStill('closed', true); setTimeout(preloadOpen, 1200); }
     return {art: !!art, light: g.lightHex};
   },
   show(o = {}) {
-    clearLater(); g.live = true; g.state = 'closed'; g.knocks = 0; g.opens = 0; g.imgs = g.imgs || [];
+    clearLater(); g.live = true; g.state = 'closed'; g.knocks = 0; g.opens = 0;
     g.el.hidden = false; g.el.getAnimations().forEach(a => a.cancel()); g.el.style.opacity = '';
     g.el.classList.remove('slot-open', 'ritual', 'opening', 'going'); g.ph.style.removeProperty('--swing'); g.ph.style.removeProperty('--dolly'); g.ph.style.removeProperty('--glow'); g.seq.classList.remove('on');
     g.form.hidden = g.mem.hidden = true; g.form.classList.remove('on'); g.mem.classList.remove('on'); g.code.value = ''; eyesTo(0);

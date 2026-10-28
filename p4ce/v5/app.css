@@ -442,7 +442,7 @@ html.in #gate:not(.going) { display: none; }
 .g-wall { position: absolute; inset: 0; opacity: .5; background:
   repeating-linear-gradient(0deg, transparent 0 calc(var(--dh) * .125 - 1px), rgba(255, 255, 255, .018) calc(var(--dh) * .125 - 1px) calc(var(--dh) * .125)); }
 .g-light, .g-door, .g-frame { position: absolute; left: calc(50% - var(--dw) / 2); top: var(--dt); width: var(--dw); height: var(--dh); }
-.g-light { background: radial-gradient(90% 70% at 50% 45%, #fbf3e6, #f3e7d4 60%, #e9d8bd); opacity: var(--glow, 0); box-shadow: 0 0 calc(var(--glow, 0) * 120px) calc(var(--glow, 0) * 30px) rgba(243, 231, 212, .35); }
+.g-light { background: radial-gradient(90% 70% at 50% 45%, #f7f4f1, #eeeae7 60%, #e2ddd8); opacity: var(--glow, 0); box-shadow: 0 0 calc(var(--glow, 0) * 120px) calc(var(--glow, 0) * 30px) rgba(238, 234, 231, .35); }
 .g-door {
   transform-origin: 0 50%; transform: rotateY(var(--swing, 0deg)); backface-visibility: hidden;
   background:
@@ -457,7 +457,7 @@ html.in #gate:not(.going) { display: none; }
 .g-frame { box-shadow: 0 0 0 9px #101011, 0 0 0 10px rgba(255, 255, 255, .03), 0 30px 60px -20px rgba(0, 0, 0, .8); pointer-events: none; }
 .g-floor { position: absolute; left: 0; right: 0; top: calc(var(--dt) + var(--dh)); bottom: 0; background: linear-gradient(180deg, #0b0b0c, #050505); }
 .g-floor::after { content: ''; position: absolute; left: calc(50% - var(--dw) / 2); top: 0; width: var(--dw); height: 60%; opacity: var(--glow, 0);
-  background: linear-gradient(180deg, rgba(243, 231, 212, .45), rgba(243, 231, 212, 0)); clip-path: polygon(0 0, 100% 0, 150% 100%, -50% 100%); }
+  background: linear-gradient(180deg, rgba(238, 234, 231, .45), rgba(238, 234, 231, 0)); clip-path: polygon(0 0, 100% 0, 150% 100%, -50% 100%); }
 .g-lamp { position: absolute; left: calc(50% - 22px); top: calc(var(--dt) - 46px); width: 44px; height: 6px; border-radius: 2px; background: #1e1e20; box-shadow: 0 6px 18px 2px rgba(255, 236, 205, .14); }
 .g-lamp::after { content: ''; position: absolute; left: 8px; right: 8px; bottom: -1px; height: 1px; background: rgba(255, 240, 215, .55); }
 
@@ -470,6 +470,15 @@ html.in #gate:not(.going) { display: none; }
 #gEyes:not([src]) { display: none; }
 .g-slot.eyes #gEyes { opacity: .94; }
 .g-slot.blink #gEyes { transform: translate(var(--ex, 0), var(--ey, 0)) scaleY(.06); transition: opacity .6s, transform .07s; }
+/* the real eyes: behind the opening, a little darker than the steel, with the slot's lip casting onto them */
+.has-art #gEyes { filter: brightness(1.3) contrast(1.12); }
+.has-art .g-slot::after { content: ''; position: absolute; inset: 0; pointer-events: none;
+  box-shadow: inset 0 3px 3px -1px rgba(0, 0, 0, .9), inset 0 -2px 2px -1px rgba(0, 0, 0, .75), inset 4px 0 4px -2px rgba(0, 0, 0, .85), inset -4px 0 4px -2px rgba(0, 0, 0, .85); }
+.has-art .g-sub { bottom: auto; top: var(--suby); }
+.rit-side .g-form { transform: translate(0, 6px); }
+.rit-side .g-form.on { transform: none; }
+.rit-side .g-tap { transform: none; align-items: flex-start; }
+.rit-side .g-tap i { left: 0; }
 /* placeholder eyes: two wet glints in the dark, nothing more */
 #gate:not(.has-art) .g-slot::before, #gate:not(.has-art) .g-slot::after {
   content: ''; position: absolute; top: 42%; width: 9%; height: 26%; border-radius: 50%; opacity: 0;
@@ -489,7 +498,7 @@ html.in #gate:not(.going) { display: none; }
 .g-sub.on { opacity: 1; }
 .g-hint { position: absolute; z-index: 3; left: 50%; bottom: 6vh; transform: translateX(-50%); font-family: var(--mono); font-size: 10.5px; letter-spacing: .34em; text-transform: uppercase; color: #8d897f; opacity: 0; transition: opacity 1.4s ease; pointer-events: none; }
 .g-hint.on { opacity: 1; }
-.slot-open .g-hint { opacity: 0; }
+.slot-open .g-hint, .ritual .g-hint, .going .g-hint, .slot-open .g-knock:focus-visible ~ .g-hint { opacity: 0; transition-duration: .3s; }
 .g-form { position: absolute; z-index: 4; left: var(--fx, 50%); top: var(--fy, 60%); width: var(--fw, 280px); transform: translate(-50%, 6px); opacity: 0; transition: opacity .3s ease, transform .5s var(--out); }
 .g-form.on { opacity: 1; transform: translate(-50%, 0); }
 .g-form input {

@@ -289,7 +289,7 @@ float aaf=1.-smoothstep(.03,.085,fwz);
     arm.gwGoal = .208 + fx.release * .09;
     if (held.spin && !RM && fx.release < .01 && !travel.on) held.frame = (held.frame + dt * 5) % 48;
     held.off.set(0, 0, 0); if (fx.release > 0) { const toCam = _f.copy(cam.position).sub(arm.e).setY(0).normalize(); held.off.addScaledVector(toCam, fx.release * .35).addScaledVector(_up, -fx.release * .05); }
-    heldPoint(sprite.position); sprite.visible = held.vis; if (held.vis) drawSprite();
+    heldPoint(sprite.position); sprite.material.opacity = Math.pow(1 - fx.haze, 3); /* unfogged, so it emerges last */ sprite.visible = held.vis && fx.haze < .995; if (sprite.visible) drawSprite();
     camUpdate(now, dt);
     /* colour: the tone is the sky, the fog and the sweep */
     BG.setRGB(Tone.rgb[0] / 255, Tone.rgb[1] / 255, Tone.rgb[2] / 255, THREE.SRGBColorSpace);

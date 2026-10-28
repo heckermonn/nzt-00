@@ -4,7 +4,7 @@ import {tween, E, hex2rgb, rgb2hex, mixRGB} from './util.js';
 
 export const STOPS = {
   night: '#0a0a0b',
-  light: '#f3e7d4',   /* replaced by the gate manifest's lightHex when it exists */
+  light: '#eeeae7',   /* the light beyond the door (the gate manifest's lightHex); the Atlas sky starts here */
   sand: '#e3ded5',    /* the Atlas plane: a warm grey that sits close to paper */
   stone: '#e9e6e0',   /* at a station */
   paper: '#f1efea'    /* the store */
