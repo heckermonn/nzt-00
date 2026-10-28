@@ -1,0 +1,3 @@
+__pycache__/
+# Poly Haven downloads (CC0); build_gate.py fetches them on first run
+polyhaven/
