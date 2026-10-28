@@ -30,32 +30,8 @@
 <!-- The gate: the only thing a guest sees. Each gate (js/gates/) writes its own markup into this section. -->
 <section id="gate" aria-label="Closed"></section>
 
-<!-- members -->
-<a class="skip" href="#views">Skip to content</a>
-<header id="bar" hidden>
-  <a class="mark" href="#/atlas" aria-label="P4CE, The Atlas">P4CE</a>
-  <nav class="bnav" aria-label="Site">
-    <a class="bl" href="#/formulary" data-nav="formulary">Formulary</a>
-    <button class="bl" type="button" id="bSearch" aria-expanded="false" aria-controls="search">Search</button>
-    <div class="mwrap"><button class="bl" type="button" id="bMember" aria-expanded="false" aria-controls="menu">Member</button>
-      <nav class="menu" id="menu" aria-label="Member" hidden>
-        <a href="#/formulary" class="m-fx">The Formulary</a><a href="#/m/dispatches">Dispatches</a><a href="#/m/cabinet">Cabinet</a><a href="#/m/nominations">Nominations</a><a href="#/m/record">Member Record</a><a href="#/m/liaison">Liaison</a><a href="#/m/key">Your Key</a><a href="#/exit" class="ex">Exit</a>
-      </nav></div>
-    <a class="bl pro" href="#/protocol" id="bPro" aria-label="Your Protocol, 0 items">Protocol <span class="cnt" data-cnt>0</span></a>
-  </nav>
-</header>
-<div id="search" class="search" role="dialog" aria-label="Search the catalogue" hidden>
-  <label class="sr" for="sQ">Search</label><input id="sQ" type="search" placeholder="Search the Formulary" autocomplete="off" spellcheck="false">
-  <ul id="sRes" class="s-res" role="list"></ul>
-</div>
-
+<!-- the members' chrome is written by js/app.js once the gate has been opened -->
 <main id="views" tabindex="-1"></main>
-<div id="atlasUI" aria-hidden="false">
-  <nav id="lbl" aria-label="Stations"></nav>
-  <a id="heldLine" class="held-line" href="#/c/08"><i></i><span>Enter 08 <b>Renew</b></span></a>
-  <a id="heldHit" class="held-hit" href="#/c/08" tabindex="-1" aria-hidden="true"></a>
-  <svg id="ring" viewBox="0 0 76 76" aria-hidden="true"><circle class="bg" cx="38" cy="38" r="30"/><circle class="fg" id="ringFg" cx="38" cy="38" r="30" stroke-dasharray="188.5" stroke-dashoffset="188.5"/></svg>
-</div>
 <div id="stage" aria-hidden="true"></div>
 <div id="scrim" hidden></div>
 <aside id="drawer" role="dialog" aria-modal="true" aria-labelledby="dwH" hidden></aside>

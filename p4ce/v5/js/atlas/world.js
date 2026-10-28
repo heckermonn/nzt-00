@@ -326,7 +326,11 @@ float aaf=1.-smoothstep(.03,.085,fwz);
     arm.gwGoal = .208 + fx.release * .035;
     if (held.spin && !RM && fx.release < .01 && !travel.on) held.frame = (held.frame + dt * 5) % 48;
     held.off.set(0, 0, 0);
-    heldPoint(sprite.position); sprite.material.opacity = Math.pow(1 - fx.haze, 3); /* unfogged, so it emerges last */ sprite.visible = held.vis && fx.haze < .995; if (sprite.visible) drawSprite();
+    heldPoint(sprite.position);
+    /* the sprite is unfogged (so it stays crisp in the arm), but while the haze is up it must clear with its own
+       distance, like everything else, or it shows as a lone speck before the plane resolves */
+    { const fd = cam.position.distanceTo(sprite.position), ff = clamp((fd - scene.fog.near) / Math.max(.01, scene.fog.far - scene.fog.near), 0, 1);
+      sprite.material.opacity = Math.pow(1 - fx.haze, 3) * (1 - ff * Math.min(1, fx.haze * 12)); } sprite.visible = held.vis && fx.haze < .995; if (sprite.visible) drawSprite();
     camUpdate(now, dt);
     /* colour: the tone is the sky, the fog and the sweep */
     BG.setRGB(Tone.rgb[0] / 255, Tone.rgb[1] / 255, Tone.rgb[2] / 255, THREE.SRGBColorSpace);
