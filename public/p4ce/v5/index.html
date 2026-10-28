@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Closed</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0a0a0b">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Hanken+Grotesk:wght@300..600&family=Instrument+Serif:ital@1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="app.css">
+<script>
+/* before first paint: test hooks (?rm reduced motion, ?nogl no WebGL, ?gate), and who is at the door */
+(function(){var q=new URLSearchParams(location.search),d=document.documentElement,m=null;
+ try{m=localStorage.getItem('p4ce.v5.member')}catch(e){}
+ if(q.has('rm')||matchMedia('(prefers-reduced-motion: reduce)').matches)d.classList.add('rm');
+ if(q.has('nogl'))d.classList.add('nogl');
+ var exit=/^#\/exit/.test(location.hash),key=(q.get('key')||'').replace(/\s+/g,'').toUpperCase()==='0047RSRV';
+ d.classList.add(m==='1'&&!q.has('gate')&&!exit&&!key?'in':'out');
+})();
+</script>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}</script>
+<script type="module" src="js/main.js"></script>
+</head>
+<body>
+<!-- the world (WebGL) sits at the back; every view floats over it on the same colour -->
+<div id="world" aria-hidden="true"></div>
+
+<!-- The Door: the only thing a guest sees -->
+<section id="gate" aria-label="A door">
+  <div class="g-art" id="gArt" aria-hidden="true">
+    <div class="g-ph" id="gPh"><div class="g-wall"></div><div class="g-light"></div><div class="g-door" id="gDoor"><i class="g-seam"></i><i class="g-plate"></i></div><div class="g-frame"></div><div class="g-floor"></div><div class="g-lamp"></div></div>
+    <img class="g-img" id="gImg" alt="" decoding="async">
+    <canvas class="g-seq" id="gSeq"></canvas>
+    <div class="g-slot" id="gSlot"><img id="gEyes" alt="" decoding="async"></div>
+  </div>
+  <button class="g-knock" id="gKnock" type="button" aria-label="Knock on the door (K)"></button>
+  <p class="g-sub" id="gSub" aria-live="polite"></p>
+  <p class="g-hint" id="gHint" aria-hidden="true">Knock</p>
+  <form class="g-form" id="gForm" autocomplete="off" novalidate hidden>
+    <label class="sr" for="gCode">Invitation code</label>
+    <input id="gCode" name="code" type="text" inputmode="text" autocapitalize="characters" spellcheck="false" maxlength="16" placeholder="Code">
+    <button type="submit" class="g-go" aria-label="Present the code"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h12M11.5 5.5L16 10l-4.5 4.5"/></svg></button>
+    <p class="g-demo" id="gDemo">0047RSRV</p>
+    <div class="g-alt"><button type="button" id="gTap">Tap your key</button><button type="button" id="gMem">Members</button></div>
+  </form>
+  <form class="g-form g-mem" id="gMemForm" autocomplete="on" novalidate hidden>
+    <label class="sr" for="gEmail">Email</label><input id="gEmail" type="email" autocomplete="username" spellcheck="false" placeholder="Email">
+    <label class="sr" for="gPass">Password</label><input id="gPass" type="password" autocomplete="current-password" placeholder="Password">
+    <div class="g-alt"><button type="submit" class="g-in">Log in</button><button type="button" id="gBack">Back</button></div>
+  </form>
+  <div class="g-tap" id="gTapUI" hidden aria-hidden="true"><i></i><i></i><span>Hold your key to the door</span></div>
+</section>
+
+<!-- members -->
+<a class="skip" href="#views">Skip to content</a>
+<header id="bar" hidden>
+  <a class="mark" href="#/atlas" aria-label="P4CE, The Atlas">P4CE</a>
+  <nav class="bnav" aria-label="Site">
+    <a class="bl" href="#/formulary" data-nav="formulary">Formulary</a>
+    <button class="bl" type="button" id="bSearch" aria-expanded="false" aria-controls="search">Search</button>
+    <div class="mwrap"><button class="bl" type="button" id="bMember" aria-expanded="false" aria-controls="menu">Member</button>
+      <nav class="menu" id="menu" aria-label="Member" hidden>
+        <a href="#/formulary" class="m-fx">The Formulary</a><a href="#/m/dispatches">Dispatches</a><a href="#/m/cabinet">Cabinet</a><a href="#/m/nominations">Nominations</a><a href="#/m/record">Member Record</a><a href="#/m/liaison">Liaison</a><a href="#/m/key">Your Key</a><a href="#/exit" class="ex">Exit</a>
+      </nav></div>
+    <a class="bl pro" href="#/protocol" id="bPro" aria-label="Your Protocol, 0 items">Protocol <span class="cnt" data-cnt>0</span></a>
+  </nav>
+</header>
+<div id="search" class="search" role="dialog" aria-label="Search the catalogue" hidden>
+  <label class="sr" for="sQ">Search</label><input id="sQ" type="search" placeholder="Search the Formulary" autocomplete="off" spellcheck="false">
+  <ul id="sRes" class="s-res" role="list"></ul>
+</div>
+
+<main id="views" tabindex="-1"></main>
+<div id="atlasUI" aria-hidden="false">
+  <nav id="lbl" aria-label="Stations"></nav>
+  <a id="heldLine" class="held-line" href="#/c/08"><i></i><span>Enter 08 <b>Renew</b></span></a>
+  <a id="heldHit" class="held-hit" href="#/c/08" tabindex="-1" aria-hidden="true"></a>
+  <svg id="ring" viewBox="0 0 76 76" aria-hidden="true"><circle class="bg" cx="38" cy="38" r="30"/><circle class="fg" id="ringFg" cx="38" cy="38" r="30" stroke-dasharray="188.5" stroke-dashoffset="188.5"/></svg>
+</div>
+<div id="stage" aria-hidden="true"></div>
+<div id="scrim" hidden></div>
+<aside id="drawer" role="dialog" aria-modal="true" aria-labelledby="dwH" hidden></aside>
+<p id="live" class="sr" aria-live="polite"></p>
+</body>
+</html>
