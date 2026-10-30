@@ -9,6 +9,9 @@ import {Renders, packOf, placeholderSVG} from './renders.js';
 import {$, RM, clamp, Spring, sm} from './util.js';
 
 const N = 24;
+/* the renders share one camera, so a squat box of sachets reads much smaller on the disc than a tall tin: even them
+   out, so every object fills the disc about as the kit's pill and sphere do (roughly two thirds of its diameter) */
+const PSCALE = {box: 1.24, jar: 1.07, pouch: 1.04, tin: 1, dropper: 1};
 const FR = {};               /* pack → [Image] */
 const READY = {};            /* pack → Set of decoded frame indices */
 function frames(p) { return Renders.frames(p); }
@@ -20,7 +23,7 @@ function loadPack(p) {
     /* frame 0 first (it is the hero), then outward from it, so a turn in either direction is ready soonest */
     const order = [0]; for (let i = 1; i <= N / 2; i++) { order.push(i % N); if (N - i !== i) order.push(N - i); }
     order.forEach((k, j) => { const im = new Image(); im.decoding = 'async'; FR[pack][k] = im;
-      setTimeout(() => { im.src = list[k]; im.decode().then(() => { READY[pack].add(k); DISC.dirty = true; }).catch(() => {}); }, j < 3 ? 0 : 40 + j * 12); });
+      setTimeout(() => { im.src = list[k]; im.decode().then(() => { FR[pack][k] = misted(im); READY[pack].add(k); DISC.dirty = true; }).catch(() => {}); }, j < 3 ? 0 : 40 + j * 12); });
   }
   return FR[pack];
 }
@@ -47,10 +50,16 @@ function draw(it, size) {
   it.drawn = key;
   const dpr = Math.min(devicePixelRatio || 1, 2), w = Math.round(size * .8 * dpr), h = Math.round(size * dpr);
   if (it.cv.width !== w || it.cv.height !== h) { it.cv.width = w; it.cv.height = h; }
-  const g = it.cv.getContext('2d', {willReadFrequently: true}); g.clearRect(0, 0, w, h); g.imageSmoothingQuality = 'high';
+  const g = it.cv.getContext('2d'); g.clearRect(0, 0, w, h); g.imageSmoothingQuality = 'high';
   g.globalAlpha = 1; g.drawImage(fr[A], 0, 0, w, h);
   if (B !== A && f > .36 && !RM) { g.globalAlpha = sm(.36, .64, f); g.drawImage(fr[B], 0, 0, w, h); g.globalAlpha = 1; }
-  mist(g, w, h);
+}
+/* each frame is re-tinted once, when it is decoded (not on every draw), into its own canvas */
+function misted(im) {
+  try {
+    const c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight;
+    const g = c.getContext('2d', {willReadFrequently: true}); g.drawImage(im, 0, 0); mist(g, c.width, c.height); return c;
+  } catch (e) { return im; }
 }
 /* the renders carry a neutral black contact shadow; on the mist disc it reads as a hole, so it is re-tinted
    to the disc's own blue-grey and softened (only the translucent dark pixels: the pack itself is untouched) */
@@ -117,7 +126,20 @@ export const Disc = {
   /* turning the object: idle sway, a slow idle turn, drag, or a scroll position */
   setIdle(mode) { DISC.idle = mode; },
   setTurn(k) { DISC.turnSet = k; },
-  dragTurn(dx) { DISC.turn -= dx / 12; DISC.turnV = -dx / 12 * 60; },
+  /* a hand on the object (the Dossier's own drag): the turn follows the finger exactly while held (one frame, 15°,
+     per 12 px), and on release carries on with the measured speed, capped, then settles into the idle turn */
+  dragTurn(dx) {
+    const now = performance.now(), g = DISC.hand || (DISC.hand = {t: now, v: 0});
+    const dt = Math.max(8, now - g.t) / 1000; g.t = now;
+    DISC.turn -= dx / 12; g.v = g.v * .7 + (-dx / 12 / dt) * .3; DISC.turnV = 0;
+  },
+  grab(on) {
+    if (on) { DISC.hand = {t: performance.now(), v: 0}; DISC.drag = DISC.drag || {hand: true}; DISC.turnV = 0; return; }
+    if (DISC.drag && DISC.drag.hand) DISC.drag = null;
+    const g = DISC.hand; DISC.hand = null;
+    if (g && performance.now() - g.t < 120) DISC.turnV = clamp(g.v, -28, 28);
+  },
+  nudge(frames) { DISC.turnV = clamp(DISC.turnV + frames * 3.2, -28, 28); },
   dim(v) { DISC.dim = v; },
   lift(v) { DISC.lift.set(v); },
   /* where the object is drawn now (for the flight into Your Protocol) */
@@ -128,25 +150,38 @@ export const Disc = {
     if (!DISC.root) return;
     const pos = DISC.pos.step(dt), away = DISC.away.step(dt), lift = DISC.lift.step(dt);
     /* the turn: drag inertia, then the screen's idle */
-    if (DISC.drag) { /* held */ }
-    else if (Math.abs(DISC.turnV) > .05) { DISC.turn += DISC.turnV * dt; DISC.turnV *= Math.pow(.04, dt); }
-    else if (DISC.turnSet != null) { DISC.turn += (DISC.turnSet - DISC.turn) * (1 - Math.pow(.0005, dt)); }
-    else if (!RM && DISC.idle === 'spin') DISC.turn += dt * .9;
-    else if (!RM && DISC.idle === 'sway') { const g = Math.round(DISC.turn / N) * N; DISC.turn += (g + Math.sin(now / 2400) * .9 - DISC.turn) * (1 - Math.pow(.2, dt)); }
+    if (DISC.drag && (DISC.drag.hand || DISC.mode !== 'picker')) { /* held */ }
+    /* the object always comes to rest on a whole frame: between two frames the renders can only be cross-faded, and a
+       label caught half way reads doubled. So scroll turns step frame to frame (eased), a flick coasts and then
+       settles onto the nearest frame, and the Dossier's slow idle turn is a turntable that indexes one frame (15°)
+       at a time, easing into each stop and resting there */
+    else if (DISC.turnSet != null) { DISC.turnV = 0; DISC.stepTo = null; DISC.turn += (Math.round(DISC.turnSet) - DISC.turn) * (1 - Math.pow(.004, dt)); }
+    else if (Math.abs(DISC.turnV) > .6) { DISC.turn += DISC.turnV * dt; DISC.turnV *= Math.pow(.05, dt); DISC.stepTo = null; DISC.stepAt = now + 1400; }
+    else {
+      DISC.turnV = 0;
+      if (!RM && DISC.idle === 'spin') {
+        if (DISC.stepAt == null || DISC.stepAt - now > 4000) DISC.stepAt = now + 1600;
+        if (now >= DISC.stepAt) { DISC.stepTo = Math.round(DISC.turn) + 1; DISC.stepAt = now + 1750; }
+      } else DISC.stepTo = null;
+      const goal = DISC.stepTo != null ? DISC.stepTo : Math.round(DISC.turn);
+      DISC.turn += (goal - DISC.turn) * (1 - Math.pow(.006, dt));
+      if (Math.abs(goal - DISC.turn) < .002) DISC.turn = goal;
+    }
     const S = DISC.size, n = DISC.items.length;
     DISC.items.forEach((it, i) => {
       const d = i - pos, ad = Math.abs(d);
       let x, sc, op, k, y;
       if (DISC.mode === 'picker') {
-        /* the picker: slide from disc to disc, turning a quarter as it goes, smaller and fainter off the disc */
+        /* the picker: slide from disc to disc, turning a quarter as it goes, smaller and fainter off the disc; at rest the
+           neighbours all but vanish (they would sit over the fields), and show while the picker moves */
         const live = clamp(Math.abs(DISC.pos.vel) * .5 + (DISC.drag && DISC.drag.moved ? 1 : 0));
-        x = d * DISC.spacing * S; sc = 1 - Math.min(ad, 1.6) * .36; op = 1 - (.8 - .32 * live) * sm(.12, 1, ad) - (.2 + .32 * live) * sm(1, 1.7, ad); k = d * -6 + (Math.round(pos) === i ? DISC.turn : 0); y = -Math.min(ad, 1) * S * .05;
+        x = d * DISC.spacing * S; sc = 1 - Math.min(ad, 1.6) * .36; op = 1 - (.94 - .44 * live) * sm(.12, 1, ad) - (.06 + .44 * live) * sm(1, 1.7, ad); k = d * -6 + (Math.round(pos) === i ? DISC.turn : 0); y = -Math.min(ad, 1) * S * .05;
       } else {
         /* a swap: the old object turns away and fades as the new one turns in */
         const isNew = i === n - 1, vis = n === 1 ? 1 : isNew ? clamp(pos) : 1 - clamp(pos);
         x = (isNew ? 1 : -1) * (1 - vis) * DISC.spacing * S * .5; sc = .9 + .1 * vis; op = sm(0, 1, vis); k = (1 - vis) * (isNew ? -5 : 5) + DISC.turn; y = 0;
       }
-      op *= away; sc *= .86 + .14 * away;
+      op *= away; sc *= (.86 + .14 * away) * (it.real ? PSCALE[it.pack] || 1 : 1);
       y += -lift * S * .1;
       it.k = k;
       if (op < .01) { it.el.style.visibility = 'hidden'; return; }
@@ -154,7 +189,7 @@ export const Disc = {
       it.el.style.opacity = op.toFixed(3);
       it.el.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0) scale(${sc.toFixed(4)})`;
       it.el.style.zIndex = String(100 - Math.round(ad * 10));
-      draw(it, S);
+      draw(it, S * (it.real ? PSCALE[it.pack] || 1 : 1));
     });
     /* a swap is over: drop the old object */
     if (DISC.mode === 'swap' && n > 1 && DISC.pos.rest) { DISC.items.slice(0, -1).forEach(i => i.el.remove()); DISC.items = DISC.items.slice(-1); DISC.pos.snap(0); }
@@ -196,7 +231,7 @@ function bindPicker() {
         const i = clamp(Math.round(proj), Math.round(DISC.pos.v) - 2, Math.round(DISC.pos.v) + 2);
         DISC.pos.vel = -st.v * 1000 / (DISC.spacing * DISC.size) * .6;
         Disc.go(i);
-      } else DISC.turnV = -st.v * 1000 / 12 * .5;
+      } else DISC.turnV = clamp(-st.v * 1000 / 12 * .5, -28, 28);
     }
     st = null; DISC.drag = null;
   };

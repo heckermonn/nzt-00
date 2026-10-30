@@ -85,8 +85,23 @@ addEventListener('pointermove', e => {
   const r = SLAB.getBoundingClientRect(); SL.tlx = (e.clientX - r.left) / r.width * 100; SL.tly = (e.clientY - r.top) / r.height * 100;
 }, {passive: true});
 document.addEventListener('pointerleave', () => { SL.tnx = SL.tny = 0; SL.tlx = 30; SL.tly = -10; });
-/* device tilt where it is given without asking (Android); elsewhere a slow drift stands in */
-addEventListener('deviceorientation', e => { if (e.gamma == null) return; SL.tilt = true; SL.tnx = clamp(e.gamma / 25, -1, 1); SL.tny = clamp((e.beta - 45) / 25, -1, 1); SL.tlx = 50 + SL.tnx * 45; SL.tly = 50 + SL.tny * 45; }, {passive: true});
+/* device tilt where it is given without asking (Android): small, smoothed, with a dead zone so a hand's tremor
+   does not make the glass shiver. Elsewhere on a touch screen the slab rests still; a press tips it a little toward
+   the finger and it springs back on release (only the light keeps a very slow drift). */
+let tiltBase = null;
+addEventListener('deviceorientation', e => {
+  if (e.gamma == null) return; SL.tilt = true;
+  if (!tiltBase) tiltBase = {g: e.gamma, b: e.beta};
+  /* the resting hold drifts with the person: follow it slowly, so only a deliberate tilt moves the glass */
+  tiltBase.g += (e.gamma - tiltBase.g) * .01; tiltBase.b += (e.beta - tiltBase.b) * .01;
+  const dz = v => Math.sign(v) * Math.max(0, Math.abs(v) - 2.5);
+  SL.tnx = clamp(dz(e.gamma - tiltBase.g) / 30, -.8, .8); SL.tny = clamp(dz(e.beta - tiltBase.b) / 30, -.8, .8);
+  SL.tlx = 50 + SL.tnx * 45; SL.tly = 30 + SL.tny * 45;
+}, {passive: true});
+let press = null;
+addEventListener('pointerdown', e => { if (e.pointerType !== 'touch' || SL.tilt) return; press = {x: clamp((e.clientX / innerWidth - .5) * 2, -1, 1) * .35, y: clamp((e.clientY / innerHeight - .5) * 2, -1, 1) * .25}; }, {passive: true});
+const unpress = e => { if (e.pointerType === 'touch') press = null; };
+addEventListener('pointerup', unpress, {passive: true}); addEventListener('pointercancel', unpress, {passive: true});
 function slabGoal() {
   const ph = isPhone();
   let tx = 0, ty = 0, s = 1, o = 1;
@@ -94,14 +109,14 @@ function slabGoal() {
   else if (S.roam) { ty = innerHeight * .72; s = .9; o = 0; }
   else if (Protocol.isOpen) {
     if (ph) { s = .94; ty = -6; }
-    else { const W = SLAB.offsetWidth, dw = Math.min(420, innerWidth * .32), gap = 24, avail = innerWidth - dw - gap * 3; s = Math.min(1, avail / W); tx = (gap + W * s / 2) - innerWidth / 2; }
+    else { const W = SLAB.offsetWidth, dw = Math.min(420, innerWidth * .32), gap = 24, avail = innerWidth - dw - gap * 3 - 12; s = Math.min(1, avail / (W * 1.03)); tx = (gap + W * s * 1.015 / 2) - innerWidth / 2; }
   }
   SL.tx.set(tx); SL.ty.set(ty); SL.s.set(s); SL.o.set(o);
 }
 function slabFrame(dt, now) {
   slabGoal();
   const touch = matchMedia('(hover: none)').matches;
-  if (touch && !SL.tilt) { SL.tnx = Math.sin(now / 4200) * .45; SL.tny = Math.sin(now / 5300) * .3; SL.tlx = 50 + SL.tnx * 50; SL.tly = 20 + SL.tny * 40; }
+  if (touch && !SL.tilt) { SL.tnx = press ? press.x : 0; SL.tny = press ? press.y : 0; SL.tlx = 50 + Math.sin(now / 9000) * 30; SL.tly = 12 + Math.sin(now / 11000) * 14; }
   SL.nx += (SL.tnx - SL.nx) * (1 - Math.pow(.02, dt)); SL.ny += (SL.tny - SL.ny) * (1 - Math.pow(.02, dt));
   SL.lx += (SL.tlx - SL.lx) * (1 - Math.pow(.004, dt)); SL.ly += (SL.tly - SL.ly) * (1 - Math.pow(.004, dt));
   const maxR = isPhone() ? 2.2 : 1.7;
@@ -140,7 +155,7 @@ function openSearch() {
     <p class="s-meta mono" id="sMeta" role="status"></p>
     <ol class="s-res" id="sRes"></ol>
     <button type="button" class="s-x mono" data-sx aria-label="Close search">${ic('x', 's')}</button></div>`;
-  SEARCH.hidden = false; HTML.classList.add('s-open'); $('#bSearch').setAttribute('aria-expanded', 'true');
+  SEARCH.hidden = false; HTML.classList.add('s-open'); SEARCH.classList.add('enter'); setTimeout(() => SEARCH.classList.remove('enter'), RM ? 0 : 900); $('#bSearch').setAttribute('aria-expanded', 'true');
   requestAnimationFrame(() => requestAnimationFrame(() => SEARCH.classList.add('on')));
   const q = $('#sQ'); q.focus();
   q.addEventListener('input', renderSearch);

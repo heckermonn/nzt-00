@@ -255,17 +255,17 @@ function product(id) {
       });
       sc.addEventListener('pointermove', e => {
         if (!drag || e.pointerId !== drag.id) return;
-        if (!drag.axis && Math.hypot(e.clientX - drag.x, e.clientY - drag.y) > 6) { drag.axis = Math.abs(e.clientX - drag.x) > Math.abs(e.clientY - drag.y) ? 'x' : 'y'; if (drag.axis === 'x') { try { sc.setPointerCapture(e.pointerId); } catch (x) {} sc.classList.add('grab'); } }
+        if (!drag.axis && Math.hypot(e.clientX - drag.x, e.clientY - drag.y) > 6) { drag.axis = Math.abs(e.clientX - drag.x) > Math.abs(e.clientY - drag.y) ? 'x' : 'y'; if (drag.axis === 'x') { try { sc.setPointerCapture(e.pointerId); } catch (x) {} sc.classList.add('grab'); Disc.grab(true); } }
         if (drag.axis === 'x') { Disc.dragTurn(e.clientX - drag.lx); drag.lx = e.clientX; }
       });
-      const up = () => { drag = null; sc.classList.remove('grab'); };
+      const up = () => { if (drag && drag.axis === 'x') Disc.grab(false); drag = null; sc.classList.remove('grab'); };
       sc.addEventListener('pointerup', up); sc.addEventListener('pointercancel', up);
       Disc.setIdle('spin'); Disc.setTurn(null);
       onScroll();
       return {
         scroller: sc,
-        keydown(e) { if (e.key === 'ArrowRight' && !/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) Disc.dragTurn(-24); if (e.key === 'ArrowLeft' && !/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) Disc.dragTurn(24); },
-        destroy() { Disc.dim(0); Disc.setTurn(null); }
+        keydown(e) { if (/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) return; if (e.key === 'ArrowRight') Disc.nudge(2); if (e.key === 'ArrowLeft') Disc.nudge(-2); },
+        destroy() { Disc.dim(0); Disc.setTurn(null); Disc.grab(false); }
       };
     }
   };

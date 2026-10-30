@@ -6,14 +6,14 @@
    Rounded corners throughout, Apple style; every move on a spring (slight overshoot, then settle). */
 :root {
   --chalk: #f2f3ef; --ink: #171c1f; --deep: #0a0f13; --mist: #cad5da; --steel: #718b9a; --orange: #e98546; --stage: #b3bec5;
-  --ink2: rgba(23, 28, 31, .66); --ink3: rgba(23, 28, 31, .56); --ink4: rgba(23, 28, 31, .42); --rule: rgba(23, 28, 31, .12); --rule2: rgba(23, 28, 31, .07);
+  --ink2: rgba(23, 28, 31, .66); --ink3: rgba(23, 28, 31, .6); --ink4: rgba(23, 28, 31, .48); --rule: rgba(23, 28, 31, .12); --rule2: rgba(23, 28, 31, .07);
   --wm: 'Inter Tight', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   --sans: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   --mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
   --out: cubic-bezier(.16, 1, .3, 1); --io: cubic-bezier(.65, 0, .35, 1);
   --spring: cubic-bezier(.34, 1.36, .64, 1); --spring2: cubic-bezier(.3, 1.6, .55, 1);
   /* the slab: about the kit's proportion (1.41 : 1), as large as the stage allows */
-  --sh: clamp(460px, calc(100vh - 210px), 720px);
+  --sh: clamp(460px, calc(100vh - 236px), 720px);
   --sw: min(calc(100vw - 64px), calc(var(--sh) * 1.42));
   --r: 28px;
   color-scheme: light;
@@ -46,6 +46,19 @@ html.out .skip, html.out #world, html.out #labels { display: none; }
 #world { position: fixed; inset: 0; z-index: 0; cursor: grab; touch-action: none; background:
   radial-gradient(60% 50% at 50% 38%, #c9d3d8, rgba(201, 211, 216, 0) 70%), linear-gradient(180deg, #aab6bd 0%, #bcc7cd 46%, #c3cdd2 60%, #b6c1c7 100%); }
 #world.drag { cursor: grabbing; }
+/* a soft mist along the top and bottom edges, under the bar and the dock, so their small mono type always reads over
+   the Atlas (a white pill in the world never sits hard behind a label); it thins while roaming */
+#world::after { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none; transition: opacity .8s ease;
+  background: linear-gradient(180deg, rgba(178, 190, 197, .78) 0, rgba(178, 190, 197, .42) 56px, rgba(178, 190, 197, 0) 120px),
+    linear-gradient(0deg, rgba(178, 190, 197, .7) 0, rgba(178, 190, 197, .3) 44px, rgba(178, 190, 197, 0) 96px); }
+html.roam #world::after { opacity: .55; }
+/* on the Dossier the world steps back behind a light veil, thicker toward the edges, so the stage reads as the kit's
+   plain mist (the station is still there, alive, just quieter); a collection gets a lighter veil; roaming lifts it */
+#world::before { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none; opacity: 0; transition: opacity 1.2s var(--out);
+  background: radial-gradient(75% 70% at 50% 48%, rgba(180, 192, 199, .22) 0, rgba(180, 192, 199, .5) 62%, rgba(180, 192, 199, .82) 100%); }
+html[data-view="product"] #world::before { opacity: 1; }
+html[data-view="col"] #world::before { opacity: .5; }
+html.roam #world::before { opacity: 0; }
 #world.roam.over { cursor: pointer; }
 #world canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; opacity: 0; transition: opacity 1.4s var(--out); }
 html.gl #world canvas { opacity: 1; }
@@ -75,10 +88,10 @@ html:not(.gl) .world-fb { opacity: 1; }
 
 #stage { position: fixed; inset: 0; z-index: 2; display: grid; place-items: center; pointer-events: none; perspective: 1900px; perspective-origin: 50% 45%; }
 /* the backing plate: a larger, flatter, thinner pane behind the slab, as in the kit */
-.plate { position: absolute; left: 50%; top: 50%; width: calc(var(--sw) * 1.17); height: calc(var(--sh) * 1.24); margin: calc(var(--sh) * -.6) 0 0 calc(var(--sw) * -.585); border-radius: 20px;
+.plate { --ph: min(calc(var(--sh) * 1.24), calc(100vh - 136px)); position: absolute; left: 50%; top: 50%; width: calc(var(--sw) * 1.17); height: var(--ph); margin: calc(var(--ph) * -.5) 0 0 calc(var(--sw) * -.585); border-radius: 22px;
   background: linear-gradient(170deg, rgba(214, 223, 228, .5), rgba(200, 210, 216, .42)); backdrop-filter: blur(9px) saturate(1.05); -webkit-backdrop-filter: blur(9px) saturate(1.05);
   box-shadow: inset 1px 1px 0 rgba(255, 255, 255, .34), inset -1px -1px 0 rgba(90, 110, 122, .12), 0 40px 90px -60px rgba(30, 44, 54, .4);
-  transform: translate3d(var(--px, 0), var(--py, 0), 0); opacity: var(--plo, 1); }
+  transform: translate3d(var(--px, 0), var(--py, 0), 0); opacity: var(--plo, 1); transition: opacity .5s ease; }
 
 /* ================================================================ the slab */
 .slab { position: relative; width: var(--sw); height: var(--sh); border-radius: var(--r); pointer-events: auto; transform-origin: 50% 55%; will-change: transform, opacity; opacity: 0; --lx: 30%; --ly: 0%; --bev: .9; }
@@ -115,7 +128,7 @@ a.slab-mark:hover .sec { color: var(--ink); }
 .slab-tr.swap { opacity: 0; filter: blur(4px); transform: translateY(-4px); }
 /* the nine collections, a dial of mono tabs */
 .ctabs { display: flex; gap: 2px; padding: 3px; border-radius: 999px; background: rgba(160, 176, 186, .12); box-shadow: inset 0 1px 2px rgba(60, 80, 92, .14), 0 1px 0 rgba(255, 255, 255, .5); }
-.ctabs a { position: relative; display: grid; place-items: center; width: 31px; height: 26px; border-radius: 999px; font-size: 10.5px; letter-spacing: .04em; color: rgba(23, 28, 31, .5); transition: color .2s, background-color .3s, box-shadow .3s, transform .4s var(--spring); }
+.ctabs a { position: relative; display: grid; place-items: center; width: 31px; height: 26px; border-radius: 999px; font-size: 10.5px; letter-spacing: .04em; color: rgba(23, 28, 31, .6); transition: color .2s, background-color .3s, box-shadow .3s, transform .4s var(--spring); }
 .ctabs a:hover { color: var(--ink); transform: translateY(-1px); }
 .ctabs a.on { color: var(--ink); background: rgba(246, 248, 249, .75); box-shadow: 0 1px 2px rgba(40, 58, 70, .16), inset 0 1px 0 rgba(255, 255, 255, .9); }
 .ctabs a.on::after { content: ''; position: absolute; bottom: 3px; left: 50%; width: 4px; height: 2px; margin-left: -2px; border-radius: 2px; background: var(--orange); }
@@ -163,7 +176,7 @@ a.slab-mark:hover .sec { color: var(--ink); }
 /* fields: a small mono label over a soft debossed field */
 .fields { position: absolute; left: 4.5cqw; top: 0; width: 26cqw; }
 .fld { position: absolute; left: 0; width: 100%; }
-.fld-l { font: 400 9.5px/1 var(--mono); letter-spacing: .2em; text-transform: uppercase; color: rgba(23, 28, 31, .52); margin-bottom: 9px; }
+.fld-l { font: 400 9.5px/1 var(--mono); letter-spacing: .2em; text-transform: uppercase; color: rgba(23, 28, 31, .62); margin-bottom: 9px; }
 .fld-v { display: flex; align-items: center; width: 24.5cqw; min-height: max(34px, 5.1cqh); padding: 7px 12px; border-radius: 7px; font: 500 12.5px/1.35 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: #12171a;
   background: rgba(214, 223, 229, .34); box-shadow: inset 0 1px 2px rgba(56, 76, 90, .12), inset 0 0 0 1px rgba(120, 140, 152, .1), 0 1px 0 rgba(255, 255, 255, .55); }
 .fld-v span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -177,7 +190,8 @@ a.slab-mark:hover .sec { color: var(--ink); }
 .s-index .under { top: 71.5cqh; }
 .cap-n { font: 500 17px/1.25 var(--sans); letter-spacing: -.015em; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cap-m { margin-top: 6px; font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: rgba(23, 28, 31, .58); white-space: nowrap; }
-.p-price { margin-top: 0; font-size: 10.5px; }
+.p-price { margin-top: 0; font-size: 10px; color: rgba(23, 28, 31, .5); }
+.s-product .under { top: 78.6cqh; }
 .act { position: absolute; left: 48.5cqw; width: 28cqw; top: 84.2cqh; }
 .act .pill { width: 100%; height: max(46px, 7.9cqh); }
 
@@ -371,7 +385,8 @@ ul.ds-list li::before { content: '—'; font-size: 12px; top: 0; }
 .ink-card .lbl { color: rgba(242, 243, 239, .7); }
 .ink-t { margin-top: 10px; font: 500 22px/1.2 var(--sans); letter-spacing: -.02em; }
 .ink-m { margin-top: 10px; font-size: 9.5px; letter-spacing: .12em; text-transform: uppercase; color: rgba(242, 243, 239, .55); }
-.rv-h { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.rv-h { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 6px 14px; }
+.rv-h .lbl, .rv-all, .smp { white-space: nowrap; }
 .rv-all { font-size: 10px; letter-spacing: .08em; color: var(--ink3); text-transform: uppercase; }
 .rv-all b { font-weight: 500; font-size: 13px; color: var(--ink); margin-right: 6px; }
 .rv { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
@@ -521,8 +536,9 @@ html.roam .dk-r .dk-hint { opacity: 0; }
 .dw-empty p:first-child { font-size: 19px; letter-spacing: -.02em; }
 .dw-empty .mono { font-size: 10.5px; line-height: 1.7; color: var(--ink2); }
 .dw-empty .mono b { font-weight: 400; color: var(--ink); }
-.pc { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 14px; padding: 14px; margin-bottom: 8px; border-radius: 18px; background: rgba(168, 184, 194, .12); box-shadow: inset 0 1px 2.5px rgba(56, 76, 90, .14), 0 1px 0 rgba(255, 255, 255, .55);
-  animation: pcin .7s var(--spring) backwards; animation-delay: calc(var(--i, 0) * 50ms); }
+.pc { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 14px; padding: 14px; margin-bottom: 8px; border-radius: 18px; background: rgba(168, 184, 194, .12); box-shadow: inset 0 1px 2.5px rgba(56, 76, 90, .14), 0 1px 0 rgba(255, 255, 255, .55); }
+/* the cards come in one after another when Your Protocol opens (not again on every change of quantity or mode) */
+#drawer.enter .pc { animation: pcin .7s var(--spring) backwards; animation-delay: calc(var(--i, 0) * 50ms); }
 @keyframes pcin { from { opacity: 0; transform: translateX(24px) scale(.97); } }
 .pc.new { box-shadow: inset 0 1px 2.5px rgba(56, 76, 90, .14), 0 0 0 1.5px rgba(233, 133, 70, .55); }
 .pc-v { align-self: start; }
@@ -564,7 +580,8 @@ html.roam .dk-r .dk-hint { opacity: 0; }
 .s-x { position: absolute; right: 16px; top: 16px; width: 36px; height: 36px; display: grid; place-items: center; border-radius: 50%; color: var(--ink2); transition: background-color .2s, transform .4s var(--spring); }
 .s-x:hover { background: rgba(255, 255, 255, .45); transform: rotate(90deg); }
 .s-meta { margin: 14px 0 6px; font-size: 9.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink3); }
-.s-res li { animation: pcin .5s var(--spring) backwards; animation-delay: calc(var(--i) * 26ms); }
+/* results come in one after another when search opens; while typing they update in place, without replaying */
+#search.enter .s-res li { animation: pcin .5s var(--spring) backwards; animation-delay: calc(var(--i) * 26ms); }
 .s-res a { display: grid; grid-template-columns: 40px 6ch minmax(0, 1fr) minmax(0, 22ch) 7ch; gap: 14px; align-items: center; padding: 6px 10px; border-radius: 12px; font-size: 14px; transition: background-color .2s; }
 .s-res a:hover, .s-res a:focus-visible { background: rgba(255, 255, 255, .45); outline: none; }
 .s-res a:focus-visible .s-c { color: var(--orange); }
@@ -591,6 +608,10 @@ html.roam .dk-r .dk-hint { opacity: 0; }
 
 /* ================================================================ roaming: the panel hides, the Atlas is yours */
 html.roam #stage .plate { opacity: 0 !important; transition: opacity .5s; }
+/* no Atlas (no WebGL, or ?nogl): nothing to roam, so no control for it and no hint about dragging the world */
+html.nogl #bRoam, html.nogl .dk-hint, html.nogl .dk-xyz { display: none; }
+/* Your Protocol open on a wide screen: the slab steps aside, so its backing plate steps back rather than stay behind */
+@media (min-width: 761px) { html.dw-open #stage .plate { opacity: 0 !important; transition: opacity .5s; } }
 html.roam .dock .dk-l { opacity: 1; }
 
 /* ================================================================ narrower desktops */
@@ -640,19 +661,23 @@ html.roam .dock .dk-l { opacity: 1; }
 
   /* the disc, centred and large, on the Dossier and a collection */
   .disc-wrap { left: 15cqw; width: 70cqw; top: 104px; }
-  #slab[data-s="product"] .disc-wrap { top: 70px; left: 12cqw; width: 76cqw; }
+  /* the Dossier on a phone: the action, the price and the three fields stand on the bottom edge like the kit's
+     pill; the disc is centred in the room above them, as large as the height allows */
+  #slab[data-s="product"] .disc-wrap { --dw: min(84cqw, calc(100cqh - 300px)); width: var(--dw); left: calc(50cqw - var(--dw) / 2); top: calc(58px + (100cqh - 258px - var(--dw)) / 2); }
   #slab[data-s="index"] .disc-wrap { left: 18px; width: 30cqw; top: 92px; }
   .s-product .fields, .s-col .fields { left: 18px; right: 18px; width: auto; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-  .s-product .fields { top: calc(70px + 76cqw + 18px); }
+  .s-product .fields { top: auto; bottom: 148px; }
   .s-product .fld, .s-col .fld { position: static; }
   .s-product .fld-v { min-height: 38px; font-size: 10.5px; letter-spacing: .05em; padding: 6px 9px; }
-  .s-product .under { top: calc(70px + 76cqw + 104px); }
-  .s-col .fields { top: calc(104px + 70cqw + 8px); grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 8px; }
+  .s-product .under { top: auto; bottom: 110px; }
+  .s-col .fields { top: auto; bottom: 178px; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 8px; }
+  /* the picker on a phone: the same bottom-up order, the disc centred in the room between the tabs and the fields */
+  #slab[data-s="col"] .disc-wrap { --dw: min(74cqw, calc(100cqh - 420px)); width: var(--dw); left: calc(50cqw - var(--dw) / 2); top: calc(86px + (100cqh - 384px - var(--dw)) / 2); }
   .s-col .fld:nth-child(2) { grid-column: 1 / -1; order: 4; display: none; }
   .s-col .fld:nth-child(1) { grid-column: 1 / -1; }
   .s-col .fld:nth-child(2) .fld-v { min-height: 38px; }
-  .s-col .under { top: calc(104px + 70cqw + 150px); }
-  .s-col .act { bottom: 40px; }
+  .s-col .under { top: auto; bottom: 106px; }
+  .s-col .act { top: auto; bottom: 40px; }
   .s-col .swipe-hint { display: none; }
   .ticks { margin-top: 10px; }
   .p-gap { height: 46cqh; }
@@ -853,7 +878,6 @@ html.rm #splash { animation-delay: 0s; animation-duration: .2s; }
   .slab-glass { background: linear-gradient(162deg, rgba(229, 235, 238, .8) 0%, rgba(218, 226, 231, .74) 46%, rgba(209, 218, 224, .76) 100%); backdrop-filter: blur(30px) saturate(1.1) brightness(1.03); -webkit-backdrop-filter: blur(30px) saturate(1.1) brightness(1.03); }
 }
 @media (max-width: 760px) and (min-height: 780px) {
-  #slab[data-s="product"] .disc-wrap { top: 78px; left: 8cqw; width: 84cqw; }
-  .s-product .fields { top: calc(78px + 84cqw + 26px); }
-  .s-product .under { top: calc(78px + 84cqw + 112px); }
+  .s-product .fields { bottom: 156px; }
+  .s-product .under { bottom: 114px; }
 }

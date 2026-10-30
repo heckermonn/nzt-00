@@ -185,7 +185,9 @@ float vn(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h21(i
     setDpr(); renderer.setSize(innerWidth, innerHeight, false); cam.aspect = innerWidth / innerHeight; cam.updateProjectionMatrix(); W.force = true;
   }
   addEventListener('resize', fit);
-  function fogGoal() { const t = T(); return want.st < 0 ? [t.dist * user.zoom * .55, t.dist * user.zoom * 2.4] : want.close ? [7, 40] : [9, 48]; }
+  /* behind the glass the world is calmer (a little more mist round a station, so the Dossier reads like the kit's plain
+   stage); with the panel hidden it clears, so the plane and its stations read crisply */
+function fogGoal() { const t = T(), d = t.dist * user.zoom; return want.st < 0 ? (roam ? [d * .75, d * 3] : [d * .55, d * 2.4]) : want.close ? [6, 34] : [8, 42]; }
   const fogS = {n: 30, f: 120};
   function snap() { travel.on = false; const p = poseFor(); camS.pos.copy(p.pos); camS.tgt.copy(p.tgt); camS.fov = p.fov; const G = fogGoal(); fogS.n = G[0]; fogS.f = G[1]; }
   let lastR = -1;
@@ -204,6 +206,8 @@ float vn(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h21(i
     /* software GL cannot hold 60 fps: draw less often there, but keep every computation per frame */
     if (SOFT && now - lastR < (W.softEvery || 120) && W.force !== true) return;
     if (now === lastR && W.force !== true) return;
+    /* seen through frosted glass and only drifting, 30 frames a second is plenty: half the GPU work under the blur */
+    if (!roam && !travel.on && !ptr.down && now - lastR < 30 && W.force !== true) return;
     lastR = now; W.force = false;
     renderer.render(scene, cam);
   }
@@ -221,7 +225,9 @@ float vn(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h21(i
     },
     /* the arrival: from high over the plane, the camera settles down to where the slab is */
     intro() { if (RM) return; const p = poseFor(); camS.pos.copy(p.pos).add(_v.set(0, 24, 16)); camS.tgt.copy(p.tgt); startTravel(2600); },
-    setRoam(v) { roam = !!v; host.classList.toggle('roam', roam); if (!roam) { hov.st = -1; host.classList.remove('over'); } },
+    /* the stations' orange ticks: full Safety Orange when you roam; behind the glass they would blur into a warm smudge
+       (the only saturated thing seen through the frost), so there they are a quiet, clay-warm tint */
+    setRoam(v) { roam = !!v; host.classList.toggle('roam', roam); MAT.orange.color.set(roam ? 0xe98546 : 0xc7b2a6); W.force = true; if (!roam) { hov.st = -1; host.classList.remove('over'); } },
     pointer(nx, ny) { par.tx = nx; par.ty = ny; },
     set onPick(f) { onPick = f; },
     setVisible(v) { this.visible = v; canvas.style.visibility = v ? '' : 'hidden'; if (v) W.force = true; },
@@ -232,6 +238,7 @@ float vn(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h21(i
     dbg: Q.has('dbg') ? {scene, cam, renderer, stations, THREE} : null
   };
   W.warm = () => (renderer.compileAsync ? renderer.compileAsync(scene, cam) : Promise.resolve()).catch(() => {});
+  MAT.orange.color.set(0xc7b2a6);
   fit(); snap();
   return W;
 }

@@ -109,7 +109,7 @@ function open() {
   render();
   if (isOpen) return;
   isOpen = true; back = document.activeElement;
-  dw.hidden = false; scrim.hidden = false;
+  dw.hidden = false; scrim.hidden = false; dw.classList.add('enter'); setTimeout(() => dw.classList.remove('enter'), RM ? 0 : 1200);
   document.documentElement.classList.add('dw-open');
   requestAnimationFrame(() => requestAnimationFrame(() => { dw.classList.add('on'); scrim.classList.add('on'); }));
   setTimeout(() => { const h = $('#dwH', dw); if (h) h.focus({preventScroll: true}); }, RM ? 0 : 360);
