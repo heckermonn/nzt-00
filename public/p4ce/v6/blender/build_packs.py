@@ -635,10 +635,12 @@ def build_box():
 
     # sachets leaning on the front face
     sach = []
-    for k, (theta, xoff, dz) in enumerate([(30.0, -1.9, 0.0), (37.0, 1.9, 0.0)]):
+    SS = 0.85  # sachet scale relative to the 72 x 92 mm artwork
+    for k, (theta, xoff, dz) in enumerate([(28.0, -2.7, 0.0), (36.0, -4.0, 0.0)]):
         s = build_sachet("sachet%d" % k)
         th = math.radians(theta)
-        Hs = SZ["sachet"][1] / 10.0
+        Hs = SZ["sachet"][1] / 10.0 * SS
+        s.scale = (SS, SS, SS)
         s.rotation_euler = (math.pi / 2 - th, 0, 0)
         sach.append((s, th, xoff, Hs))
     # place: rear sachet top edge touches box face; front rests on rear one
@@ -904,6 +906,31 @@ def bbox_world(root):
     return pts
 
 
+def envelope_points(root, bands=24, segs=48):
+    dg = bpy.context.evaluated_depsgraph_get()
+    vs = []
+    for o in root.children_recursive:
+        if o.type != "MESH":
+            continue
+        oe = o.evaluated_get(dg)
+        mw = oe.matrix_world
+        vs += [mw @ v.co for v in oe.data.vertices]
+    z0, z1 = min(v.z for v in vs), max(v.z for v in vs)
+    rmax = [0.0] * bands
+    for v in vs:
+        b = min(bands - 1, int((v.z - z0) / (z1 - z0 + 1e-9) * bands))
+        rmax[b] = max(rmax[b], math.hypot(v.x, v.y))
+    pts = []
+    for b in range(bands):
+        if rmax[b] <= 0:
+            continue
+        for zz in (z0 + (z1 - z0) * b / bands, z0 + (z1 - z0) * (b + 1) / bands):
+            for i in range(segs):
+                a = i / segs * math.tau
+                pts.append(Vector((rmax[b] * math.cos(a), rmax[b] * math.sin(a), zz)))
+    return pts
+
+
 def frame_camera(root, res, yaw, elev=13.0, lens=95.0, fill_h=0.66, fill_w=0.70, union=True):
     sc = bpy.context.scene
     sc.render.resolution_x, sc.render.resolution_y = res
@@ -913,14 +940,11 @@ def frame_camera(root, res, yaw, elev=13.0, lens=95.0, fill_h=0.66, fill_w=0.70,
     cd.sensor_height = 24.0 * 1.25
     cam = link_obj(bpy.data.objects.new("cam", cd))
     sc.camera = cam
-    # gather union of bboxes over all turntable angles so frames never jump
-    pts = []
-    for a in (range(0, 360, 15) if union else (0,)):
-        root.rotation_euler.z = math.radians(yaw + a)
-        bpy.context.view_layer.update()
-        pts += bbox_world(root)
+    # rotation-invariant envelope: per height band, the max radius of any vertex from the
+    # turntable axis, swept as circles. Hero and turntable use the very same camera.
     root.rotation_euler.z = math.radians(yaw)
     bpy.context.view_layer.update()
+    pts = envelope_points(root)
     zmax = max(p.z for p in pts)
     tgt = Vector((0, 0, zmax * 0.48))
     el = math.radians(elev)
@@ -953,6 +977,21 @@ def frame_camera(root, res, yaw, elev=13.0, lens=95.0, fill_h=0.66, fill_w=0.70,
 def setup_scene(pack):
     reset()
     root = BUILDERS[pack]()
+    # put the turntable axis at the centre of the footprint (matters for box + sachets)
+    bpy.context.view_layer.update()
+    dg = bpy.context.evaluated_depsgraph_get()
+    xs, ys = [], []
+    for o in root.children_recursive:
+        if o.type == "MESH":
+            oe = o.evaluated_get(dg)
+            for v in oe.data.vertices:
+                w = oe.matrix_world @ v.co
+                xs.append(w.x)
+                ys.append(w.y)
+    cx, cy = (min(xs) + max(xs)) / 2, (min(ys) + max(ys)) / 2
+    for o in root.children:
+        o.location.x -= cx
+        o.location.y -= cy
     root.rotation_euler.z = math.radians(YAW[pack])
     bpy.context.view_layer.update()
     pts = bbox_world(root)
@@ -966,11 +1005,26 @@ def setup_scene(pack):
     return root
 
 
-def render_to(path):
-    bpy.context.scene.render.filepath = path
+def render_to(path, mask=True):
+    """Render, then (cheaply) an object-only coverage mask next to it as *_mask.png:
+    catcher hidden, no bounces, 4 samples. finalize.py uses it to keep the object's alpha
+    intact while fading/cleaning the shadow-catcher alpha."""
+    sc = bpy.context.scene
+    sc.render.filepath = path
     t = time.time()
     bpy.ops.render.render(write_still=True)
-    return time.time() - t
+    dt = time.time() - t
+    if mask:
+        cy = sc.cycles
+        keep = (cy.samples, cy.use_denoising, cy.max_bounces, cy.use_adaptive_sampling)
+        cat = bpy.data.objects["catcher"]
+        cat.hide_render = True
+        cy.samples, cy.use_denoising, cy.max_bounces, cy.use_adaptive_sampling = 6, False, 0, False
+        sc.render.filepath = path[:-4] + "_mask.png"
+        bpy.ops.render.render(write_still=True)
+        cy.samples, cy.use_denoising, cy.max_bounces, cy.use_adaptive_sampling = keep
+        cat.hide_render = False
+    return dt
 
 
 def main():
@@ -996,7 +1050,7 @@ def main():
             bpy.ops.wm.save_as_mainfile(filepath=os.path.join(a.raw, pack + ".blend"))
         if "hero" in a.modes:
             res = (int(1600 * a.scale), int(2000 * a.scale))
-            frame_camera(root, res, YAW[pack], union=False)
+            frame_camera(root, res, YAW[pack])
             sc.cycles.samples = a.samples
             dt = render_to(os.path.join(a.raw, "%s_hero.png" % pack))
             log["%s_hero" % pack] = round(dt, 1)

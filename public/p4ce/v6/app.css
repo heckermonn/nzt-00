@@ -105,8 +105,7 @@ html.rm .live { animation: none; }
 .pk > svg, .pk > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
 .pk-svg text { font-kerning: normal; }
 /* the renders' alpha can leave a faint rectangle at the frame edge: feather every edge to nothing */
-.pk.real .pk-img { -webkit-mask: linear-gradient(90deg, transparent, #000 17%, #000 83%, transparent), linear-gradient(180deg, transparent, #000 8%, #000 80%, transparent);
-  -webkit-mask-composite: source-in; mask: linear-gradient(90deg, transparent, #000 17%, #000 83%, transparent), linear-gradient(180deg, transparent, #000 8%, #000 80%, transparent); mask-composite: intersect; }
+/* renders now fade their own shadow alpha before the edges (blender/finalize.py), so no edge mask here */
 
 /* ================================================================ the bar */
 .bar { position: fixed; z-index: 40; top: 0; left: 0; right: 0; height: var(--barh); transition: background-color .5s, box-shadow .5s, color .5s, backdrop-filter .5s; }

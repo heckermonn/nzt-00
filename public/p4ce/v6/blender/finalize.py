@@ -15,6 +15,7 @@ import math
 import os
 import random
 
+import numpy as np
 from PIL import Image
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -38,6 +39,41 @@ def load(p):
     if im.mode not in ("RGBA",):
         im = im.convert("RGBA")
     return im
+
+
+EDGE0, EDGE1 = 0.065, 0.20  # shadow alpha is 0 within 6.5% of every edge, full from 20% in
+
+
+def edge_mask(w, h):
+    """Feathered rounded-rect: 0 at EDGE0 inside each edge, 1 from EDGE1 inwards."""
+    def ramp(n):
+        t = np.minimum(np.arange(n) + 0.5, n - np.arange(n) - 0.5) / n
+        s = np.clip((t - EDGE0) / (EDGE1 - EDGE0), 0, 1)
+        return s * s * (3 - 2 * s)
+    return np.outer(ramp(h), ramp(w))
+
+
+def clean_alpha(im, mask_path):
+    """Keep the object's own alpha; fade the shadow-catcher alpha out towards the edges
+    and drop faint (<6/255) shadow alpha, so no faint rectangle shows on the page."""
+    a = np.asarray(im, dtype=np.float32).copy()
+    alpha = a[..., 3]
+    if os.path.exists(mask_path):
+        obj = np.asarray(Image.open(mask_path).convert("RGBA"), dtype=np.float32)[..., 3] / 255.0
+        # grow the object mask by 1 px so anti-aliased rims stay intact
+        g = obj.copy()
+        g[1:, :] = np.maximum(g[1:, :], obj[:-1, :])
+        g[:-1, :] = np.maximum(g[:-1, :], obj[1:, :])
+        g[:, 1:] = np.maximum(g[:, 1:], obj[:, :-1])
+        g[:, :-1] = np.maximum(g[:, :-1], obj[:, 1:])
+        obj = g
+    else:
+        obj = (alpha > 250).astype(np.float32)
+    shadow = alpha * (1 - obj)
+    shadow = np.where(shadow < 6, 0, shadow) * edge_mask(alpha.shape[1], alpha.shape[0])
+    a[..., 3] = np.clip(alpha * obj + shadow, 0, 255)
+    a[..., 3] = np.where(a[..., 3] < 1, 0, a[..., 3])
+    return Image.fromarray(np.round(a).astype(np.uint8), "RGBA")
 
 
 def sweep(w, h, seed=6):
@@ -85,7 +121,7 @@ def main():
     for pack in a.packs.split(","):
         hp = os.path.join(a.raw, "%s_hero.png" % pack)
         if os.path.exists(hp):
-            im = load(hp)
+            im = clean_alpha(load(hp), hp[:-4] + "_mask.png")
             im.save(os.path.join(OUT, "%s_hero.webp" % pack), "WEBP", quality=a.q, method=6, exact=False)
             if im.size not in bg_cache:
                 bg_cache[im.size] = sweep(*im.size)
@@ -95,7 +131,8 @@ def main():
         for f in range(24):
             fp = os.path.join(a.raw, "turntable", "%s_%02d.png" % (pack, f))
             if os.path.exists(fp):
-                load(fp).save(os.path.join(OUT, "turntable", "%s_%02d.webp" % (pack, f)), "WEBP", quality=a.tq, method=6)
+                clean_alpha(load(fp), fp[:-4] + "_mask.png").save(
+                    os.path.join(OUT, "turntable", "%s_%02d.webp" % (pack, f)), "WEBP", quality=a.tq, method=6)
 
     assets = []
     for pack in PACKS:
@@ -129,9 +166,10 @@ def main():
         "generated": datetime.datetime.now().replace(microsecond=0).isoformat(),
         "base": "assets/renders/",
         "renderer": "Blender 5.2 Cycles (CPU), OpenImageDenoise",
-        "notes": ("Stills: 'hero' is transparent with a soft contact shadow in alpha (shadow catcher); "
+        "notes": ("Stills: 'hero' is transparent with a soft contact shadow in alpha (shadow catcher), faded to 0 "
+                  "at least 6.5% inside every edge; "
                   "'mist' is the same render over a Mist #CAD5DA -> Chalk #F2F3EF sweep. Turntable frames are "
-                  "transparent, frame 00 = the hero angle, then the pack turns 15 deg per frame counter-clockwise "
+                  "transparent and use the same camera as the hero (frame 00 = the hero at 800x1000), then the pack turns 15 deg per frame counter-clockwise "
                   "seen from above (the front moves to the right first). Append ?v=<v> (see 'url') so caches refresh. "
                   "Scripts: blender/build_packs.py, blender/labels.py, blender/finalize.py."),
         "palette": {"chalk": "#F2F3EF", "ink": "#171C1F", "mist": "#CAD5DA", "steel_blue": "#718B9A",
