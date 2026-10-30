@@ -107,9 +107,9 @@ function buildHome() {
       <span class="hcd-d">${esc(co.d)}</span></a></li>`).join('')}</ol>`;
   $$('[data-hs]', HOME).forEach(a => {
     const i = +a.dataset.hs;
-    a.addEventListener('pointerenter', () => { if (S.world) S.world.hover(i); });
+    a.addEventListener('pointerenter', () => { if (S.world) { S.world.hover(i); S.world.reveal(i); } });
     a.addEventListener('pointerleave', () => { if (S.world) S.world.hover(-1); });
-    a.addEventListener('focus', () => { if (S.world) S.world.hover(i); });
+    a.addEventListener('focus', () => { if (S.world) { S.world.hover(i); S.world.reveal(i); } });
     a.addEventListener('blur', () => { if (S.world) S.world.hover(-1); });
   });
   $$('[data-hd]', HOME).forEach(b => b.addEventListener('click', () => { if (S.world) S.world.focusTo(+b.dataset.hd); }));
@@ -143,7 +143,7 @@ function homeKey(e) {
     if (e.key === 'ArrowLeft') { e.preventDefault(); S.world.step(-1); }
     if (e.key === 'Enter' && document.activeElement === document.body) nav('#/c/' + CAT[S.world.focus].c);
   } else {
-    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { e.preventDefault(); S.hsel = clamp((S.hsel < 0 ? (e.key === 'ArrowRight' ? -1 : 9) : S.hsel) + (e.key === 'ArrowRight' ? 1 : -1), 0, 8); S.world.hover(S.hsel); }
+    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { e.preventDefault(); S.hsel = clamp((S.hsel < 0 ? (e.key === 'ArrowRight' ? -1 : 9) : S.hsel) + (e.key === 'ArrowRight' ? 1 : -1), 0, 8); S.world.hover(S.hsel); S.world.reveal(S.hsel); }
     if (e.key === 'Enter' && S.hsel >= 0 && (document.activeElement === document.body || document.activeElement.classList.contains('h-h'))) nav('#/c/' + CAT[S.hsel].c);
   }
 }
@@ -221,12 +221,16 @@ function ghost(from, to, o = {}) {
   if (face) {
     /* the panel's face sits a little inside its rounded glass edge: draw the edge, then the face inset in it */
     GHC.width = 384; GHC.height = 512; const g = GHC.getContext('2d'), m = 11;
-    const bg = g.createLinearGradient(0, 0, 0, 512); bg.addColorStop(0, '#e9eff1'); bg.addColorStop(1, '#cdd7dc'); g.fillStyle = bg; g.fillRect(0, 0, 384, 512);
+    g.clearRect(0, 0, 384, 512);
+    g.save(); g.beginPath(); g.roundRect ? g.roundRect(0, 0, 384, 512, 384 * .15 / 2.4) : g.rect(0, 0, 384, 512); g.clip();
+    const bg = g.createLinearGradient(0, 0, 0, 512); bg.addColorStop(0, '#e9eff1'); bg.addColorStop(1, '#cdd7dc'); g.fillStyle = bg; g.fillRect(0, 0, 384, 512); g.restore();
     g.save(); g.beginPath(); g.roundRect ? g.roundRect(m, m, 384 - m * 2, 512 - m * 2, 16) : g.rect(m, m, 384 - m * 2, 512 - m * 2); g.clip(); g.drawImage(face, m, m, 384 - m * 2, 512 - m * 2); g.restore();
     GHC.style.display = '';
   }
   else GHC.style.display = 'none';
   GH.hidden = false; GH.classList.remove('out');
+  /* growing, the pane fades in over the 3D panel it replaces (their light differs a touch: no pop) */
+  GH.classList.remove('gin'); if (o.grow && !RM) { void GH.offsetWidth; GH.classList.add('gin'); }
   ['x', 'y', 'w', 'h', 'r'].forEach(k => GHF[k].snap(from[k]).set(to[k]));
   const d0 = Math.abs(from.w - to.w) + Math.abs(from.h - to.h) + Math.abs(from.x - to.x) + Math.abs(from.y - to.y) || 1;
   return new Promise(res => { GHF.run = {res, d0, grow: !!o.grow, t0: CLOCK.now(), face: !!face}; ghostApply(); if (RM) { ['x', 'y', 'w', 'h', 'r'].forEach(k => GHF[k].snap(to[k])); ghostApply(); GHF.run = null; res(true); } });
@@ -237,15 +241,16 @@ function ghostApply() {
   if (run) {
     const d = Math.abs(GHF.w.v - GHF.w.to) + Math.abs(GHF.h.v - GHF.h.to) + Math.abs(GHF.x.v - GHF.x.to) + Math.abs(GHF.y.v - GHF.y.to);
     const p = clamp(1 - d / run.d0);
-    /* growing, the face dissolves early (before it stretches much); shrinking, it resolves late, as the pane lands */
-    GHC.style.opacity = run.face ? (run.grow ? clamp(1 - p * 2.4) : clamp((p - .45) * 2.2)).toFixed(3) : 0;
+    /* the face keeps its shape (object-fit: contain), so it can stay: growing, it holds until the pane is half way and is
+       still half there when the slab lands on top of it (a crossfade into the page); shrinking, it resolves as it goes */
+    GHC.style.opacity = run.face ? (run.grow ? clamp(1 - (p - .5) * 1.1) : clamp(.2 + p * 1.1)).toFixed(3) : 0;
   }
 }
 function ghostFrame(dt) {
   if (!GHF.run) return;
   ['x', 'y', 'w', 'h', 'r'].forEach(k => GHF[k].step(dt));
   ghostApply();
-  const done = ['x', 'y', 'w', 'h'].every(k => Math.abs(GHF[k].v - GHF[k].to) < .6 && Math.abs(GHF[k].vel) < 30);
+  const done = ['x', 'y', 'w', 'h'].every(k => Math.abs(GHF[k].v - GHF[k].to) < 2 && Math.abs(GHF[k].vel) < 60);
   if (done || CLOCK.now() - GHF.run.t0 > 1600) { const r = GHF.run; GHF.run = null; ['x', 'y', 'w', 'h', 'r'].forEach(k => GHF[k].snap(GHF[k].to)); ghostApply(); r.res(true); }
 }
 function ghostOut() { if (GH.hidden) return; GH.classList.add('out'); setTimeout(() => { if (GH.classList.contains('out')) { GH.hidden = true; GH.classList.remove('out'); } }, RM ? 0 : 320); }
@@ -427,7 +432,8 @@ async function transition(r, o = {}) {
     if (m.v.cam === 'enter') S.world.enter(st, rect, {instant});
     else if (m.v.cam === 'product') S.world.product(st, rect, {instant});
     else S.world.over({st: S.world.phone ? S.world.focus : undefined, instant});
-    S.world.faceOn(m.v.cam === 'home');
+    S.world.faceOn(false);   /* behind any open slab the panels' faces step back, so no big 04 reads through a page */
+    S.world.hide(m.v.cam === 'enter' || m.v.cam === 'product' ? st : -1);
   }
   if (fresh) { setSlab(true); if (instant) slabSnap(true); }
   m.reveal();
@@ -435,7 +441,8 @@ async function transition(r, o = {}) {
   if (!o.noFocus) setTimeout(() => { const h = $('h1', m.el); if (h && my === S.tok && !Protocol.isOpen) h.focus({preventScroll: true}); }, instant ? 0 : 420);
 }
 async function openFromPanel(r, st, my) {
-  if (S.world) S.world.input = false;
+  /* (an interrupted back may still have a station out of the world: put it back before the glide) */
+  if (S.world) { S.world.input = false; S.world.hide(-1); S.world.faceOn(true); }
   HTML.dataset.view = 'col'; HTML.classList.remove('home-on');
   const m = mount(r, {fresh: true});           /* built now, behind; shown when the panel has become the slab */
   const rect = slabRect();
@@ -448,7 +455,10 @@ async function openFromPanel(r, st, my) {
     const card = $(`.hcard[data-hc="${st}"]`, HOME), b = card ? card.getBoundingClientRect() : {left: rect.x + rect.w * .3, top: rect.y + rect.h * .3, width: rect.w * .4, height: rect.h * .4};
     from = {x: b.left, y: b.top, w: b.width, h: b.height, r: 22};
   }
-  await ghost(from, Object.assign({r: slabRadius()}, rect), {grow: true, face: S.world ? S.world.faceCanvas(st) : null});
+  const gp = ghost(from, Object.assign({r: slabRadius()}, rect), {grow: true, face: S.world ? S.world.faceCanvas(st) : null});
+  /* once the pane covers it, the panel leaves the world (nothing of it shows through the frost) */
+  if (S.world) setTimeout(() => { if (my === S.tok) S.world.hide(st); }, RM ? 0 : 170);
+  await gp;
   if (my !== S.tok) return;
   slabSnap(true); ghostOut(); m.reveal(); dockStation(st);
   if (S.world) S.world.faceOn(false);
@@ -460,20 +470,26 @@ async function goHome(prev, my, instant) {
   dockStation(S.world && S.world.phone ? S.world.focus : -1);
   if (S.slab && st >= 0 && !instant && (S.world || $(`.hcard[data-hc="${st}"]`, HOME))) {
     /* the slab shrinks back into its panel, then the camera pulls back */
+    /* first the page leaves the glass, then the bare glass becomes the pane and shrinks back into its panel */
+    const SIN = $('#slabIn'); SIN.classList.add('fading');
+    if (!RM) await new Promise(r => setTimeout(r, 190));
+    if (my !== S.tok) { SIN.classList.remove('fading'); return; }
     const rect = slabRect(), from = Object.assign({r: slabRadius()}, rect);
     let to;
-    if (S.world) { S.world.faceOn(true); if (S.world.state().mode !== 'enter') { S.world.enter(st, rect, {instant: true}); S.world.frame(CLOCK.now(), 0); } to = S.world.panelRect(st); }
+    if (S.world) { S.world.faceOn(true); S.world.hide(st); if (S.world.state().mode !== 'enter') { S.world.enter(st, rect, {instant: true}); S.world.frame(CLOCK.now(), 0); } to = S.world.panelRect(st); }
     else { const b = $(`.hcard[data-hc="${st}"]`, HOME).getBoundingClientRect(); to = {x: b.left, y: b.top, w: b.width, h: b.height, r: 22}; }
-    slabSnap(false); unmountSoon();
+    slabSnap(false); unmountSoon(); setTimeout(() => SIN.classList.remove('fading'), 60);
     await ghost(from, to, {grow: false, face: S.world ? S.world.faceCanvas(st) : null});
     if (my !== S.tok) return;
+    /* landed: the panel is back in the world under the pane, and the pane clears off it */
+    if (S.world) { S.world.hide(-1); S.world.frame(CLOCK.now(), 0); }
     ghostOut();
     if (S.world) { S.world.input = true; S.world.home({st}); }
     homeOn(my);
     return;
   }
   if (S.slab) { setSlab(false); unmountSoon(); }
-  if (S.world) { S.world.faceOn(true); S.world.input = true; S.world.home({st: st >= 0 ? st : undefined, instant}); }
+  if (S.world) { S.world.faceOn(true); S.world.hide(-1); S.world.input = true; S.world.home({st: st >= 0 ? st : undefined, instant}); }
   homeOn(my, instant);
 }
 function unmountSoon() { const c = S.cur; if (!c) return; S.cur = null; if (c.api && c.api.destroy) c.api.destroy(); c.el.inert = true; Disc.setAway(true); setTimeout(() => { if (S.cur !== c) c.el.remove(); }, RM ? 0 : 500); TR.dataset.html = ''; }
@@ -520,7 +536,7 @@ function loop(now) {
   slabFrame(dt, t);
   ghostFrame(dt);
   Disc.frame(dt, t);
-  if (S.world) S.world.frame(t, dt);
+  if (S.world) { S.world.cover(S.slab && !GHF.run && SL.o.v > .5 ? SLAB.getBoundingClientRect() : null); S.world.frame(t, dt); }
   dockFrame(t);
   if (S.cur && S.cur.api && S.cur.api.frame) S.cur.api.frame(dt);
 }
@@ -544,11 +560,13 @@ function startWorld() {
     w.onFocus = homeFocus;
     w.onHover = homeHover;
     const r = S.r;
+    /* arriving at the Atlas: the camera starts high from its very first frame (intro() then brings it down) */
+    if ((r || parse(location.hash)).v === 'home' && !S.entered) w.prepIntro();
     if (r) {
       const st = stOf(r);
       if (r.v === 'home') w.home({instant: true});
-      else if (S.cur && S.cur.v.cam === 'enter') w.enter(st, slabRect(), {instant: true});
-      else if (S.cur && S.cur.v.cam === 'product') w.product(st, slabRect(), {instant: true});
+      else if (S.cur && S.cur.v.cam === 'enter') { w.enter(st, slabRect(), {instant: true}); w.faceOn(false); w.hide(st); }
+      else if (S.cur && S.cur.v.cam === 'product') { w.product(st, slabRect(), {instant: true}); w.faceOn(false); w.hide(st); }
     }
     return w.warm().then(() => w);
   }).catch(e => { console.warn('[pr6] the Atlas is unavailable; the cards stand in', e); HTML.classList.add('nogl'); return null; }));

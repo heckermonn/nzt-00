@@ -87,40 +87,35 @@ float vn(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h21(i
   /* behind an open slab the panel's own face would show through the frost and fight the page: it clears, leaving the
      glass (the app clears it once the panel has become the slab, and restores it before the slab shrinks back) */
   let faceVis = true;
+  /* the station that has become the slab is taken out of the world while the slab stands in its place (otherwise its
+     glass, its foot and its tick show through the frost as faint shapes) */
+  let hidden = -1, coverR = null;
 
   /* ------------------------------------------------------------ framings */
   const TU = {
     /* phone: the centred panel is wf of the screen's width, its centre cy (NDC) above the middle, seen from a little above */
-    p: {fov: 38, el: .2, wf: .66, cy: .25, fitFov: 34},
-    /* desktop: the whole arc fits fit of the half-width, shifted right of the side list (shx), from el above */
-    d: {fov: 28, el: .17, fit: .84, shx: .14, shy: -.02, ty: 1.1, fitFov: 28}
+    p: {fov: 38, el: .26, wf: .62, cy: .24, fitFov: 34},
+    /* desktop: a station centred right of the side list, wf of the screen's width, its neighbours running round the
+       arc to both edges (about seven in view); drag or the list glides along the arc, the wheel steps back */
+    d: {fov: 30, el: .25, wf: .155, cy: .03, fitFov: 28}
   };
   const camS = {pos: new THREE.Vector3(0, 30, 60), tgt: new THREE.Vector3(), sh: new THREE.Vector2(), fov: 30};
   const travel = {on: false, k: 1, t0: 0, d: 0, lift: 0, a: {pos: new THREE.Vector3(), tgt: new THREE.Vector3(), sh: new THREE.Vector2(), fov: 30}, res: null};
   let mode = {k: 'home', st: -1, rect: null};
-  const foc = new Spring(0, {k: 44, c: 12.5});
+  const foc = new Spring(PH ? 0 : 4, {k: 44, c: 12.5});
   const user = {yaw: 0, tyaw: 0, pitch: 0, tpitch: 0, zoom: 1, tzoom: 1, vx: 0, vy: 0};
   const par = {x: 0, y: 0, tx: 0, ty: 0};
   const G = {pos: new THREE.Vector3(), tgt: new THREE.Vector3(), sh: new THREE.Vector2(), fov: 30};
   const _a = {}, _v = new THREE.Vector3(), _r = new THREE.Vector3(), _u = new THREE.Vector3();
   const tanH = fov => Math.tan(fov * Math.PI / 360);
   function poseFocus(f, o) {
-    const t = TU.p, a = arcAt(LAY, f, _a), fy = tanH(t.fov), asp = innerWidth / innerHeight;
-    const d = (PANEL.w / 2) / (t.wf * fy * asp);
+    const t = PH ? TU.p : TU.d, a = arcAt(LAY, f, _a), fy = tanH(t.fov), asp = innerWidth / innerHeight;
+    /* desktop: the side list takes the left (24 + 278px, or 18 + 250px under 1180px); centre the station in what is left */
+    const listR = PH ? 0 : innerWidth <= 1180 ? 268 : 302, shx = listR / innerWidth;
+    const wf = t.wf * (1 - shx), d = (PANEL.w / 2) / (wf * fy * asp) * (PH ? 1 : user.zoom), el = t.el + (PH ? 0 : user.pitch);
     o.tgt.set(a.x, PCY, a.z);
-    o.pos.set(a.x + a.nx * d * Math.cos(t.el), PCY + d * Math.sin(t.el), a.z + a.nz * d * Math.cos(t.el));
-    o.sh.set(0, t.cy); o.fov = t.fov; return o;
-  }
-  function poseOver(o) {
-    const t = TU.d, fy = tanH(t.fov), asp = innerWidth / innerHeight, a4 = 4 * LAY.da;
-    /* the side list takes the left (24 + 278px, or 18 + 250px under 1180px): centre the arc in what is left */
-    const listR = innerWidth <= 1180 ? 268 : 302, shx = Math.max(t.shx, listR / innerWidth), fit = t.fit * (1 - shx) / (1 - t.shx);
-    const halfW = LAY.R * Math.sin(a4) + PANEL.w / 2 + .4, sag = LAY.R * (1 - Math.cos(a4)) / 2;
-    const zM = LAY.cz - LAY.R + sag;
-    const el = t.el + user.pitch, dist = (halfW / (fit * fy * asp) + sag) / Math.cos(t.el) * user.zoom, y = user.yaw;
-    o.tgt.set(0, t.ty, zM);
-    o.pos.set(Math.sin(y) * Math.cos(el) * dist, t.ty + Math.sin(el) * dist, zM + Math.cos(y) * Math.cos(el) * dist);
-    o.sh.set(shx, t.shy); o.fov = t.fov; return o;
+    o.pos.set(a.x + a.nx * d * Math.cos(el), PCY + d * Math.sin(el), a.z + a.nz * d * Math.cos(el));
+    o.sh.set(shx, t.cy); o.fov = t.fov; return o;
   }
   /* straight on to a panel, so that it fits a screen rectangle (contain) and is centred on it */
   function poseFit(st, rect, back, o) {
@@ -132,11 +127,12 @@ float vn(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h21(i
   }
   function goal(o) {
     if ((mode.k === 'enter' || mode.k === 'product') && mode.rect) return poseFit(mode.st, mode.rect, mode.k === 'product' ? 1.5 : 1, o);
-    return PH ? poseFocus(foc.v, o) : poseOver(o);
+    return poseFocus(foc.v, o);
   }
   function startTravel(dur, lift = 0) {
     travel.a.pos.copy(camS.pos); travel.a.tgt.copy(camS.tgt); travel.a.sh.copy(camS.sh); travel.a.fov = camS.fov;
     if (travel.res) travel.res(false);
+    W.prepped = false;
     travel.on = true; travel.t0 = CLOCK.now(); travel.d = RM ? 0 : dur; travel.lift = lift; travel.k = 0;
     return new Promise(r => { travel.res = r; });
   }
@@ -187,7 +183,7 @@ float vn(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h21(i
   const ray = new THREE.Raycaster(), boxes = stations.map(s => s.box);
   function pick(cx, cy) { cam.updateMatrixWorld(); ray.setFromCamera({x: cx / innerWidth * 2 - 1, y: -(cy / innerHeight * 2 - 1)}, cam); const h = ray.intersectObjects(boxes, false)[0]; return h ? h.object.userData.st : -1; }
   const live = () => mode.k === 'home' && W.input;
-  const pxPer = () => innerWidth * .64;
+  const pxPer = () => PH ? innerWidth * .64 : innerWidth * .16;
   host.addEventListener('pointerdown', e => {
     if (e.button > 0 || !live()) return;
     Object.assign(ptr, {down: true, id: e.pointerId, sx: e.clientX, sy: e.clientY, x: e.clientX, y: e.clientY, drag: false, f0: foc.v, t0: Math.round(foc.to), v: 0, lt: performance.now(), lx: e.clientX});
@@ -201,11 +197,10 @@ float vn(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h21(i
     if (!ptr.drag && Math.hypot(ptr.x - ptr.sx, ptr.y - ptr.sy) > 7) { ptr.drag = true; if (travel.on && PH) { travel.on = false; if (travel.res) { travel.res(false); travel.res = null; } } }
     if (!ptr.drag) return;
     const now = performance.now(), ddt = Math.max(1, now - ptr.lt); ptr.v = ptr.v * .55 + ((e.clientX - ptr.lx) / ddt) * .45; ptr.lt = now; ptr.lx = e.clientX;
-    if (PH) {
-      let f = ptr.f0 - (ptr.x - ptr.sx) / pxPer();
-      if (f < 0) f *= .3; if (f > 8) f = 8 + (f - 8) * .3;
-      foc.snap(f);
-    } else { user.tyaw = clamp(user.tyaw - dx * .0022, -.55, .55); user.tpitch = clamp(user.tpitch + dy * .0016, -.1, .3); user.vx = dx; user.vy = dy; }
+    let f = ptr.f0 - (ptr.x - ptr.sx) / pxPer();
+    if (f < 0) f *= .3; if (f > 8) f = 8 + (f - 8) * .3;
+    foc.snap(f);
+    if (!PH) user.tpitch = clamp(user.tpitch + dy * .0012, -.08, .22);
   });
   function endPtr(e) {
     if (!ptr.down || e.pointerId !== ptr.id) return; ptr.down = false; host.classList.remove('drag');
@@ -215,7 +210,7 @@ float vn(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h21(i
       if (PH && hit !== Math.round(foc.to)) W.focusTo(hit); else onPick(hit);
       return;
     }
-    if (PH) {
+    {
       /* one station per swipe (a flick past the halfway carries to the next one); a long drag can travel further */
       const vs = clamp(ptr.v * 1000 / pxPer(), -4, 4), base = ptr.t0, moved = foc.v - base;
       let to = Math.abs(moved) > 1.4 ? Math.round(foc.v - vs * .1) : Math.abs(moved) > .5 || Math.abs(vs) > .35 ? base + Math.sign(Math.abs(moved) > .12 ? moved : -vs) : base;
@@ -225,7 +220,7 @@ float vn(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h21(i
   }
   host.addEventListener('pointerup', endPtr); host.addEventListener('pointercancel', endPtr);
   host.addEventListener('pointerleave', () => { if (!ptr.down && hov.src === 'ptr') { hov.st = -1; host.classList.remove('over'); } });
-  host.addEventListener('wheel', e => { if (!live() || PH) return; e.preventDefault(); user.tzoom = clamp(user.tzoom * Math.exp(e.deltaY * .0011), .5, 1.15); }, {passive: false});
+  host.addEventListener('wheel', e => { if (!live() || PH) return; e.preventDefault(); user.tzoom = clamp(user.tzoom * Math.exp(e.deltaY * .0011), .8, 2.1); }, {passive: false});
 
   /* ------------------------------------------------------------ resize, loop */
   function fit() {
@@ -234,16 +229,17 @@ float vn(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h21(i
     setDpr(); renderer.setSize(innerWidth, innerHeight, false); W.force = true;
   }
   addEventListener('resize', fit);
+  /* fog runs from the camera's own distance to what it looks at, so a glide never drowns the world in mist */
   function fogGoal() {
-    if (mode.k === 'enter' || mode.k === 'product') return [5, 38];
-    if (PH) return [11, 48];
-    const d = camS.pos.distanceTo(camS.tgt); return [d * .7, d * 2.4];
+    const d = camS.pos.distanceTo(camS.tgt);
+    if (mode.k === 'enter' || mode.k === 'product') return [d * .7, d * 4.6];
+    if (PH) return [d * .95, d * 4.2];
+    return [d * .8, d * 2.9];
   }
   const fogS = {n: 30, f: 120};
   let lastR = -1;
   function frame(now, dt) {
     par.x = lerp(par.x, par.tx, .04); par.y = lerp(par.y, par.ty, .04);
-    if (!ptr.down && !PH && (Math.abs(user.vx) > .1 || Math.abs(user.vy) > .1)) { user.tyaw = clamp(user.tyaw - user.vx * .0016, -.55, .55); user.vx *= .9; user.vy *= .9; if (Math.abs(user.vx) < .2) user.vx = 0; if (Math.abs(user.vy) < .2) user.vy = 0; }
     const a = 1 - Math.pow(.0009, dt);
     user.yaw = lerp(user.yaw, user.tyaw, a); user.pitch = lerp(user.pitch, user.tpitch, a); user.zoom = lerp(user.zoom, user.tzoom, a);
     if (!ptr.down || !ptr.drag) foc.step(dt);
@@ -258,13 +254,20 @@ float vn(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h21(i
       s.lift.position.y = y; s.lift.rotation.x = -y * .05;
       s.glow = lerp(s.glow, on ? 1 : 0, 1 - Math.pow(.01, dt));
       s.fMat.emissiveIntensity = .34 + s.glow * .2;
-      const fv = faceVis ? 1 : s.i === mode.st ? 0 : .14; s.fade = fv === 1 ? 1 : lerp(s.fade, fv, 1 - Math.pow(.02, dt));
+      s.g.visible = s.i !== hidden;
+      const fv = faceVis ? 1 : s.i === mode.st ? 0 : .07; s.fade = lerp(s.fade, fv, 1 - Math.pow(.02, dt));
       if (s.fade > .995) s.fade = 1;
       const tr = s.fade < 1; if (s.fMat.transparent !== tr) { s.fMat.transparent = tr; s.fMat.needsUpdate = true; } s.fMat.opacity = s.fade;
       s.tick.material.emissive.setHex(0xe98546); s.tick.material.emissiveIntensity = s.glow * .9;
     });
     camUpdate(now, dt);
-    { const G2 = fogGoal(), b = 1 - Math.pow(travel.on ? .05 : .2, dt); fogS.n = lerp(fogS.n, G2[0], b); fogS.f = lerp(fogS.f, G2[1], b); scene.fog.near = fogS.n; scene.fog.far = fogS.f; }
+    /* a station standing wholly behind the open slab (e.g. when Protocol slides the slab aside) leaves the world too:
+       through the frost it would only read as a faint box and a stand line */
+    if (coverR) stations.forEach(s => {
+      if (!s.g.visible) return; const q = W.panelRect(s.i), m = 6, fh = q.h * .1;
+      if (q.x > coverR.left + m && q.x + q.w < coverR.right - m && q.y > coverR.top + m && q.y + q.h + fh < coverR.bottom - m) s.g.visible = false;
+    });
+    { const G2 = fogGoal(), b = 1 - Math.pow(.002, dt); fogS.n = lerp(fogS.n, G2[0], b); fogS.f = lerp(fogS.f, G2[1], b); scene.fog.near = fogS.n; scene.fog.far = fogS.f; }
     const fp = camS.tgt; key.target.position.set(fp.x, 0, fp.z); key.position.copy(key.target.position).addScaledVector(KEYDIR, 50);
     setShadow(lerp(shHalf, mode.k === 'home' && !PH ? 24 : 10, .08));
     sky.position.copy(cam.position);
@@ -289,7 +292,7 @@ float vn(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h21(i
     home(o = {}) {
       const was = mode.k; mode = {k: 'home', st: -1, rect: null};
       if (o.st != null) { if (was === 'enter' || was === 'product' || o.instant) foc.snap(o.st); else foc.set(o.st); }
-      if (o.instant) { snap(); return Promise.resolve(true); }
+      if (o.instant) { if (!W.prepped) snap(); return Promise.resolve(true); }
       if (was === 'home') return Promise.resolve(true);
       return startTravel(o.dur || 1450, PH ? 0 : .8);
     },
@@ -313,8 +316,12 @@ float vn(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h21(i
       return startTravel(o.dur || 1300, 0);
     },
     setRect(rect) { if (mode.rect) mode.rect = rect; },
-    faceOn(v) { faceVis = !!v; if (v) stations.forEach(s => { s.fade = 1; }); W.force = true; },
+    cover(r) { coverR = r; },
+    hide(i) { hidden = i == null ? -1 : i; stations.forEach(s => { s.g.visible = s.i !== hidden; }); W.force = true; },
+    faceOn(v) { faceVis = !!v; W.force = true; },
     focusTo(i) { i = clamp(Math.round(i), 0, 8); if (mode.k !== 'home') return; foc.set(i); },
+    /* a station named from the side list: glide along the arc only if it is not already well in view */
+    reveal(i) { if (mode.k !== 'home' || PH) return; if (Math.abs(i - foc.to) > 1.6) foc.set(clamp(i + Math.sign(foc.to - i) * 1.4, 0, 8)); },
     step(d) { W.focusTo(Math.round(foc.to) + d); },
     hover(i) { hov.st = i; hov.src = 'list'; },
     /* where a panel's face is on screen now, and its corner radius in px (for the morph to the DOM slab) */
@@ -326,7 +333,18 @@ float vn(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h21(i
     },
     faceCanvas: i => stations[i].cv,
     /* the arrival: from high over the plane, the camera settles to its framing */
-    intro() { if (RM) return; goal(G); camS.pos.copy(G.pos).add(_v.set(0, PH ? 16 : 14, PH ? 10 : 12)); camS.tgt.copy(G.tgt); camS.sh.copy(G.sh); camS.fov = G.fov; startTravel(2600); },
+    /* prepIntro holds the camera high from the first frame (no cut from the framing to the high pose when the arrival
+       starts); intro starts the descent */
+    prepIntro() {
+      if (RM) return; goal(G); travel.a.pos.copy(G.pos).add(_v.set(0, PH ? 16 : 14, PH ? 10 : 12)); travel.a.tgt.copy(G.tgt); travel.a.sh.copy(G.sh); travel.a.fov = G.fov;
+      camS.pos.copy(travel.a.pos); camS.tgt.copy(travel.a.tgt); camS.sh.copy(G.sh); camS.fov = G.fov;
+      travel.on = true; travel.t0 = 1e15; travel.d = 2600; travel.lift = 0; travel.k = 0; W.prepped = true;
+    },
+    intro() {
+      if (RM) return;
+      if (W.prepped && travel.on && travel.t0 > 1e14) { W.prepped = false; travel.t0 = CLOCK.now(); return new Promise(r => { travel.res = r; }); }
+      goal(G); camS.pos.copy(G.pos).add(_v.set(0, PH ? 16 : 14, PH ? 10 : 12)); camS.tgt.copy(G.tgt); camS.sh.copy(G.sh); camS.fov = G.fov; startTravel(2600);
+    },
     pointer(nx, ny) { par.tx = nx; par.ty = ny; },
     set onPick(f) { onPick = f; }, set onFocus(f) { onFocus = f; lastF = -1; }, set onHover(f) { onHover = f; },
     setVisible(v) { this.visible = v; canvas.style.visibility = v ? '' : 'hidden'; if (v) W.force = true; },

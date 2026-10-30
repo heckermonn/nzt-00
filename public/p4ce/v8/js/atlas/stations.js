@@ -46,6 +46,12 @@ export function drawFace(g, co, img, n) {
   const sh = g.createRadialGradient(FW * .18, FH * .06, 10, FW * .18, FH * .06, FW * .9);
   sh.addColorStop(0, 'rgba(255,255,255,.55)'); sh.addColorStop(1, 'rgba(255,255,255,0)');
   g.fillStyle = sh; g.fillRect(0, 0, FW, FH);
+  /* frost: a very fine grain, and a soft diagonal reflection band across the upper half */
+  const st = g.createLinearGradient(0, FH * .05, FW, FH * .55);
+  st.addColorStop(0, 'rgba(255,255,255,0)'); st.addColorStop(.42, 'rgba(255,255,255,0)'); st.addColorStop(.5, 'rgba(255,255,255,.22)'); st.addColorStop(.62, 'rgba(255,255,255,0)');
+  g.fillStyle = st; g.fillRect(0, 0, FW, FH);
+  const gb = g.createLinearGradient(0, FH * .7, 0, FH); gb.addColorStop(0, 'rgba(120,144,158,0)'); gb.addColorStop(1, 'rgba(120,144,158,.10)');
+  g.fillStyle = gb; g.fillRect(0, 0, FW, FH);
   g.lineWidth = 3; rr(g, 16, 16, FW - 32, FH - 32, 30);
   g.strokeStyle = 'rgba(255,255,255,.85)'; g.stroke();
   g.lineWidth = 2; rr(g, 19, 19, FW - 36, FH - 36, 28); g.strokeStyle = 'rgba(96,116,128,.16)'; g.stroke();
@@ -158,9 +164,9 @@ export function scatter(scene, MAT, SOFT, L, ph) {
     if (dR < -1.9 && inSpan) {                                                     /* the plaza in front of the panels */
       const k = ((ang / L.da) % 1 + 1) % 1, gap = Math.abs(k - .5);                /* 0 = halfway between two stations */
       if (ph) { if (dR < -6.5 || gap > .22) continue; s = .22 + r() * .3; }
-      else { if (dR > -4 && gap > .25) continue; s = .3 + Math.pow(r(), 2) * .6; }
+      else { if (dR < -6 || gap > .24) continue; s = .24 + Math.pow(r(), 2) * .34; }   /* small, in the gaps: never over a label */
     } else if (dR > 1.9) s = .5 + Math.pow(r(), 1.6) * (dR > 8 ? 2.6 : 1.2);        /* behind the arc, in the mist */
-    else { if (Math.hypot(x, z - L.cz) < 4) continue; s = .4 + Math.pow(r(), 2) * 1.1; }
+    else { if (Math.hypot(x, z - L.cz) < 4 || (!ph && rad < 9)) continue; s = .4 + Math.pow(r(), 2) * (ph ? 1.1 : .7); }
     (r() < .55 ? pills : balls).push({x, z, s, a: r() * Math.PI * 2, tilt: r() < .2});
   }
   const pg = new THREE.CapsuleGeometry(.32, .9, SOFT ? 6 : 12, SOFT ? 16 : 28), bg = new THREE.SphereGeometry(.38, SOFT ? 20 : 36, SOFT ? 14 : 24);
@@ -175,7 +181,11 @@ export function scatter(scene, MAT, SOFT, L, ph) {
   const lean = MS(new THREE.CapsuleGeometry(.62, 1.9, SOFT ? 8 : 16, SOFT ? 20 : 40), MAT.clay, .45, 1.42, 0); lean.rotation.z = -.5; kit.add(lean);
   kit.add(MS(new THREE.SphereGeometry(.62, SOFT ? 24 : 48, SOFT ? 16 : 32), MAT.clay, -1.05, .62, .4));
   kit.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } });
-  kit.position.set(0, 0, L.cz - 1.5); kit.rotation.y = .5; grp.add(kit);
+  /* it stands just past each end of the arc, so it frames the row and never stands in front of a station */
+  [-1, 1].forEach(sd => {
+    const k = sd < 0 ? kit : kit.clone(), a = arcAt(L, 4 + sd * 5.7);
+    k.position.set(a.x - a.nx * 2.4, 0, a.z - a.nz * 2.4); k.rotation.y = -a.a + (sd < 0 ? .5 : 2.6); k.scale.setScalar(1.1); grp.add(k);
+  });
   scene.add(grp);
   return grp;
 }

@@ -1082,3 +1082,21 @@ html.rm .home.in .h-side, html.rm .home.in .h-cap, html.rm .home.in .h-list li {
 /* behind any open slab the world steps back under a light, even veil (the Dossier keeps v7's vignette, so its
    station stays visible, blurred, round the slab) */
 html.slab-on:not([data-view="product"]) #world::before { opacity: 1; background: radial-gradient(80% 70% at 50% 50%, rgba(184, 196, 202, .52), rgba(184, 196, 202, .72)); }
+
+/* ---------------------------------------------------------------- critic pass (v8): readable frost, a clean morph */
+/* the slab's frost is denser: the Atlas's panels (big 04s, discs) must never read through a page of text */
+.slab-glass, .gh-glass { background: linear-gradient(162deg, rgba(230, 236, 239, .84) 0%, rgba(219, 227, 231, .8) 46%, rgba(210, 219, 225, .82) 100%);
+  backdrop-filter: blur(44px) saturate(1.1) brightness(1.03); -webkit-backdrop-filter: blur(44px) saturate(1.1) brightness(1.03); }
+@media (max-width: 760px) {
+  .slab-glass, .gh-glass { background: linear-gradient(162deg, rgba(231, 237, 240, .88) 0%, rgba(221, 229, 233, .85) 46%, rgba(212, 221, 226, .86) 100%);
+    backdrop-filter: blur(40px) saturate(1.1) brightness(1.03); -webkit-backdrop-filter: blur(40px) saturate(1.1) brightness(1.03); }
+}
+/* the morph pane: it fades in over the panel it replaces; the face keeps its own shape (no stretch) as the glass grows */
+#ghost.gin { animation: ghIn .17s ease-out both; }
+@keyframes ghIn { from { opacity: 0; } }
+.gh-face { object-fit: contain; }
+/* going back, the page leaves the glass before the glass shrinks into its panel */
+.slab-in { transition: opacity .18s ease; }
+.slab-in.fading { opacity: 0; }
+/* the Atlas's caption steps away under the menu and search */
+html.sh-open .home, html.s-open .home { opacity: 0; transition: opacity .25s ease; }

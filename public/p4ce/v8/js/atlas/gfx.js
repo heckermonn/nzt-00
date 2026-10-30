@@ -42,5 +42,14 @@ export function makeGfx(renderer, SOFT) {
     orange: new THREE.MeshStandardMaterial({color: 0xe98546, roughness: .6, metalness: 0}),
     hidden: new THREE.MeshBasicMaterial({visible: false})
   };
+  /* the glass edge: a cool fresnel rim, so the rounded bevel and the sides glow like the edge of a thick pane
+     (head-on the face is untouched) */
+  MAT.glass.onBeforeCompile = sh => {
+    sh.fragmentShader = sh.fragmentShader.replace('#include <opaque_fragment>', `{
+      float fr = pow(1.0 - clamp(abs(dot(normalize(vViewPosition), normal)), 0.0, 1.0), 2.6);
+      outgoingLight = mix(outgoingLight, vec3(.93, .97, 1.0), fr * .55) + vec3(.03, .05, .07) * fr;
+    }
+    #include <opaque_fragment>`);
+  };
   return {MAT, mkTex, MAXA};
 }
