@@ -3,60 +3,81 @@
    pack type (tin, pouch, box, dropper, jar), not per product. The manifest's exact shape may vary, so it is read
    tolerantly: every image path anywhere in it is classified by its name ({pack}_hero.*, {pack}_mist.*,
    turntable/{pack}_NN.*), and an optional "formats" map (Capsules → tin …) overrides the catalogue's own.
-   A hero image is only used once it has actually loaded; until then (or if the folder is empty) each pack type is
-   drawn as a clean SVG placeholder, so the store looks finished either way. */
-import {FORMATS} from './catalog.js';
+   The manifest is trusted (no waiting on downloads); a render that fails to load is swapped for a clean SVG drawing
+   of its pack type, and with no manifest every pack is drawn, so the store looks finished either way. */
+import {FORMATS, byId} from './catalog.js';
 import {esc} from './util.js';
 
 const BASE = 'assets/renders/';
 const PACKS = ['tin', 'pouch', 'box', 'dropper', 'jar'];
-const R = {manifest: null, fmt: {...FORMATS}, hero: {}, mist: {}, tt: {}, ok: {}, tried: false};
+const R = {manifest: null, fmt: {...FORMATS}, hero: {}, mist: {}, tt: {}, ok: {}, bad: {}, tried: false};
+const IMG = /\.(webp|png|jpe?g|avif)(\?[^"'\s]*)?$/i;
+const url = f => /^(https?:)?\//.test(f) ? f : BASE + f.replace(/^\.?\/?(assets\/renders\/)?/, '');
 
+/* the documented shape: m.assets = [{type:'still', pack, variant:'hero'|'mist', url}, {type:'turntable', pack, frame_urls:[…]}].
+   urls carry ?v=<hash> so caches refresh; they are used exactly as given. */
+function fromAssets(list) {
+  let n = 0;
+  list.forEach(a => {
+    if (!a || !PACKS.includes(a.pack)) return;
+    if (a.type === 'turntable' && Array.isArray(a.frame_urls) && a.frame_urls.length) { R.tt[a.pack] = a.frame_urls.map(url); n++; }
+    else if (a.type === 'still' && (a.url || a.path)) { const u = url(a.url || a.path); if (a.variant === 'mist') R.mist[a.pack] = u; else if (a.variant === 'hero') R.hero[a.pack] = u; n++; }
+  });
+  return n;
+}
+/* any other shape: every image path anywhere in it, classified by its file name */
 function walk(v, out) {
-  if (typeof v === 'string') { if (/\.(webp|png|jpe?g|avif)$/i.test(v)) out.push(v); return; }
+  if (typeof v === 'string') { if (IMG.test(v)) out.push(v); return; }
   if (Array.isArray(v)) { v.forEach(x => walk(x, out)); return; }
   if (v && typeof v === 'object') Object.values(v).forEach(x => walk(x, out));
 }
-const url = f => /^(https?:)?\//.test(f) ? f : BASE + f.replace(/^\.?\/?(assets\/renders\/)?/, '');
 function classify(files) {
   files.forEach(f => {
-    const name = f.split('/').pop(), m = name.match(/^(tin|pouch|box|dropper|jar)[_-]([a-z]+|\d+)\b/i);
+    const name = f.split('?')[0].split('/').pop(), m = name.match(/^(tin|pouch|box|dropper|jar)[_-]([a-z]+|\d+)\b/i);
     if (!m) return;
     const pack = m[1].toLowerCase(), view = m[2].toLowerCase();
-    if (/turntable|\/tt\//i.test(f) || /^\d+$/.test(view)) (R.tt[pack] = R.tt[pack] || []).push(url(f));
+    if (/turntable|\/tt\//i.test(f) || /^\d+$/.test(view)) { (R.tt[pack] = R.tt[pack] || []).includes(url(f)) || R.tt[pack].push(url(f)); }
     else if (view === 'hero') R.hero[pack] = url(f);
     else if (view === 'mist') R.mist[pack] = url(f);
   });
-  for (const k in R.tt) R.tt[k].sort((a, b) => (+(a.match(/(\d+)\.\w+$/) || [0, 0])[1]) - (+(b.match(/(\d+)\.\w+$/) || [0, 0])[1]));
+  const num = u => +((u.split('?')[0].match(/(\d+)\.\w+$/) || [0, 0])[1]);
+  for (const k in R.tt) R.tt[k].sort((a, b) => num(a) - num(b));
 }
-const probe = src => new Promise(res => { const im = new Image(); im.onload = () => res(im.naturalWidth > 0); im.onerror = () => res(false); im.src = src; });
 
+/* the manifest is trusted: no waiting for every hero to download. An <img> that fails is swapped for the drawing. */
 async function load() {
   try {
     const r = await fetch(BASE + 'manifest.json', {cache: 'no-cache'});
     if (!r.ok) throw new Error(r.status);
     const m = await r.json(); R.manifest = m;
     if (m && m.formats && typeof m.formats === 'object') Object.assign(R.fmt, m.formats);
-    const files = []; walk(m, files); classify(files);
-    /* a manifest that names packs but no files: try the documented file names */
-    if (!files.length) PACKS.forEach(p => { if (m && (m[p] || (m.packs && m.packs[p]))) R.hero[p] = BASE + p + '_hero.webp'; });
-    /* only a hero that loads counts; the others fall back to the placeholder */
-    await Promise.all(PACKS.map(async p => { R.ok[p] = !!R.hero[p] && await probe(R.hero[p]); }));
+    if (!(Array.isArray(m.assets) && fromAssets(m.assets))) { const files = []; walk(m, files); classify(files); }
+    PACKS.forEach(p => { R.ok[p] = !!R.hero[p]; });
   } catch (e) { /* no manifest yet: placeholders throughout */ }
   R.tried = true;
   return R;
 }
-const ready = Promise.race([load(), new Promise(r => setTimeout(() => r(R), 2500))]);
+const ready = Promise.race([load(), new Promise(r => setTimeout(() => r(R), 1500))]);
 
 export const packOf = p => R.fmt[p.g] || p.pack || 'tin';
+const okp = p => R.ok[packOf(p)] && !R.bad[packOf(p)];
 export const Renders = {
   ready, PACKS,
-  has: p => !!R.ok[packOf(p)],
-  hero: p => R.ok[packOf(p)] ? R.hero[packOf(p)] : null,
-  mist: p => R.ok[packOf(p)] ? (R.mist[packOf(p)] || null) : null,
-  frames: p => R.ok[packOf(p)] ? (R.tt[packOf(p)] || []) : [],
-  status: () => ({manifest: !!R.manifest, real: PACKS.filter(p => R.ok[p]), frames: Object.fromEntries(Object.entries(R.tt).map(([k, v]) => [k, v.length]))})
+  has: p => !!okp(p),
+  hero: p => okp(p) ? R.hero[packOf(p)] : null,
+  mist: p => okp(p) ? (R.mist[packOf(p)] || null) : null,
+  frames: p => okp(p) ? (R.tt[packOf(p)] || []) : [],
+  status: () => ({manifest: !!R.manifest, real: PACKS.filter(p => R.ok[p] && !R.bad[p]), broken: Object.keys(R.bad), frames: Object.fromEntries(Object.entries(R.tt).map(([k, v]) => [k, v.length]))})
 };
+/* a render that does not load: that pack type falls back to its drawing, here and from now on */
+document.addEventListener('error', e => {
+  const im = e.target; if (!(im instanceof HTMLImageElement) || !im.classList.contains('pk-img')) return;
+  const pk = im.closest('.pk'); if (!pk) return;
+  const isFrame = im.dataset.frame != null;
+  if (!isFrame) R.bad[pk.dataset.pack] = true;
+  const p = byId(pk.dataset.id);
+  if (p) { pk.classList.remove('real'); pk.innerHTML = placeholderSVG(p); }
+}, true);
 
 /* ---------------------------------------------------------------- the placeholders: one drawing per pack type.
    Shared gradients live in one hidden <svg> (defs), so 51 placeholders on a page cost 51 small paths, not 51 copies. */
@@ -166,10 +187,12 @@ export function placeholderSVG(p) {
   const pack = packOf(p);
   return `<svg class="pk-svg" viewBox="0 0 400 480" aria-hidden="true" focusable="false">${(DRAW[pack] || DRAW.tin)(p)}</svg>`;
 }
-/* the pack as markup: the render when there is one, otherwise the drawing. data-pack carries the type for CSS. */
+/* the pack as markup: the render when there is one, otherwise the drawing. data-pack carries the type for CSS.
+   Renders are transparent, so thumbnails use the hero (not the mist sweep) and sit straight on the page.
+   o.src forces an image (the Dossier starts on turntable frame 00 so dragging does not jump). */
 export function packHTML(p, o = {}) {
   ensureDefs();
-  const pack = packOf(p), src = o.mist ? (Renders.mist(p) || Renders.hero(p)) : Renders.hero(p);
-  const inner = src ? `<img class="pk-img" src="${esc(src)}" alt="" decoding="async"${o.eager ? '' : ' loading="lazy"'} draggable="false">` : placeholderSVG(p);
+  const pack = packOf(p), src = Renders.hero(p) ? (o.src || Renders.hero(p)) : null;
+  const inner = src ? `<img class="pk-img" src="${esc(src)}" alt="" decoding="async"${o.eager ? ' fetchpriority="high"' : ' loading="lazy"'}${o.src ? ' data-frame="0"' : ''} draggable="false">` : placeholderSVG(p);
   return `<span class="pk${src ? ' real' : ''} pk-${pack}${o.cls ? ' ' + o.cls : ''}" data-pack="${pack}" data-id="${esc(p.id)}">${inner}</span>`;
 }

@@ -6,11 +6,13 @@ All photographs are from Unsplash and used under the Unsplash License (https://u
 
 | File | Used for | Source | Photographer | Licence |
 |---|---|---|---|---|
-| photos/hero-cyclist.webp | Index hero, behind the frosted glass (the jersey's orange is kept as the one accent) | https://unsplash.com/photos/bcFrhElnWL0 | Ollie Danvers (@hipposeyephotography) | Unsplash License |
-| photos/sprint.webp | Field Club header; Strip view; Formulary band | https://unsplash.com/photos/pFYI404z_a4 | R_ INVSCIMENTO (@r_inascimento) | Unsplash License |
-| photos/field.webp | Collection pages; Field Notes | https://unsplash.com/photos/person-standing-on-misty-ground-arOyDPUAJzc | Jakub Kriz (@jakubkriz) | Unsplash License |
-| photos/fog.webp | Member pages (Your Key, Member Liaison) | https://unsplash.com/photos/silhouette-of-man-during-foggy-day-nyKJlVwKTAU | Patrick Hendry (@worldsbetweenlines) | Unsplash License |
-| photos/runner.webp | Field Club; Field Notes | https://unsplash.com/photos/Kojhfhrld90 | Mathias Reding (@matreding) | Unsplash License |
+| photos/hero-sprint.webp | Index hero, behind the frosted glass (cropped to the runner; no visible logos or text) | https://unsplash.com/photos/two-athletes-running-on-a-track-with-motion-blur-R9hR2inD8YA | Noah Katz (@nktz_10) | Unsplash License |
+| photos/sprint.webp | Collection headers (03 Force, 04 Endure) | https://unsplash.com/photos/pFYI404z_a4 | R_ INVSCIMENTO (@r_inascimento) | Unsplash License |
+| photos/field.webp | Field Club band on the Index; collection headers (01, 05, 07, 09); Field Notes | https://unsplash.com/photos/person-standing-on-misty-ground-arOyDPUAJzc | Jakub Kriz (@jakubkriz) | Unsplash License |
+| photos/fog.webp | Collection headers (02, 06, 08); Member Liaison | https://unsplash.com/photos/silhouette-of-man-during-foggy-day-nyKJlVwKTAU | Patrick Hendry (@worldsbetweenlines) | Unsplash License |
+| photos/runner.webp | Field Club header | https://unsplash.com/photos/Kojhfhrld90 | Mathias Reding (@matreding) | Unsplash License |
+
+The earlier hero (photos/hero-cyclist.webp, Ollie Danvers) was removed because the jersey carried third-party sponsor logos.
 
 ## The gate: Object 0047 (`object/`)
 
@@ -20,7 +22,7 @@ All photographs are from Unsplash and used under the Unsplash License (https://u
 
 ## Product renders (`renders/`)
 
-Written by the parallel Blender job (see `renders/manifest.json` when present). Until they land, `js/renders.js` draws a CSS/SVG placeholder per pack type (tin, pouch, box, dropper, jar); those placeholders are original work.
+Original renders made for PR6 in Blender (Cycles) by the parallel render job; scripts in `../blender/` (build_packs.py, labels.py, finalize.py). One set per pack type (tin, pouch, box, dropper, jar): a transparent hero still, a mist-sweep still and a 24-frame turntable, listed with cache-busting `?v=` urls in `renders/manifest.json`, which `js/renders.js` reads at runtime. If an image fails to load, `js/renders.js` draws an SVG placeholder of that pack type instead (also original work).
 
 ## Type
 

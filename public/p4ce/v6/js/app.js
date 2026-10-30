@@ -72,7 +72,7 @@ function openSearch() {
   SEARCH.innerHTML = `<div class="s-in">
     <p class="lbl mono">Search <i>/</i> The Formulary</p>
     <label class="sr" for="sQ">Search the Formulary</label>
-    <input id="sQ" type="search" placeholder="Name, ingredient, format or code" autocomplete="off" spellcheck="false">
+    <input id="sQ" type="search" placeholder="${innerWidth < 600 ? 'Name, ingredient or code' : 'Name, ingredient, format or code'}" autocomplete="off" spellcheck="false">
     <button type="button" class="s-x mono" data-sx>Close <kbd>Esc</kbd></button>
     <p class="s-meta mono" id="sMeta" role="status"></p>
     <ol class="s-res" id="sRes"></ol></div>`;
@@ -80,7 +80,7 @@ function openSearch() {
   requestAnimationFrame(() => SEARCH.classList.add('on'));
   const q = $('#sQ'); q.focus();
   q.addEventListener('input', renderSearch);
-  q.addEventListener('keydown', e => { if (e.key === 'Enter') { const a = $('#sRes a'); if (a) { location.hash = a.getAttribute('href'); closeSearch(false); } } if (e.key === 'ArrowDown') { const a = $('#sRes a'); if (a) { e.preventDefault(); a.focus(); } } });
+  q.addEventListener('keydown', e => { if (e.key === 'Enter') { const a = $('#sRes a'); if (a) { nav(a.getAttribute('href')); closeSearch(false); } } if (e.key === 'ArrowDown') { const a = $('#sRes a'); if (a) { e.preventDefault(); a.focus(); } } });
   $('[data-sx]', SEARCH).onclick = () => closeSearch();
   SEARCH.onclick = e => { if (e.target === SEARCH) closeSearch(); if (e.target.closest('#sRes a')) closeSearch(false); };
   renderSearch();
@@ -139,8 +139,9 @@ function fly(carry, target) {
   const p = byId(carry.id); if (!p || !target) return;
   const to = target.getBoundingClientRect(), fr = carry.rect;
   if (to.width < 8) return;
-  const g = document.createElement('div'); g.className = 'ghost';
-  g.innerHTML = packHTML(p, {eager: true});
+  const g = document.createElement('div'); g.className = 'fly-ghost';
+  /* the ghost is the very image the new page shows (turntable frame 00 on a Dossier), so nothing swaps on landing */
+  g.innerHTML = target.outerHTML;
   Object.assign(g.style, {left: to.left + 'px', top: to.top + 'px', width: to.width + 'px', height: to.height + 'px'});
   FLY.appendChild(g); target.style.visibility = 'hidden';
   const sx = fr.width / to.width, dx = fr.left - to.left, dy = fr.top - to.top;
@@ -191,8 +192,12 @@ async function transition(r, o = {}) {
   if (r.v === 'club' && r.sub === 'reviews') setTimeout(() => { const j = $('#reviews', el); if (j) j.scrollIntoView({behavior: RM ? 'auto' : 'smooth'}); }, instant ? 30 : 500);
   if (!o.noFocus) setTimeout(() => { const h = $('h1', el); if (h && my === S.tok && !Protocol.isOpen) h.focus({preventScroll: true}); }, instant ? 0 : 420);
 }
-let popping = false;
-addEventListener('popstate', () => { popping = true; });
+/* only a real back/forward restores the old scroll. Chrome fires popstate for every hash change, link clicks included,
+   so link clicks (and programmatic moves) are flagged first and a popstate that follows one of them is ignored. */
+let popping = false, linked = false;
+const nav = h => { linked = true; location.hash = h; linked = false; };
+document.addEventListener('click', e => { const a = e.target.closest && e.target.closest('a[href^="#"]'); if (a && !e.metaKey && !e.ctrlKey && !e.shiftKey) { linked = true; setTimeout(() => { linked = false; }, 0); } }, true);
+addEventListener('popstate', () => { popping = !linked; });
 function route() {
   const r = parse(location.hash), pop = popping; popping = false;
   if (S.cur && S.cur.hash === location.hash) return;
@@ -207,7 +212,9 @@ function loop(now) {
   if (document.hidden) return;
   stepTweens();
   if (S.cur && S.cur.api && S.cur.api.frame) S.cur.api.frame(dt);
-  const over = HTML.dataset.view === 'home' && scrollY < innerHeight * .82 ? 'over' : HTML.dataset.view === 'club' && scrollY < innerHeight * .7 ? 'dark' : scrollY > 8 ? 'solid' : 'top';
+  /* see-through only at the very top; the moment the page moves the bar turns solid so it never sits on the wordmark */
+  const y = scrollY, v = HTML.dataset.view;
+  const over = v === 'home' && y < 24 ? 'over' : v === 'club' && y < 24 ? 'dark' : y > 8 ? 'solid' : 'top';
   if (over !== lastBar) { lastBar = over; BAR.dataset.state = over; }
 }
 const startLoop = () => { if (!looping) { looping = true; requestAnimationFrame(loop); } };
@@ -230,12 +237,25 @@ export async function boot() {
 let FG = null;
 export function fromGate() {
   return FG || (FG = (async () => {
+    showSplash();
     await Renders.ready;
     buildChrome(); hooks(); startLoop();
-    const img = new Image(); img.src = 'assets/photos/hero-cyclist.webp';
-    try { await img.decode(); } catch (e) {}
+    const img = new Image(); img.src = 'assets/photos/hero-sprint.webp';
+    try { await Promise.race([img.decode(), new Promise(r => setTimeout(r, 1800))]); } catch (e) {}
     return enter;
   })());
+}
+/* while the Index loads behind the gate's light, the light is not left blank: the wordmark settles into it */
+let splash = null;
+function showSplash() {
+  if (splash) return;
+  splash = document.createElement('div'); splash.id = 'splash'; splash.setAttribute('aria-hidden', 'true');
+  splash.innerHTML = '<div class="sp-in"><span class="sp-wm">PR6</span><span class="sp-tag mono">The practice of progress</span></div>';
+  document.body.appendChild(splash);
+}
+function dropSplash() {
+  if (!splash) return; const s = splash; splash = null;
+  s.style.setProperty('--o', getComputedStyle(s).opacity); s.style.transition = 'none'; s.style.animation = ''; s.classList.add('out'); setTimeout(() => s.remove(), RM ? 0 : 1000);
 }
 let entered = false;
 const enter = {
@@ -249,6 +269,9 @@ const enter = {
     /* the Index comes up out of the gate's Chalk light as a frost that clears */
     await transition({v: 'home'}, {instant: true, noFocus: true});
     if (!RM) { VIEWS.classList.add('frost-arrive'); requestAnimationFrame(() => requestAnimationFrame(() => VIEWS.classList.remove('frost-arrive'))); }
+    /* the wordmark is always seen in the light for a moment, then lifts away as the Index clears under it */
+    if (splash && !RM) { const o = +getComputedStyle(splash).opacity; if (o < .95) { splash.style.animation = 'none'; splash.style.transition = 'opacity .3s ease, filter .3s ease'; splash.style.opacity = o; void splash.offsetWidth; splash.style.opacity = 1; splash.style.filter = 'none'; } setTimeout(dropSplash, o < .95 ? 650 : 350); }
+    else dropSplash();
     setTimeout(() => BAR.classList.remove('arrive'), RM ? 0 : 900);
     addEventListener('hashchange', route);
     HTML.classList.add('ready');
@@ -265,7 +288,7 @@ function hooks() {
       protocol: {open: Protocol.isOpen, count: Protocol.count(), lines: Protocol.lines(), total: Protocol.total()},
       renders: Renders.status(), search: !SEARCH.hidden, sheet: !SHEET.hidden
     }),
-    go: h => { location.hash = h; },
+    go: h => { nav(h); },
     protocol: Protocol
   };
 }

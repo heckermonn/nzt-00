@@ -6,7 +6,7 @@ export const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
 export const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
 /* prices are whole Canadian dollars: CA$42 on the shelf, $42 CAD in a total */
 export const money = n => 'CA$' + Math.round(n);
-export const moneyTotal = n => '$' + Math.round(n) + ' CAD';
+export const moneyTotal = n => 'CA$' + Math.round(n);
 export const pad2 = n => String(n).padStart(2, '0');
 export const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
 export const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));

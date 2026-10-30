@@ -64,11 +64,11 @@ function indexBlock(o) {
 function wireIndex(root, ctx) {
   const ix = $('[data-ix]', root); if (!ix) return;
   const stage = $('.ix-stage', ix), cap = $('.ix-cap', ix);
-  let cur = null, layer = null, hideT = 0;
+  let cur = null, layer = null, hideT = 0, viaPointer = false;
   const show = id => {
     clearTimeout(hideT);
     if (cur === id) return; cur = id;
-    ix.classList.toggle('hov', !!id);
+    ix.classList.toggle('hov', !!id && viaPointer);
     $$('.ix-row.on, .sx-row.on, .ix-g.on', ix).forEach(r => r.classList.remove('on'));
     if (!id) { if (layer) { const l = layer; l.classList.remove('in'); setTimeout(() => l.remove(), 700); layer = null; } stage.classList.remove('on'); return; }
     const p = byId(id);
@@ -91,16 +91,29 @@ function wireIndex(root, ctx) {
   addEventListener('scroll', onScroll, {passive: true});
   ctx.destroy = () => removeEventListener('scroll', onScroll);
   const rowOf = e => e.target.closest && e.target.closest('.ix-row, .sx-row');
-  ix.addEventListener('pointerover', e => { const r = rowOf(e); if (r) show(r.dataset.id); });
+  ix.addEventListener('pointerover', e => { const r = rowOf(e); if (r && e.pointerType !== 'touch') { viaPointer = true; show(r.dataset.id); } });
   ix.addEventListener('pointerleave', () => { hideT = setTimeout(() => show(null), 260); });
-  ix.addEventListener('focusin', e => { const r = rowOf(e); if (r) show(r.dataset.id); });
+  ix.addEventListener('focusin', e => { const r = rowOf(e); if (r) { viaPointer = false; show(r.dataset.id); } });
   ix.addEventListener('focusout', e => { if (!ix.contains(e.relatedTarget)) show(null); });
   /* tabs filter in place */
+  const body = $('.ix-body', ix);
+  let relT = 0;
   $$('[data-tab]', ix).forEach(b => b.addEventListener('click', () => {
     const k = b.dataset.tab;
+    /* where the list starts, with the sticky tabs sitting under the bar */
+    const barH = (document.getElementById('bar') || {}).offsetHeight || 0;
+    const top = Math.round(ix.getBoundingClientRect().top + scrollY - barH);
+    /* hold the page height so nothing jumps while the filter applies, then glide up to the list */
+    clearTimeout(relT); body.style.minHeight = body.offsetHeight + 'px';
     $$('[data-tab]', ix).forEach(x => { x.classList.toggle('on', x === b); x.setAttribute('aria-pressed', x === b); });
     $$('.ix-g, .sx-g', ix).forEach(g => g.hidden = k !== 'all' && g.dataset.c !== k);
     $$('.sx-row', ix).forEach(r => r.hidden = k !== 'all' && !r.dataset.id.startsWith(k + '-'));
+    const shown = $$('.ix-g:not([hidden]), .sx-g:not([hidden]), .sx-row:not([hidden])', ix);
+    shown.forEach(g => { g.classList.remove('reveal'); void g.offsetWidth; g.classList.add('reveal'); });
+    setTimeout(() => shown.forEach(g => g.classList.remove('reveal')), 900);
+    const past = scrollY > top + 2;
+    if (past) scrollTo({top, behavior: RM ? 'auto' : 'smooth'});
+    relT = setTimeout(() => { body.style.minHeight = ''; }, past && !RM ? 750 : 0);
     show(null);
     say(k === 'all' ? 'Showing all ' + N + ' entries.' : 'Showing ' + colOf(k).n + '.');
   }));
@@ -125,7 +138,7 @@ function home() {
     title: 'PR6 · The Index', crumb: 'The Index', cls: 'v-home',
     html: `
     <section class="hero" data-hero>
-      <div class="hero-ph" aria-hidden="true"><img src="${PH}hero-cyclist.webp" alt="" fetchpriority="high" decoding="async"></div>
+      <div class="hero-ph" aria-hidden="true"><img src="${PH}hero-sprint.webp" alt="" fetchpriority="high" decoding="async"></div>
       <div class="hero-frost" aria-hidden="true"></div>
       <div class="hero-marks" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
       <p class="hx hx-tl mono"><i class="rl"></i>Session 006<br><span>The Index / ${N} entries</span></p>
@@ -135,7 +148,7 @@ function home() {
         <p class="tag mono" aria-hidden="true">The practice of progress</p>
       </div>
       <div class="hero-bl">
-        <p class="hx-line">Progress, in practice.</p>
+        <p class="hx-line">Progress,<br>in practice.</p>
         <a class="pill" href="#index" data-jump="index">Explore PR6 <span class="arr" aria-hidden="true">&rarr;</span></a>
       </div>
       <p class="hx hx-hint mono" aria-hidden="true">Move to see through the glass</p>
@@ -153,7 +166,9 @@ function home() {
     init(el, ctx) {
       wireIndex(el, ctx);
       const hero = $('[data-hero]', el), img = $('.hero-ph img', hero);
-      const s = {f: 1, tf: 1, mx: .62, my: .55, tx: .62, ty: .55, lens: 0, tl: 0, moved: 0};
+      const s = {f: 1, tf: 1, mx: .56, my: .5, tx: .56, ty: .5, lens: 0, tl: 0, moved: 0, t0: performance.now()};
+      /* no pointer (a phone): the clear lens drifts slowly over the runner on its own, and follows the scroll */
+      const touch = matchMedia('(hover: none)').matches;
       const onMove = e => { const r = hero.getBoundingClientRect(); s.tx = (e.clientX - r.left) / r.width; s.ty = (e.clientY - r.top) / r.height; s.tl = 1; s.moved = performance.now(); };
       hero.addEventListener('pointermove', onMove);
       hero.addEventListener('pointerleave', () => { s.tl = 0; });
@@ -162,7 +177,10 @@ function home() {
         frame(dt) {
           const h = hero.offsetHeight || 1, y = scrollY;
           if (y > h * 1.2) return;
-          s.tf = 1 - clamp(y / (h * .62));
+          /* on arrival the glass eases from fully frosted to about half clear over a second, then scroll clears the rest */
+          const t = performance.now() - s.t0, rest = RM ? .5 : 1 - .5 * (1 - Math.pow(1 - clamp((t - 250) / 1100), 3));
+          s.tf = Math.min(rest, 1 - clamp(y / (h * .62)));
+          if (touch && !RM) { s.tl = 1; s.moved = performance.now(); s.tx = .54 + .16 * Math.sin(t / 2600); s.ty = .48 + .08 * Math.sin(t / 1900) + clamp(y / h) * .2; }
           const k = RM ? 1 : 1 - Math.exp(-dt * 5);
           s.f += (s.tf - s.f) * k; s.mx += (s.tx - s.mx) * k; s.my += (s.ty - s.my) * k;
           if (performance.now() - s.moved > 2600) s.tl = 0;
@@ -191,7 +209,7 @@ function clubBand() {
     <div class="band-in">
       <div class="band-t">
         <p class="lbl mono">PR6 <i>/</i> Field Club</p>
-        <h2 id="bandH" class="h2">Go further.<br>Together.</h2>
+        <h2 id="bandH" class="h2">Show up.<br>Build together.</h2>
         <p class="lede">Restocks, new entries and session notes, and what members say about the range. Information only.</p>
         <a class="pill ghost" href="#/club">Open Field Club <span class="arr" aria-hidden="true">&rarr;</span></a>
       </div>
@@ -276,7 +294,7 @@ function product(id) {
       <div class="dos-stage" aria-hidden="true">
         <div class="dos-bg"></div>
         <div class="dos-marks"><i></i><i></i><i></i><i></i></div>
-        <div class="dos-obj${frames.length ? ' tt' : ''}" data-target="${p.id}">${packHTML(p, {eager: true})}</div>
+        <div class="dos-obj${frames.length ? ' tt' : ''}" data-target="${p.id}">${packHTML(p, {eager: true, src: frames[0]})}</div>
         <p class="dos-l dos-tl mono">PR6 <i>/</i> ${p.id}</p>
         <p class="dos-l dos-bl mono">Batch ${batch(p)}<br>${T(PACKNAME[pack])}</p>
         <p class="dos-l dos-br mono">${frames.length ? 'Drag to turn' : T(p.q)}</p>
@@ -302,7 +320,7 @@ function product(id) {
           </div>
           <p class="buy-f mono"><span><i class="live" aria-hidden="true"></i>Next dispatch ${dispatchLabel()}</span><span>Prices in CAD</span></p>
         </form>
-        ${sec('01', 'Serving', `<dl class="kv mono"><div><dt>Serving</dt><dd>${esc(servingSize(p))}</dd></div><div><dt>Directions say</dt><dd>${esc(p.s)}</dd></div><div><dt>In the pack</dt><dd>${esc(p.q)}</dd></div></dl><p class="ds-p">${esc(purpose(p))} ${esc(p.e)}</p>`)}
+        ${sec('01', 'Serving', `<dl class="kv mono"><div><dt>Serving</dt><dd>${esc(servingSize(p))}</dd></div><div><dt>Per pack</dt><dd>${esc(p.s)}</dd></div><div><dt>In the pack</dt><dd>${esc(p.q)}</dd></div></dl><p class="ds-p">${esc(purpose(p))} ${esc(p.e)}</p>`)}
         ${sec('02', 'Ingredients', ingTable(p))}
         ${sec('03', 'Directions', `<ol class="ds-list">${directions(p).map(d => `<li>${esc(d)}</li>`).join('')}</ol>`)}
         ${sec('04', 'Cautions', `<ul class="ds-list">${cautions(p).map(d => `<li>${esc(d)}</li>`).join('')}</ul>`)}
@@ -403,7 +421,7 @@ const MBODY = {
   dispatches: () => `<div class="nxd"><p class="lbl mono"><i class="live" aria-hidden="true"></i>Next dispatch</p><p class="nxd-d">${dispatchLabel()}</p><div data-nxd></div></div>
     <h2 class="lbl mono mt">Past dispatches <span class="smp">Sample</span></h2>
     <table class="tbl mono disp"><thead><tr><th scope="col">No.</th><th scope="col">Sent</th><th scope="col">Items</th><th scope="col">Total</th><th scope="col">Status</th></tr></thead><tbody>
-    ${PAST.map(d => `<tr><td>${d.no}</td><td>${fmtDate(d.d)}</td><td>${d.items.map(([id, q]) => `<a href="#/p/${id}">${id}</a>${q > 1 ? ' ×' + q : ''}`).join(', ')}</td><td>$${d.items.reduce((s, [id, q]) => s + byId(id).pc * q, 0)} CAD</td><td>${d.st}</td></tr>`).join('')}</tbody></table>`,
+    ${PAST.map(d => `<tr><td>${d.no}</td><td>${fmtDate(d.d)}</td><td>${d.items.map(([id, q]) => `<a href="#/p/${id}">${id}</a>${q > 1 ? ' ×' + q : ''}`).join(', ')}</td><td>${money(d.items.reduce((s, [id, q]) => s + byId(id).pc * q, 0))}</td><td>${d.st}</td></tr>`).join('')}</tbody></table>`,
   nominations: () => `<p class="lede">Members may nominate someone for a key. Member Liaison reviews each nomination and replies to you, not to them.</p>
     ${form('nom', fld('name', 'Their name') + fld('email', 'Their email', 'email', 'autocomplete="off"') + `<label class="fl"><span class="mono">One line on why</span><textarea name="why" rows="3"></textarea></label>`, 'Send nomination', 'Two nominations per member per year.')}
     <h2 class="lbl mono mt">Your nominations <span class="smp">Sample</span></h2><ol class="noms mono"><li><span>N-0031</span><span>J. Okafor</span><span>Under review</span></li></ol>`,
@@ -414,7 +432,7 @@ const MBODY = {
   liaison: () => `<div class="liai"><div><p class="lede">One desk for everything: dispatches, your key, certificates of analysis, nominations, and any question about an entry.</p>
     <dl class="kv mono"><div><dt>Hours</dt><dd>Mon to Fri, 09:00 to 17:00 ET</dd></div><div><dt>Reply</dt><dd>Within one business day</dd></div><div><dt>Email</dt><dd>liaison@pr6.example</dd></div></dl></div>
     ${form('liai', `<label class="fl"><span class="mono">About</span><select name="about"><option>A dispatch</option><option>Your Protocol</option><option>A certificate of analysis</option><option>Your key</option><option>Something else</option></select></label><label class="fl"><span class="mono">Message</span><textarea name="msg" rows="5"></textarea></label>`, 'Send to Member Liaison')}</div>`,
-  key: () => `<div class="keyc"><div class="card" aria-hidden="true"><span class="card-wm">PR6</span><span class="card-c mono">0047 RSRV</span><span class="card-n mono">Member edition <i>/</i> Field Club</span><span class="card-chip"></span></div>
+  key: () => `<div class="keyc"><div class="card" aria-hidden="true"><span class="card-wm">PR6</span><span class="card-c mono">0047 RSRV</span><span class="card-n mono">Member edition <i>/</i> 0047</span><span class="card-chip"></span></div>
     <div><p class="lede">Your key is a card with an NFC chip. Hold it to a phone and the Formulary opens already unlocked. The code on the card works on any device.</p>
     <dl class="kv mono"><div><dt>Code</dt><dd>0047RSRV</dd></div><div><dt>Card</dt><dd>${MEMBER.key}</dd></div><div><dt>Lost it?</dt><dd><a href="#/m/liaison">Member Liaison</a> retires the old code</dd></div></dl>
     <a class="pill ghost" href="#/exit">Exit this device <span class="arr" aria-hidden="true">&rarr;</span></a><p class="fine mono">Exit forgets the key on this browser and closes the Formulary.</p></div></div>`
@@ -454,7 +472,7 @@ function member(pg) {
 }
 
 function notFound() {
-  return {title: 'PR6 · Not found', crumb: 'Not found', cls: 'v-nf', html: `<section class="sec sec-top"><header class="sec-h"><p class="lbl mono">404</p><h1 class="h1" tabindex="-1">Not in the Formulary.</h1><p class="lede"><a class="lnk" href="#/">Back to the Index</a></p></header></section>`, init() {}};
+  return {title: 'PR6 · Not found', crumb: 'Not found', cls: 'v-nf', html: `<section class="sec sec-top"><header class="sec-h"><p class="lbl mono">404</p><h1 class="h1" tabindex="-1">Not in the Formulary.</h1><p class="nf-back"><a class="lnk mono" href="#/">&larr; Back to the Index</a></p></header></section>`, init() {}};
 }
 
 export function makeView(r) {
