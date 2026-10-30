@@ -9,6 +9,10 @@ concave side of it, looking outward at a curved seamless cyclorama.
   python film.py -- --out DIR --res 1600 --samples 320 --stills     (one frame per station)
   python film.py -- --plan        (print the frame plan as JSON and exit)
 
+Final settings used for the shipped film (see render_final.sh):
+  frames:  --res 1280 --samples 10 --skip-existing          (OIDN HIGH/ACCURATE, ~47 s/frame on 4 cores)
+  stills:  --res 1600 --samples 24 --stills --skip-existing
+
 Frames are written as DIR/NNN.png (8-bit sRGB, AgX). encode.py turns them into the web tiers.
 """
 import argparse
@@ -890,9 +894,13 @@ def main():
             continue
         set_frame(sc, cam, poses, f)
         sc.frame_current = f
-        sc.render.filepath = path
+        # write to a temp name and rename, so a kill mid-write never leaves a
+        # truncated frame that --skip-existing would then trust
+        tmp = path[:-4] + ".part.png"
+        sc.render.filepath = tmp
         t = time.time()
         bpy.ops.render.render(write_still=True)
+        os.replace(tmp, path)
         dt = time.time() - t
         with open(log, "a") as fh:
             fh.write(json.dumps({"frame": f, "file": name, "sec": round(dt, 1), "res": a.res, "spp": a.samples}) + "\n")

@@ -1,6 +1,6 @@
 """PR6 v9 film: turn film.py's PNG frames into the web tiers + manifest.
 
-  python encode.py --frames DIR --stills DIR [--dq 78] [--mq 75] [--sq 82] [--poster 24]
+  python encode.py --frames DIR --stills DIR [--dq 82] [--mq 80] [--sq 88] [--manifest]
 
 Writes ../assets/film/
   d/NNN.webp     1280x1280  desktop
@@ -49,9 +49,9 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--frames", required=True)
     ap.add_argument("--stills", default="")
-    ap.add_argument("--dq", type=int, default=78)
-    ap.add_argument("--mq", type=int, default=75)
-    ap.add_argument("--sq", type=int, default=82)
+    ap.add_argument("--dq", type=int, default=82)
+    ap.add_argument("--mq", type=int, default=80)
+    ap.add_argument("--sq", type=int, default=88)
     ap.add_argument("--manifest", action="store_true", help="write manifest.json (only once d/ and m/ are complete)")
     a = ap.parse_args()
     P = plan()
