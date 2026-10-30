@@ -100,17 +100,19 @@ html.out .skip { display: none; }
 html:not(.film-on) .film { visibility: hidden; }
 .film-frame { position: absolute; inset: 0; transform-origin: 50% 46%; transition: transform 1.05s cubic-bezier(.2, .7, .12, 1), filter 1.05s cubic-bezier(.2, .7, .12, 1); }
 .film-frame canvas { width: 100%; height: 100%; display: block; }
-html.pushing .film-frame { transform: scale(1.15); filter: blur(9px); }
+html.pushing .film-frame { transform: scale(1.15); filter: blur(18px); }
 .film.snap .film-frame { transition: none !important; }
 /* a calm lower third for the type (the frames keep it clear; this only steadies the contrast) */
 .film-veil { position: absolute; inset: 0; pointer-events: none;
   background: linear-gradient(to top, rgba(242, 243, 239, .62), rgba(242, 243, 239, .26) 26%, rgba(242, 243, 239, 0) 48%),
-              linear-gradient(to bottom, rgba(242, 243, 239, .38), rgba(242, 243, 239, 0) 140px); }
+              linear-gradient(to bottom, rgba(242, 243, 239, .6), rgba(242, 243, 239, .3) 72px, rgba(242, 243, 239, 0) 150px); }
+/* the bar over the film and over a still: the count is data a member reads, so it keeps reading contrast */
+html[data-view="home"] .b-pro .cnt, html[data-view="col"] .bar:not(.solid) .b-pro .cnt { color: var(--ink2); }
 html.no-film .film { background: linear-gradient(180deg, var(--chalk), var(--mist) 70%, #a9b8c0); }
 .film-type { position: absolute; left: var(--gx); right: var(--gx); bottom: calc(clamp(40px, 7vh, 72px) + env(safe-area-inset-bottom)); pointer-events: none; }
 .ft { max-width: 960px; transition: opacity .7s var(--out), filter .7s var(--out), transform .9s var(--out); }
 html.scrub .ft, html.pushing .ft { opacity: 0; filter: blur(8px); transform: translateY(12px); transition-duration: .24s, .24s, .3s; transition-timing-function: ease-out; }
-.ft-n { font-size: clamp(64px, 9.4vw, 152px); line-height: .86; letter-spacing: -.04em; margin-left: -.05em; }
+.ft-n { font-size: clamp(64px, 7.4vw, 96px); line-height: .86; letter-spacing: -.04em; margin-left: -.05em; }
 .ft-d { margin-top: 18px; font-size: clamp(18px, 1.5vw, 21px); color: var(--ink2); max-width: 40ch; }
 .ft-r { display: flex; align-items: center; gap: 32px; margin-top: 28px; }
 .ft-m { font-size: 14px; color: var(--ink2); }
@@ -177,12 +179,16 @@ html.pushing #page { transition: opacity .78s var(--out); }
 .col-fig { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; background: var(--mist); }
 .col-im { position: absolute; inset: 0; opacity: 0; transition: opacity .55s var(--out); }
 .col-im.on { opacity: 1; }
+.col-fig::after { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 150px; z-index: 1; pointer-events: none; background: linear-gradient(to bottom, rgba(242, 243, 239, .6), rgba(242, 243, 239, .3) 72px, rgba(242, 243, 239, 0)); }
 .col-im img { width: 100%; height: 100%; object-fit: cover; }
+.col-im[data-im="st"] img { object-position: var(--fx, 50%) 50%; transform: scale(var(--z, 1)); transform-origin: var(--fx, 50%) var(--fy, 42%); transition: filter 1s var(--out), transform 1.4s var(--out); }
+#page.arrive .col-im[data-im="st"] img { filter: blur(14px); transform: scale(calc(var(--z, 1) * 1.07)); transition: none; }
+html.rm #page.arrive .col-im[data-im="st"] img { filter: none; transform: scale(var(--z, 1)); }
 .col-im.pack { background: linear-gradient(180deg, #dfe5e7, var(--mist)); }
 .col-im .pk { position: absolute; inset: 12% 18%; }
 .col-im .pk svg { width: 100%; height: 100%; }
 .col-body { padding: calc(var(--bar) + clamp(56px, 13vh, 150px)) clamp(24px, 5.4vw, 88px) 72px; display: flex; flex-direction: column; min-height: 100svh; }
-.col-t { font-size: clamp(56px, 6.4vw, 104px); line-height: .9; letter-spacing: -.04em; margin-left: -.04em; }
+.col-t { font-size: clamp(56px, 6.4vw, 96px); line-height: .9; letter-spacing: -.04em; margin-left: -.04em; }
 .col-d { margin-top: 22px; font-size: clamp(19px, 1.5vw, 22px); color: var(--ink2); max-width: 30ch; }
 .col-m { margin-top: 16px; font-size: 14px; color: var(--ink3); }
 .col-rows { margin-top: clamp(48px, 9vh, 96px); }
@@ -209,11 +215,12 @@ html.pushing #page { transition: opacity .78s var(--out); }
 /* ================================================================ the Dossier: the kit's slide 4 */
 .v-product { background: var(--stage); }
 .pd-stage { position: relative; min-height: 100vh; min-height: 100svh; display: grid; place-items: center; padding: calc(var(--bar) + 20px) 32px 48px; overflow: hidden;
-  --ph: clamp(500px, calc(100svh - var(--bar) - 120px), 700px); --pw: min(calc(100vw - 180px), calc(var(--ph) * 1.41)); --r: 28px; }
+  /* the reference's proportions: the panel about half the screen's width, the plate 17% wider and 21% taller, lots of air */
+  --ph: clamp(500px, calc(100svh - var(--bar) - 300px), 760px); --pw: min(calc(100vw - 180px), calc(var(--ph) * 1.41)); --r: 28px; }
 .pd-bg { position: absolute; inset: 0; overflow: hidden; background: linear-gradient(180deg, #c4ced4, #aeb9c0); }
 .pd-bg img { position: absolute; inset: -6%; width: 112%; height: 112%; object-fit: cover; filter: blur(30px) saturate(.85); opacity: .55; }
 .plate, .panel { grid-area: 1 / 1; }
-.plate { position: relative; width: calc(var(--pw) + 116px); height: calc(var(--ph) + 92px); transform: translateY(-6px); background: linear-gradient(180deg, rgba(214, 222, 227, .62), rgba(196, 207, 213, .5));
+.plate { position: relative; width: calc(var(--pw) * 1.17); height: calc(var(--ph) * 1.21); transform: translateY(-6px); background: linear-gradient(180deg, rgba(214, 222, 227, .62), rgba(196, 207, 213, .5));
   box-shadow: 0 1px 0 rgba(255, 255, 255, .3) inset, 0 30px 60px -40px rgba(30, 44, 54, .35); }
 .panel { position: relative; width: var(--pw); height: var(--ph); border-radius: var(--r); container-type: size; }
 .panel-glass { position: absolute; inset: 0; border-radius: inherit; overflow: hidden;
@@ -233,6 +240,9 @@ html.pushing #page { transition: opacity .78s var(--out); }
 .pn-back { position: absolute; right: 4.5cqw; top: 5.6cqh; height: 30px; display: inline-flex; align-items: center; gap: 8px; font-size: 15px; color: var(--ink2); z-index: 3; transition: color .2s; }
 .pn-back:hover { color: var(--ink); }
 .pn-back .mono { color: var(--ink3); font-size: 13px; margin-left: 4px; }
+/* the slide-4 panel carries the wordmark: the bar's own steps back until the page is scrolled */
+html[data-view="product"] .bar:not(.solid) .b-mark { opacity: 0; pointer-events: none; }
+.b-mark { transition: opacity .3s; }
 .pn-fields { position: absolute; left: 4.5cqw; top: 23cqh; width: 26cqw; display: grid; gap: 7.4cqh; z-index: 3; }
 .fld-l { font-size: 13px; color: var(--ink3); margin-bottom: 8px; }
 .fld-v { height: 36px; display: flex; align-items: center; padding: 0 12px; border-radius: 8px; font-size: 13.5px; letter-spacing: .04em; color: var(--ink);
@@ -458,7 +468,7 @@ html.rm #splash { animation-delay: 0s; animation-duration: .2s; }
 @media (max-width: 1180px) {
   .b-nav { gap: 22px; } .bar-in { gap: 28px; }
   .pd-stage { --pw: min(calc(100vw - 96px), calc(var(--ph) * 1.41)); }
-  .plate { width: calc(var(--pw) + 64px); height: calc(var(--ph) + 64px); }
+
 }
 @media (max-width: 980px) {
   .pd-grid { grid-template-columns: 1fr; }
@@ -486,7 +496,7 @@ html.rm #splash { animation-delay: 0s; animation-duration: .2s; }
   .ft-go { height: 48px; padding: 0 22px; }
   .marks { left: 20px; right: 20px; width: auto; bottom: calc(14px + env(safe-area-inset-bottom)); }
   .mk-l { display: none; }
-  .film-veil { background: linear-gradient(to top, rgba(242, 243, 239, .72), rgba(242, 243, 239, .34) 30%, rgba(242, 243, 239, 0) 52%), linear-gradient(to bottom, rgba(242, 243, 239, .4), rgba(242, 243, 239, 0) 110px); }
+  .film-veil { background: linear-gradient(to top, rgba(242, 243, 239, .72), rgba(242, 243, 239, .34) 30%, rgba(242, 243, 239, 0) 52%), linear-gradient(to bottom, rgba(242, 243, 239, .62), rgba(242, 243, 239, .3) 60px, rgba(242, 243, 239, 0) 120px); }
   /* lists: the format drops under the name */
   .row-a { grid-template-columns: 3.9em minmax(0, 1fr) auto; grid-template-areas: "c n p" ". f f"; gap: 2px 14px; padding: 15px 0; }
   .r-c { grid-area: c; font-size: 13px; } .r-n { grid-area: n; font-size: 18px; } .r-p { grid-area: p; font-size: 14.5px; } .r-f { grid-area: f; font-size: 15px; white-space: normal; }

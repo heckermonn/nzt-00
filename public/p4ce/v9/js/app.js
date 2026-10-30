@@ -152,7 +152,7 @@ function stubFilm() {
 /* ================================================================ #page: mounting a page */
 const ctx = {
   addFly,
-  still: code => S.M ? {src: S.M.still(code), fb: S.M.stillFallback(code)} : null
+  still: code => { if (!S.M) return null; const st = S.M.stations.find(x => x.code === code) || {}; return {src: S.M.still(code), fb: S.M.stillFallback(code), fx: st.fx, fy: st.fy, fw: st.fw}; }
 };
 function mount(r) {
   const v = makeView(r, ctx);
@@ -204,12 +204,14 @@ async function pushIn(r, my) {
   HTML.classList.add('pushing');
   const still = warmStill(k >= 0 ? k : S.film.station);
   mount(r);
-  PAGE.hidden = false; PAGE.classList.add('rise');
+  PAGE.hidden = false; PAGE.classList.add('rise', 'arrive');
   void PAGE.offsetWidth;
-  /* the frame leads (it pushes in), then the page resolves out of it */
-  await Promise.all([wait(360), still ? Promise.race([still.p, wait(700)]) : null]);
+  /* the frame leads (it pushes in and goes soft), then the page resolves out of it: the still comes into focus as it
+     appears, so the two images never read as two sharp objects at once */
+  await Promise.all([wait(380), still ? Promise.race([still.p, wait(700)]) : null]);
   if (my !== S.tok) return;
   PAGE.classList.remove('rise');
+  requestAnimationFrame(() => requestAnimationFrame(() => PAGE.classList.remove('arrive')));
   await wait(760);
   if (my !== S.tok) return;
   HTML.classList.remove('film-on'); HTML.classList.add('page-on');

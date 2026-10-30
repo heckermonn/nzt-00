@@ -82,7 +82,7 @@ function collection(c, ctx) {
   return {
     key: 'col', cls: 'v-col', title: `PR6 · ${co.n}`, st: i,
     html: `<article class="col">
-      <figure class="col-fig" aria-hidden="true">
+      <figure class="col-fig" aria-hidden="true"${still && still.fx != null ? ` style="--fx:${(still.fx * 100).toFixed(1)}%;--fy:${(still.fy * 100).toFixed(1)}%"` : ''}>
         <div class="col-im on" data-im="st">${still ? `<img src="${esc(still.src)}" alt="" decoding="async" data-fb="${esc(still.fb || '')}">` : ''}</div>
       </figure>
       <div class="col-body">
@@ -102,6 +102,13 @@ function collection(c, ctx) {
     init(el) {
       const fig = $('.col-fig', el);
       const stImg = $('[data-im="st"] img', el);
+      /* frame the still on its subject: the cover crop centres on it, then a push-in until the subject (plus a little air)
+         fills the width of the figure, so the plinth sits large and whole and the frame-edge strays fall outside */
+      let ro = null;
+      if (stImg && still && still.fw) {
+        const fit = () => { const w = fig.clientWidth, h = fig.clientHeight; if (!w || !h) return; const a = Math.min(1, w / h); fig.style.setProperty('--z', clamp(a * .96 / still.fw, 1.04, 1.5).toFixed(3)); };
+        fit(); if (window.ResizeObserver) { ro = new ResizeObserver(fit); ro.observe(fig); }
+      }
       if (stImg) stImg.addEventListener('error', () => { const fb = stImg.dataset.fb; if (fb && stImg.src.indexOf(fb) < 0) stImg.src = fb; }, {once: true});
       const ims = {};
       let cur = 'st', t = 0;
@@ -117,7 +124,10 @@ function collection(c, ctx) {
         $$('.col-im', fig).forEach(d => d.classList.toggle('on', d.dataset.im === id));
       };
       const rowOf = e => e.target.closest && e.target.closest('.row');
-      el.addEventListener('pointerover', e => { const r = rowOf(e); if (r && e.pointerType !== 'touch') show(r.dataset.id); });
+      /* only a pointer that has moved since the page arrived swaps the image (a cursor left resting where Enter was, which
+         is now over the list, must not replace the still before anyone has looked at it) */
+      let armed = false; const arm = () => { armed = true; }; el.addEventListener('pointermove', arm, {once: true});
+      el.addEventListener('pointerover', e => { const r = rowOf(e); if (r && armed && e.pointerType !== 'touch') show(r.dataset.id); });
       el.addEventListener('pointerout', e => { const r = rowOf(e); if (r && !(e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest('.col-rows'))) t = setTimeout(() => show('st'), 260); });
       el.addEventListener('focusin', e => { const r = rowOf(e); show(r ? r.dataset.id : 'st'); });
       /* (preload the packs, so a hover never waits) */
@@ -126,7 +136,8 @@ function collection(c, ctx) {
         keydown(e) {
           if (/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) return;
           if (e.key === 'Escape') location.hash = '#/';
-        }
+        },
+        destroy() { if (ro) ro.disconnect(); }
       };
     }
   };
@@ -149,7 +160,7 @@ function ingTable(p) {
 }
 function product(id, ctx) {
   const p = byId(id); if (!p) return notFound();
-  const co = colOf(p.c), rel = co.it.filter(x => x.id !== p.id), rv = reviewOf(p.id), pack = packOf(p), pos = co.it.indexOf(p);
+  const co = colOf(p.c), rel = co.it.filter(x => x.id !== p.id), rv = reviewOf(p.id), pack = packOf(p);
   const still = ctx.still(co.c);
   const fld = (label, value) => `<div class="fld"><p class="fld-l">${esc(label)}</p><p class="fld-v mono">${esc(String(value).toUpperCase())}</p></div>`;
   return {
@@ -164,7 +175,7 @@ function product(id, ctx) {
             <a class="pn-mark" href="#/c/${co.c}" aria-label="Back to ${esc(co.n)}"><span class="wm" aria-hidden="true">PR6</span><i aria-hidden="true">/</i></a>
             <h1 class="pn-t" id="pnT" tabindex="-1">${esc(p.n)}</h1>
           </header>
-          <a class="pn-back" href="#/c/${co.c}"><span aria-hidden="true">&larr;</span> ${esc(co.n)} <span class="mono">${pos + 1}/${co.it.length}</span></a>
+          <a class="pn-back" href="#/c/${co.c}"><span aria-hidden="true">&larr;</span> ${esc(co.n)}</a>
           <div class="pn-fields">
             ${fld('Collection', `${co.c} ${co.n}`)}
             ${fld('Format', p.g)}

@@ -108,12 +108,13 @@ function keyLine(p) {
   if (p.top) return (CONC[p.id] || []).slice(0, 2).map(c => c[0] + ' ' + c[1]).join(' / ');
   return p.act.slice(0, 2).map(a => a.name + (a.amt ? ' ' + a.amt : '')).join(' / ');
 }
+const an = w => ((/^[aeiou]/i.test(w) || /^[FHLMNRSX]-/.test(w)) && !/^(u[nst]i|eu|one)/i.test(w) ? 'an ' : 'a ') + w;
 function purpose(p) {
-  if (p.g === 'Serum') return 'Formulated as a ' + p.u + ' for ' + (/morning/.test(p.s) ? 'morning' : 'evening') + ' use.';
-  if (p.top) return 'Formulated as a ' + p.u + ' for use as part of a daily routine.';
-  if (/as needed/.test(p.s)) return 'Formulated as a ' + p.u + ', taken as needed.';
+  if (p.g === 'Serum') return 'Formulated as ' + an(p.u) + ' for ' + (/morning/.test(p.s) ? 'morning' : 'evening') + ' use.';
+  if (p.top) return 'Formulated as ' + an(p.u) + ' for use as part of a daily routine.';
+  if (/as needed/.test(p.s)) return 'Formulated as ' + an(p.u) + ', taken as needed.';
   if (/daily/.test(p.s)) return 'Formulated as a daily ' + p.u + '.';
-  return 'Formulated as a ' + p.u + '.';
+  return 'Formulated as ' + an(p.u) + '.';
 }
 function directions(p) {
   const s = servingSize(p), d = [];
