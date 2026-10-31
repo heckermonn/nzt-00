@@ -1,0 +1,314 @@
+{
+ "hero": {
+  "src": "/tmp/claude-0/-home-user-nzt-00/0cce3156-57c3-5603-9cca-5ee67f18a391/scratchpad/dl/files/Running_in_the_winter_Unsplash_.jpg",
+  "meta": "/tmp/claude-0/-home-user-nzt-00/0cce3156-57c3-5603-9cca-5ee67f18a391/scratchpad/dl/files/Running_in_the_winter_Unsplash_.jpg.json",
+  "preset": "photo",
+  "kind": "photo",
+  "crop": [
+   0.36,
+   0.12,
+   0.86,
+   0.92
+  ],
+  "fx": [
+   "mist",
+   "motion"
+  ],
+  "mist": 0.1,
+  "motion": 0.05,
+  "alt": "A lone runner crossing a white, misty field, blurred by motion"
+ },
+ "hero-sharp": {
+  "src": "/tmp/claude-0/-home-user-nzt-00/0cce3156-57c3-5603-9cca-5ee67f18a391/scratchpad/dl/files/Running_in_the_winter_Unsplash_.jpg",
+  "meta": "/tmp/claude-0/-home-user-nzt-00/0cce3156-57c3-5603-9cca-5ee67f18a391/scratchpad/dl/files/Running_in_the_winter_Unsplash_.jpg.json",
+  "preset": "photo",
+  "kind": "photo",
+  "crop": [
+   0.36,
+   0.12,
+   0.86,
+   0.92
+  ],
+  "fx": [
+   "mist"
+  ],
+  "mist": 0.1,
+  "alt": "A lone runner crossing a white, misty field"
+ },
+ "c01": {
+  "src": "/tmp/claude-0/-home-user-nzt-00/0cce3156-57c3-5603-9cca-5ee67f18a391/scratchpad/dl/files/Geetanjal_Khanna_2016_Unsplash_.jpg",
+  "meta": "/tmp/claude-0/-home-user-nzt-00/0cce3156-57c3-5603-9cca-5ee67f18a391/scratchpad/dl/files/Geetanjal_Khanna_2016_Unsplash_.jpg.json",
+  "preset": "photo",
+  "kind": "photo",
+  "crop": [
+   0.12,
+   0.0,
+   0.92,
+   1.0
+  ],
+  "alt": "An open hand catching a splash of water in soft morning light"
+ },
+ "c02": {
+  "src": "/tmp/claude-0/-home-user-nzt-00/0cce3156-57c3-5603-9cca-5ee67f18a391/scratchpad/dl/files/World_Gym_workout_Unsplash_.jpg",
+  "meta": "/tmp/claude-0/-home-user-nzt-00/0cce3156-57c3-5603-9cca-5ee67f18a391/scratchpad/dl/files/World_Gym_workout_Unsplash_.jpg.json",
+  "preset": "photo",
+  "kind": "photo",
+  "crop": [
+   0.3,
+   0.0,
+   1.0,
+   1.0
+  ],
+  "alt": "An athlete in profile against a dark ground, shoulders and back muscles lit from the side"
+ },
+ "c03": {
+  "src": "/tmp/claude-0/-home-user-nzt-00/0cce3156-57c3-5603-9cca-5ee67f18a391/scratchpad/dl/files/Gym_Life_Unsplash_.jpg",
+  "meta": "/tmp/claude-0/-home-user-nzt-00/0cce3156-57c3-5603-9cca-5ee67f18a391/scratchpad/dl/files/Gym_Life_Unsplash_.jpg.json",
+  "preset": "photo",
+  "kind": "photo",
+  "crop": [
+   0.2,
+   0.27,
+   0.86,
+   0.7
+  ],
+  "alt": "Chalked hands pressed together over wrist wraps before a lift",
+  "soften": [
+   [
+    0.22,
+    0.44,
+    0.38,
+    0.62
+   ]
+  ]
+ },
+ "c04": {
+  "src": "/tmp/claude-0/-home-user-nzt-00/0cce3156-57c3-5603-9cca-5ee67f18a391/scratchpad/dl/files/I_canottari_Unsplash_.jpg",
+  "meta": "/tmp/claude-0/-home-user-nzt-00/0cce3156-57c3-5603-9cca-5ee67f18a391/scratchpad/dl/files/I_canottari_Unsplash_.jpg.json",
+  "preset": "photo",
+  "kind": "photo",
+  "alt": "A rowing crew seen from directly above, cutting a straight wake through dark water"
+ },
+ "c05": {
+  "src": "/tmp/claude-0/-home-user-nzt-00/0cce3156-57c3-5603-9cca-5ee67f18a391/scratchpad/dl/files/Foggy_Swim_Unsplash_.jpg",
+  "meta": "/tmp/claude-0/-home-user-nzt-00/0cce3156-57c3-5603-9cca-5ee67f18a391/scratchpad/dl/files/Foggy_Swim_Unsplash_.jpg.json",
+  "preset": "photo",
+  "kind": "photo",
+  "alt": "A swimmer, seen from behind, wades into a still lake under low fog"
+ },
+ "c06": {
+  "src": "/tmp/claude-0/-home-user-nzt-00/0cce3156-57c3-5603-9cca-5ee67f18a391/scratchpad/work/kit/kit-balaclava.png",
+  "preset": "kit",
+  "kind": "kit",
+  "grade": {
+   "tone": 0.45,
+   "sat": 0.55
+  },
+  "alt": "Athlete in a black balaclava, face turned in profile behind rain-flecked amber goggles",
+  "credit": "PR6 brand kit (concept), slide 7, type removed",
+  "licence": "Owner's kit, used with permission",
+  "source": "PR6.pdf (owner's brand kit)"
+ },
+ "c07": {
+  "src": "/tmp/claude-0/-home-user-nzt-00/0cce3156-57c3-5603-9cca-5ee67f18a391/scratchpad/dl/files/Up_Close_Unsplash_.jpg",
+  "meta": "/tmp/claude-0/-home-user-nzt-00/0cce3156-57c3-5603-9cca-5ee67f18a391/scratchpad/dl/files/Up_Close_Unsplash_.jpg.json",
+  "preset": "photo",
+  "kind": "photo",
+  "crop": [
+   0.3,
+   0.0,
+   1.0,
+   1.0
+  ],
+  "alt": "A woman with eyes lowered and nearly closed in the last light of the day"
+ },
+ "c08": {
+  "src": "/tmp/claude-0/-home-user-nzt-00/0cce3156-57c3-5603-9cca-5ee67f18a391/scratchpad/dl/files/Freckles_on_dutch_girl_face_Unsplash_.jpg",
+  "meta": "/tmp/claude-0/-home-user-nzt-00/0cce3156-57c3-5603-9cca-5ee67f18a391/scratchpad/dl/files/Freckles_on_dutch_girl_face_Unsplash_.jpg.json",
+  "preset": "macro",
+  "kind": "photo",
+  "crop": [
+   0.0,
+   0.05,
+   1.0,
+   0.95
+  ],
+  "alt": "Close-up of freckled skin, half of a face hidden behind loose strands of hair"
+ },
+ "c09": {
+  "src": "/tmp/claude-0/-home-user-nzt-00/0cce3156-57c3-5603-9cca-5ee67f18a391/scratchpad/dl/files/Senior_woman_doing_fitnes_at_home._Sports_shoes_closeup.jpg",
+  "meta": "/tmp/claude-0/-home-user-nzt-00/0cce3156-57c3-5603-9cca-5ee67f18a391/scratchpad/dl/files/Senior_woman_doing_fitnes_at_home._Sports_shoes_closeup.jpg.json",
+  "preset": "photo",
+  "kind": "photo",
+  "crop": [
+   0.0,
+   0.0,
+   1.0,
+   1.0
+  ],
+  "alt": "An older woman mid-exercise on the floor, legs raised, her trainers sharp in the foreground by a bright window"
+ },
+ "macro-eye": {
+  "src": "/tmp/claude-0/-home-user-nzt-00/0cce3156-57c3-5603-9cca-5ee67f18a391/scratchpad/dl/files/Eye_Contact_Unsplash_.jpg",
+  "meta": "/tmp/claude-0/-home-user-nzt-00/0cce3156-57c3-5603-9cca-5ee67f18a391/scratchpad/dl/files/Eye_Contact_Unsplash_.jpg.json",
+  "preset": "macro",
+  "kind": "photo",
+  "crop": [
+   0.08,
+   0.08,
+   0.8,
+   0.92
+  ],
+  "alt": "Extreme close-up of a grey-green eye, lashes and the fine skin around it"
+ },
+ "macro-skin": {
+  "src": "/tmp/claude-0/-home-user-nzt-00/0cce3156-57c3-5603-9cca-5ee67f18a391/scratchpad/dl/files/2003-09-17_Goose_bumps.jpg",
+  "meta": "/tmp/claude-0/-home-user-nzt-00/0cce3156-57c3-5603-9cca-5ee67f18a391/scratchpad/dl/files/2003-09-17_Goose_bumps.jpg.json",
+  "preset": "macro",
+  "kind": "photo",
+  "grade": {
+   "sat": 0.25,
+   "contrast": 1.12
+  },
+  "alt": "Macro of goose bumps and fine hairs along the skin of a forearm"
+ },
+ "macro-cell": {
+  "src": "/tmp/claude-0/-home-user-nzt-00/0cce3156-57c3-5603-9cca-5ee67f18a391/scratchpad/work/kit/kit-cells.png",
+  "preset": "kit",
+  "kind": "kit",
+  "alt": "Soft-focus macro of rounded cells in steel blue on pale mist",
+  "credit": "PR6 brand kit (concept), slide 1, type removed",
+  "licence": "Owner's kit, used with permission",
+  "source": "PR6.pdf (owner's brand kit)"
+ },
+ "body-xray": {
+  "src": "/tmp/claude-0/-home-user-nzt-00/0cce3156-57c3-5603-9cca-5ee67f18a391/scratchpad/work/kit/kit-xray.png",
+  "preset": "xray",
+  "kind": "kit",
+  "alt": "Translucent x-ray study of a head, neck and spine in profile on mist, open space to the right",
+  "credit": "PR6 brand kit (concept), slide 5, type and markers removed",
+  "licence": "Owner's kit, used with permission",
+  "source": "PR6.pdf (owner's brand kit)"
+ },
+ "glass-face": {
+  "src": "/tmp/claude-0/-home-user-nzt-00/0cce3156-57c3-5603-9cca-5ee67f18a391/scratchpad/dl/files/Xavier_Unsplash_.jpg",
+  "meta": "/tmp/claude-0/-home-user-nzt-00/0cce3156-57c3-5603-9cca-5ee67f18a391/scratchpad/dl/files/Xavier_Unsplash_.jpg.json",
+  "preset": "photo",
+  "kind": "photo",
+  "crop": [
+   0.08,
+   0.03,
+   1.0,
+   0.66
+  ],
+  "fx": [
+   "glass"
+  ],
+  "glass_edge": 0.44,
+  "glass_side": "left",
+  "alt": "A man's face turned to the side, the near half seen through a pane of frosted glass"
+ },
+ "pack-tin": {
+  "kind": "render",
+  "preset": "render",
+  "credit": "PR6 studio render (Blender Cycles), blender/render_v11.py",
+  "licence": "PR6 original, all rights reserved",
+  "source": "Blender 5.2 Cycles render",
+  "src": "/tmp/claude-0/-home-user-nzt-00/0cce3156-57c3-5603-9cca-5ee67f18a391/scratchpad/renders/tin_hero.png",
+  "alt": "PR6 brushed-aluminium tin on a pale mist sweep (Capsules, tablets and softgels)"
+ },
+ "pack-tin-detail": {
+  "kind": "render",
+  "preset": "render",
+  "credit": "PR6 studio render (Blender Cycles), blender/render_v11.py",
+  "licence": "PR6 original, all rights reserved",
+  "source": "Blender 5.2 Cycles render",
+  "src": "/tmp/claude-0/-home-user-nzt-00/0cce3156-57c3-5603-9cca-5ee67f18a391/scratchpad/renders/tin_detail.png",
+  "alt": "Embossed PR6 on the spun, brushed-aluminium lid of the tin, in raking light",
+  "grade": {
+   "contrast": 1.2,
+   "gamma": 1.7
+  }
+ },
+ "pack-pouch": {
+  "kind": "render",
+  "preset": "render",
+  "credit": "PR6 studio render (Blender Cycles), blender/render_v11.py",
+  "licence": "PR6 original, all rights reserved",
+  "source": "Blender 5.2 Cycles render",
+  "src": "/tmp/claude-0/-home-user-nzt-00/0cce3156-57c3-5603-9cca-5ee67f18a391/scratchpad/renders/pouch_hero.png",
+  "alt": "PR6 sealed silver foil pouch on a pale mist sweep (Powder)"
+ },
+ "pack-pouch-detail": {
+  "kind": "render",
+  "preset": "render",
+  "credit": "PR6 studio render (Blender Cycles), blender/render_v11.py",
+  "licence": "PR6 original, all rights reserved",
+  "source": "Blender 5.2 Cycles render",
+  "src": "/tmp/claude-0/-home-user-nzt-00/0cce3156-57c3-5603-9cca-5ee67f18a391/scratchpad/renders/pouch_detail.png",
+  "alt": "Macro of the pouch's crinkled foil, serrated heat seal and tear notch"
+ },
+ "pack-box": {
+  "kind": "render",
+  "preset": "render",
+  "credit": "PR6 studio render (Blender Cycles), blender/render_v11.py",
+  "licence": "PR6 original, all rights reserved",
+  "source": "Blender 5.2 Cycles render",
+  "src": "/tmp/claude-0/-home-user-nzt-00/0cce3156-57c3-5603-9cca-5ee67f18a391/scratchpad/renders/box_hero.png",
+  "alt": "PR6 numbered paper box with two foil sachets on a pale mist sweep (Sachets)"
+ },
+ "pack-box-detail": {
+  "kind": "render",
+  "preset": "render",
+  "credit": "PR6 studio render (Blender Cycles), blender/render_v11.py",
+  "licence": "PR6 original, all rights reserved",
+  "source": "Blender 5.2 Cycles render",
+  "src": "/tmp/claude-0/-home-user-nzt-00/0cce3156-57c3-5603-9cca-5ee67f18a391/scratchpad/renders/box_detail.png",
+  "alt": "Macro of a foil sachet's crimped edge against the paper box"
+ },
+ "pack-dropper": {
+  "kind": "render",
+  "preset": "render",
+  "credit": "PR6 studio render (Blender Cycles), blender/render_v11.py",
+  "licence": "PR6 original, all rights reserved",
+  "source": "Blender 5.2 Cycles render",
+  "src": "/tmp/claude-0/-home-user-nzt-00/0cce3156-57c3-5603-9cca-5ee67f18a391/scratchpad/renders/dropper_hero.png",
+  "alt": "PR6 frosted blue glass dropper bottle, sealed and capped on a pale mist sweep (Serum)"
+ },
+ "pack-dropper-detail": {
+  "kind": "render",
+  "preset": "render",
+  "credit": "PR6 studio render (Blender Cycles), blender/render_v11.py",
+  "licence": "PR6 original, all rights reserved",
+  "source": "Blender 5.2 Cycles render",
+  "src": "/tmp/claude-0/-home-user-nzt-00/0cce3156-57c3-5603-9cca-5ee67f18a391/scratchpad/renders/dropper_detail.png",
+  "alt": "Macro of the dropper's frosted glass shoulder and ribbed black collar"
+ },
+ "pack-jar": {
+  "kind": "render",
+  "preset": "render",
+  "credit": "PR6 studio render (Blender Cycles), blender/render_v11.py",
+  "licence": "PR6 original, all rights reserved",
+  "source": "Blender 5.2 Cycles render",
+  "src": "/tmp/claude-0/-home-user-nzt-00/0cce3156-57c3-5603-9cca-5ee67f18a391/scratchpad/renders/jar_hero.png",
+  "alt": "PR6 frosted glass jar with a spun-aluminium lid on a pale mist sweep (Cream)"
+ },
+ "pack-jar-detail": {
+  "kind": "render",
+  "preset": "render",
+  "credit": "PR6 studio render (Blender Cycles), blender/render_v11.py",
+  "licence": "PR6 original, all rights reserved",
+  "source": "Blender 5.2 Cycles render",
+  "src": "/tmp/claude-0/-home-user-nzt-00/0cce3156-57c3-5603-9cca-5ee67f18a391/scratchpad/renders/jar_detail.png",
+  "alt": "Macro of the jar's spun-aluminium lid edge meeting the frosted glass"
+ },
+ "night": {
+  "kind": "render",
+  "preset": "night",
+  "credit": "PR6 studio render (Blender Cycles), blender/render_v11.py",
+  "licence": "PR6 original, all rights reserved",
+  "source": "Blender 5.2 Cycles render",
+  "src": "/tmp/claude-0/-home-user-nzt-00/0cce3156-57c3-5603-9cca-5ee67f18a391/scratchpad/renders/night.png",
+  "alt": "Object 0047: a frosted glass cube with a dark sphere inside, glowing softly on black"
+ }
+}
