@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en-CA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PR6 · Formulary</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#f2f3ef">
+<link rel="preload" href="fonts/FreeSans.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/FreeSansBold.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="print.css">
+<script>
+/* ?rm: reduced motion (no drawing-on, no zoom, no morph). ?novt: test the fallback without View Transitions. */
+(function(){var q=new URLSearchParams(location.search);
+ if(q.has('rm')||matchMedia('(prefers-reduced-motion: reduce)').matches)document.documentElement.classList.add('rm');})();
+</script>
+<script type="module" src="js/app.js"></script>
+</head>
+<body>
+<a class="skip" href="#page">Skip to content</a>
+<!-- the page grid, drawn: twelve columns (six on a phone), hairlines at every column's edge -->
+<div class="cols" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+<header class="bar g">
+  <a class="wm" id="home" href="#/" aria-label="PR6, the plan">PR6</a>
+  <nav class="crumb" id="crumb" aria-label="Breadcrumb"></nav>
+  <p class="proto"><span class="pt-l">Protocol</span> <span class="mono" id="cnt">0</span></p>
+</header>
+<main id="page" tabindex="-1"></main>
+</body>
+</html>
