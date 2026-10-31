@@ -1,0 +1,53 @@
+{
+ "placeholder": true,
+ "base": "../placeholder/",
+ "count": 149,
+ "size": {
+  "d": 960,
+  "m": 540
+ },
+ "stations": [
+  {
+   "code": "01",
+   "frame": 20
+  },
+  {
+   "code": "02",
+   "frame": 36
+  },
+  {
+   "code": "03",
+   "frame": 52
+  },
+  {
+   "code": "04",
+   "frame": 68
+  },
+  {
+   "code": "05",
+   "frame": 84
+  },
+  {
+   "code": "06",
+   "frame": 100
+  },
+  {
+   "code": "07",
+   "frame": 116
+  },
+  {
+   "code": "08",
+   "frame": 132
+  },
+  {
+   "code": "09",
+   "frame": 148
+  }
+ ],
+ "intro": [
+  0,
+  20
+ ],
+ "pattern": "{tier}/{NNN}.webp",
+ "poster": "poster.webp"
+}

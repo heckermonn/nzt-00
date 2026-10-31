@@ -1,0 +1,18 @@
+Fonts in this folder (subset to Latin and converted to WOFF2 for PR6 v9; no other changes)
+
+FreeSans.woff2, FreeSansBold.woff2
+  GNU FreeFont (FreeSans), https://www.gnu.org/software/freefont/
+  Copyright 2002-2020 GNU FreeFont contributors.
+  Licence: GNU General Public License v3 or later, with the font exception:
+  "As a special exception, if you create a document which uses this font, and embed this font or unaltered
+  portions of this font into the document, this font does not by itself cause the resulting document to be covered
+  by the GNU General Public License. This exception does not however invalidate any other reasons why the document
+  might be covered by the GNU General Public License."
+  Used here as a free stand-in for Helvetica Neue.
+
+DejaVuSansMono.woff2
+  DejaVu Sans Mono, https://dejavu-fonts.github.io/
+  Copyright (c) 2003 by Bitstream, Inc. (Bitstream Vera). DejaVu changes are in the public domain.
+  Licence: Bitstream Vera Fonts licence (free to use, copy, modify and redistribute; a modified font may not be
+  sold by itself and must not use the names "Bitstream" or "Vera"). Full text: https://dejavu-fonts.github.io/License.html
+  Used here as a free stand-in for Menlo (Menlo is derived from DejaVu Sans Mono / Bitstream Vera Sans Mono).
