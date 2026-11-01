@@ -29,6 +29,7 @@ const now = () => performance.now() * TS;
 const spring = (v, k, c) => new Spring(v, {k, c});
 export const LIGHT = {
   x: spring(REST.x, 230, 28), y: spring(REST.y, 230, 28), ink: spring(0, 140, 23),
+  lean: spring(0, 90, 19),        /* 0..1: the picture leaning in to the label while the ink is held (a hold or I) */
   dawn: 1,                       /* 0: black (the gate's night), 1: lit */
   hand: -1e9,                    /* now() of the last direct input */
   sweep: null,                   /* the idle sweep, when running */
@@ -40,44 +41,50 @@ export const LIGHT = {
 if (RM) { LIGHT.x.snap(REST.x); LIGHT.y.snap(REST.y); }
 
 /* the light's position as weights on the six groups.
-   key_l and key_r share one key by a cos²/sin² split (constant energy, smooth falloff); raising the light (y) moves
-   energy from the raking keys into the top light; rim and amb stay low and constant; when the ink rises the white
-   light cools off a little so the label reads. The dawn brings key_l up first, then everything else. */
+   The light travels an arc over the pack: from a low raking key on the left, up and over the top, down to a low raking
+   key on the right. Across the middle third both keys fall away and the top light carries the picture, so the emboss
+   lies flat under the overhead light and rises again as the beam drops to either side; that change in relief, with the
+   floor shadow swinging opposite the finger, is what the member reads as moving a light. Past either edge the key keeps
+   raking lower (a little extra, a grazing beam). Raising the light (y) moves energy from the keys into the top light.
+   Rim stays low and constant; the ambient fill steps back a little while a key rakes, so the side away from it falls
+   into shade. When the ink rises each group moves toward the manifest's ink mix, so the white light cools off and the
+   label reads. The dawn brings key_l up first, then everything else. */
 export function weights(x, y, ink, dawn, mix) {
-  const s = clamp((x + 1) / 2), a = s * Math.PI / 2;
-  const kl = Math.cos(a) ** 2, kr = Math.sin(a) ** 2;
-  /* past either edge the key keeps raking lower: a little extra on that side reads as a grazing beam */
-  const over = Math.max(0, Math.abs(x) - 1) * 2;
+  const s = clamp((x + 1) / 2);
+  const kl = (1 - s) ** 1.7, kr = s ** 1.7;
+  const over = Math.max(0, Math.abs(x) - 1) * 2.5;
+  const mid = (1 - Math.min(1, Math.abs(x))) ** 2;
   const rake = 1 - .5 * y;
-  /* as the ink rises each group moves toward the manifest's ink mix (ink_weights / default_weights, per group), so at
-     rest with the ink up the picture is exactly the light agent's poster_ink */
   const R = mix.inkR || INKR0, c = i => 1 + (R[i] - 1) * ink;
   const late = sm(.3, 1, dawn), early = sm(0, .75, dawn);
   return [
     (mix.key * (kl + (x < 0 ? over : 0)) * rake + mix.fill) * c(0) * early,
     (mix.key * (kr + (x > 0 ? over : 0)) * rake + mix.fill) * c(1) * late,
-    mix.top * (.12 + .88 * y) * c(2) * late,
+    (mix.top * (.5 + 2.2 * y) + mix.topMid * mid) * c(2) * late,
     mix.rim * c(3) * late,
-    mix.amb * c(4) * late,
+    mix.amb * (1 - .3 * (1 - mid)) * c(4) * late,
     mix.ink * ink * early
   ];
 }
-/* the mix at rest (x -0.72, y 0.22) reproduces the manifest's default_weights, the mix the poster was made with */
+/* the store's mix. The light agent's default_weights (key_l 1, key_r .12, top .18, rim .25, amb .5) light a warm,
+   mid-grey room; the store wants the kit's pale Mist room with the metal still reading as metal, so the rest frame
+   lifts the exposure a step and the top and fill a little, keeps the rim where the manifest has it, and grades the
+   white balance a touch cooler (the warm left key otherwise turns the cyclorama olive). All within the manifest's
+   ranges: at rest (x -0.72, y 0.22) the weights are about key_l 1.0, key_r .08, top .28, rim .25, amb .43, × 1.15. */
 function mixFrom(m, s) {
-  const dw = Object.assign({key_l: 1, key_r: .18, top: .35, rim: .55, amb: .45}, (m && m.default_weights) || {});
+  const dw = Object.assign({key_l: 1, key_r: .12, top: .18, rim: .25, amb: .5}, (m && m.default_weights) || {});
   const iw = (m && m.ink_weights) || null;
-  /* key and fill solved together, so both keys land on default_weights at rest */
-  const at = weights(REST.x, REST.y, 0, 1, {key: 1, fill: 0, top: 1, rim: 1, amb: 1, ink: 1});
-  let key = (dw.key_l - dw.key_r) / Math.max(.05, at[0] - at[1]), fill = dw.key_r - key * at[1];
-  if (fill < 0) { fill = 0; key = dw.key_l / at[0]; }
   const inkR = iw ? GROUPS.slice(0, 5).map((g, i) => dw[g] > 1e-4 && iw[g] != null ? iw[g] / dw[g] : INKR0[i]) : INKR0;
   return Object.assign({
-    key, fill, top: dw.top / at[2], rim: dw.rim, amb: dw.amb, inkR,
-    ink: (iw && iw.ink) || 1, exposure: (m && m.exposure) || 1
+    key: 1.4, fill: .04, top: .24, topMid: .55, rim: dw.rim, amb: .6, inkR,
+    ink: ((iw && iw.ink) || 1) * 1.1, exposure: ((m && m.exposure) || 1) * 1.15, wb: [.965, 1, 1.045],
+    /* the set alone (by the shot's mask) is exposed a stop paler and cooler: the room reads as the kit's Mist while
+       the packs keep their own exposure, so metal stays metal; shadows on the floor keep their ratio */
+    lift: [1.55, 1.65, 1.78]
   }, (s && s.mix) || {});
 }
 const INKR0 = [.35, .35, .35, .55, .5];
-const MIX0 = {key: 1.15, fill: .1, top: 1.1, rim: .55, amb: .45, ink: 1.2, exposure: 1};
+const MIX0 = {key: 1.3, fill: .04, top: .24, topMid: .55, rim: .25, amb: .6, ink: 1.2, exposure: 1.1, wb: [1, 1, 1]};
 
 /* ================================================================ the manifest */
 let MAN = null, manP = null;
@@ -101,7 +108,7 @@ export function shotFiles(name, size) {
   let ok = true;
   GROUPS.forEach((g, i) => { const v = s.passes && s.passes[g]; const u = pick(v); scale[i] = v && typeof v === 'object' && +v.scale > 0 ? +v.scale : 1; if (u) passes[g] = u; else if (g !== 'ink') ok = false; });
   const box = Array.isArray(s.packs) && s.packs.length === 1 && Array.isArray(s.packs[0].box) ? s.packs[0].box : (s.bbox || null);
-  return {name, w: s.w, h: s.h, product: s.product || null, pack: s.pack || null, passes: ok ? passes : null, scale, poster: pick(s.poster), inkStill: pick(s.poster_ink || s.ink_still), inkText: s.ink_text || '', mix: mixFrom(m, s), packs: s.packs || null, box, status: s.status || '', size: sz};
+  return {name, w: s.w, h: s.h, product: s.product || null, pack: s.pack || null, passes: ok ? passes : null, scale, poster: pick(s.poster), mask: pick(s.mask), inkStill: pick(s.poster_ink || s.ink_still), inkText: s.ink_text || '', mix: mixFrom(m, s), packs: s.packs || null, box, status: s.status || '', size: sz};
 }
 export const hasShot = name => !!(MAN && MAN.shots && MAN.shots[name]);
 
@@ -112,19 +119,23 @@ void main(){ v = vec2(fit.z + (p.x * .5 + .5) * fit.x, fit.w + (.5 - p.y * .5) *
 const FS = `#version 300 es
 precision highp float;
 in vec2 v; out vec4 o;
-uniform sampler2D t0, t1, t2, t3, t4, t5;
+uniform sampler2D t0, t1, t2, t3, t4, t5, t6;   /* t6: the shot's mask (pack > 0, set 0) */
 uniform float w[6];
 uniform float expo, seed, dim;
 uniform vec4 focus;            /* x: centre (uv), y: half width, z: amount, w: feather */
 uniform vec3 bg;               /* the room's colour, linear: what the other packs recede into */
+uniform vec3 wb;               /* white balance, linear */
+uniform vec3 lift;             /* the set's exposure (cyclorama and floor only): the pale Mist room */
 float h(vec2 q){ vec3 p3 = fract(vec3(q.xyx) * .1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }
 vec3 enc(vec3 c){ c = max(c, 0.); return mix(c * 12.92, 1.055 * pow(c, vec3(1. / 2.4)) - .055, step(.0031308, c)); }
 vec3 pbrNeutral(vec3 c){ const float s = .76; const float dsat = .15; float x = min(c.r, min(c.g, c.b)); float off = x < .08 ? x - 6.25 * x * x : .04; c -= off; float p = max(c.r, max(c.g, c.b)); if (p < s) return c; const float d = 1. - s; float np = 1. - d * d / (p + d - s); c *= np / p; float g = 1. - 1. / (dsat * (p - np) + 1.); return mix(c, vec3(np), g); }
 void main(){
   vec3 c = w[0] * texture(t0, v).rgb + w[1] * texture(t1, v).rgb + w[2] * texture(t2, v).rgb
          + w[3] * texture(t3, v).rgb + w[4] * texture(t4, v).rgb + w[5] * texture(t5, v).rgb;
-  c *= expo;
-  if (focus.z > 0.) { float m = smoothstep(focus.y, focus.y + focus.w, abs(v.x - focus.x)) * focus.z; c = mix(c, bg * dim, m * .8); }
+  c *= expo * wb;
+  float pk = clamp(texture(t6, v).r * 10.2, 0., 1.);
+  c *= mix(lift, vec3(1.), pk);
+  if (focus.z > 0.) { float m = smoothstep(focus.y, focus.y + focus.w, abs(v.x - focus.x)) * focus.z; c = mix(c, bg * expo * wb * lift * dim, m * .72); }
   vec3 s = enc(pbrNeutral(c));
   float n = h(gl_FragCoord.xy + seed) + h(gl_FragCoord.xy * 1.37 + seed * 1.7 + 19.) - 1.;
   o = vec4(s + n / 255., 1.);
@@ -136,8 +147,8 @@ function compile(gl) {
   gl.useProgram(pr);
   const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
   const loc = gl.getAttribLocation(pr, 'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
-  const U = {}; ['fit', 'expo', 'seed', 'dim', 'focus', 'bg', 'w'].forEach(n => U[n] = gl.getUniformLocation(pr, n));
-  for (let i = 0; i < 6; i++) gl.uniform1i(gl.getUniformLocation(pr, 't' + i), i);
+  const U = {}; ['fit', 'expo', 'seed', 'dim', 'focus', 'bg', 'w', 'wb', 'lift'].forEach(n => U[n] = gl.getUniformLocation(pr, n));
+  for (let i = 0; i < 7; i++) gl.uniform1i(gl.getUniformLocation(pr, 't' + i), i);
   return U;
 }
 let glOK = null;
@@ -277,7 +288,7 @@ async function load(inst) {
   inst.loading = true;
   try {
     const srcs = GROUPS.map(g => shot.passes[g] || null);
-    const bms = await Promise.all(srcs.map(s => s ? bitmap(s) : null));
+    const [bms, mk] = await Promise.all([Promise.all(srcs.map(s => s ? bitmap(s) : null)), shot.mask ? bitmap(shot.mask).catch(() => null) : null]);
     if (inst.destroyed) return;
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
     gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
@@ -292,6 +303,13 @@ async function load(inst) {
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
       inst.tex.push(t);
     });
+    /* the mask, in linear units; without one every pixel counts as pack and nothing is lifted */
+    { const t = gl.createTexture(); gl.activeTexture(gl.TEXTURE6); gl.bindTexture(gl.TEXTURE_2D, t);
+      if (mk) gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, mk);
+      else gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([255, 255, 255, 255]));
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      inst.tex.push(t); }
     inst.loading = false;
     const b0 = bms[0]; inst.iw = b0.width; inst.ih = b0.height;
     if (!inst.ink) inst.inkOff = true;
@@ -349,9 +367,19 @@ function paintPoster(inst) {
 
 /* how the photograph sits in the box: cover, scaled by zoom (below 1 the edges extend: the cyclorama and the floor
    are clamped outward, which reads as more room), centred on (cx, cy) in image units */
+/* where the ink sits on each hero's label (centre, in image units, measured from the ink passes): while the ink is up
+   the live picture leans in toward it, as you would bring a label closer to read it under a lamp; on a phone that
+   takes the printed lines from about 9 px to about 13 px tall */
+const INKAT = {tin_hero: [.449, .611], pouch_hero: [.432, .595], box_hero: [.57, .5], dropper_hero: [.468, .782], jar_hero: [.368, .754]};
 function fitOf(inst) {
   const {W, H, iw, ih} = inst;
-  const f = inst.o.fit ? inst.o.fit(W, H, iw, ih) : {zoom: 1, cx: .5, cy: .5};
+  const f = Object.assign({}, inst.o.fit ? inst.o.fit(W, H, iw, ih) : {zoom: 1, cx: .5, cy: .5});
+  const at = inst.mode === 'gl' && inst.ink && !inst.inkOff && inst.o.inkZoom !== 0 && inst.shot && INKAT[inst.shot.name];
+  if (at && LIGHT.lean.v > .001) {
+    const e = E.io(clamp(LIGHT.lean.v)), k = inst.o.inkZoom || 1.38;
+    f.zoom = (f.zoom || 1) * (1 + (k - 1) * e);
+    f.cx = lerp(f.cx ?? .5, at[0], e * .8); f.cy = lerp(f.cy ?? .5, at[1], e * .8);
+  }
   const s = Math.max(W / iw, H / ih) * (f.zoom || 1);
   const sx = W / (iw * s), sy = H / (ih * s);
   let ox = (f.cx ?? .5) - sx / 2, oy = (f.cy ?? .5) - sy / 2;
@@ -383,11 +411,14 @@ function draw(inst, force) {
   gl.uniform4f(U.fit, fit[0], fit[1], fit[2], fit[3]);
   gl.uniform1fv(U.w, w);
   gl.uniform1f(U.expo, mix.exposure || 1);
+  const wb = mix.wb || [1, 1, 1]; gl.uniform3f(U.wb, wb[0], wb[1], wb[2]);
+  /* the set's lift eases off as the ink rises, so the room goes darker and colder and the ink carries */
+  const lf = mix.lift || [1, 1, 1], li = 1 - .45 * clamp(ink); gl.uniform3f(U.lift, 1 + (lf[0] - 1) * li, 1 + (lf[1] - 1) * li, 1 + (lf[2] - 1) * li);
   gl.uniform1f(U.seed, (now() % 1000) * .37);
   gl.uniform1f(U.dim, f ? f.dim ?? 1 : 1);
   gl.uniform3f(U.bg, inst.bg[0], inst.bg[1], inst.bg[2]);
   gl.uniform4f(U.focus, f ? f.x : 0, f ? f.hw : 0, f ? f.amt : 0, f ? (f.feather || .03) : .03);
-  for (let i = 0; i < 6; i++) { gl.activeTexture(gl.TEXTURE0 + i); gl.bindTexture(gl.TEXTURE_2D, inst.tex[i]); }
+  for (let i = 0; i < 7; i++) { gl.activeTexture(gl.TEXTURE0 + i); gl.bindTexture(gl.TEXTURE_2D, inst.tex[i]); }
   gl.drawArrays(gl.TRIANGLES, 0, 3);
   inst.frames = (inst.frames || 0) + 1;
 }
@@ -402,8 +433,8 @@ function bindInput(inst) {
      the beam can graze from past the frame), down the picture is the light coming lower */
   const toLight = p => ({x: lerp(-1.12, 1.12, clamp(p.u)), y: clamp(1 - (p.v - .05) / .9) * .95});
   const take = p => { const t = toLight(p); LIGHT.hand = now(); stopSweep(); LIGHT.set(t.x, t.y); edgeInk(t.x); };
-  const edgeInk = x => { if (!inst.ink || RM) return; if (LIGHT.inkHeld || LIGHT.inkKey) return; LIGHT.ink.set(down ? sm(.97, 1.08, Math.abs(x)) : 0); };
-  const inkOn = on => { if (!inst.ink) return; LIGHT.inkHeld = on; LIGHT.ink.set(on || LIGHT.inkKey ? 1 : 0); el.classList.toggle('lt-inked', on || LIGHT.inkKey); inkStillShow(inst, on || LIGHT.inkKey); kick(); o.onInk && o.onInk(on); };
+  const edgeInk = x => { if (!inst.ink || RM) return; if (LIGHT.inkHeld || LIGHT.inkKey) return; LIGHT.ink.set(down ? .6 * sm(.98, 1.1, Math.abs(x)) : 0); };
+  const inkOn = on => { if (!inst.ink) return; LIGHT.inkHeld = on; LIGHT.ink.set(on || LIGHT.inkKey ? 1 : 0); LIGHT.lean.set(on || LIGHT.inkKey ? 1 : 0); el.classList.toggle('lt-inked', on || LIGHT.inkKey); inkStillShow(inst, on || LIGHT.inkKey); kick(); o.onInk && o.onInk(on); };
   /* the ink: a finger (or the mouse button) held still for 600 ms, anywhere on the picture, whether or not it dragged
      first. Under reduced motion the light stays at the left key and a press shows the ink at once. */
   const still = () => { clearTimeout(lp); lp = setTimeout(() => { if (down && !LIGHT.inkHeld) inkOn(true); }, 600 / TS); };
@@ -514,13 +545,16 @@ function loop(ts) {
   const t = now(); const dt = Math.min(.05, Math.max(0, (t - lastT) / 1000)); lastT = t;
   if (LIGHT._dawn) { const k = clamp((t - LIGHT._dawn.t0) / LIGHT._dawn.d); LIGHT.dawn = E.io(k); if (k >= 1) { const r = LIGHT._dawn.res; LIGHT._dawn = null; r(); } }
   stepSweep(t);
-  LIGHT.x.step(dt); LIGHT.y.step(dt); LIGHT.ink.step(dt);
-  let busy = !!(LIGHT._dawn || LIGHT.sweep) || !LIGHT.x.rest || !LIGHT.y.rest || !LIGHT.ink.rest;
+  LIGHT.x.step(dt); LIGHT.y.step(dt); LIGHT.ink.step(dt); LIGHT.lean.step(dt);
+  let busy = !!(LIGHT._dawn || LIGHT.sweep) || !LIGHT.x.rest || !LIGHT.y.rest || !LIGHT.ink.rest || !LIGHT.lean.rest;
   LIVE.forEach(i => { if (i.o.tick) busy = i.o.tick(dt) || busy; if (i.vis && !document.hidden) { if (i.ready) draw(i); else if (i.poDirty || i.o.panning) paintPoster(i); } });
   LISTEN.forEach(f => f(LIGHT));
+  /* while the ink is up the page steps back from the picture (the display line fades; see app.css) */
+  const inked = LIGHT.lean.v > .3; if (inked !== HTMLINK) { HTMLINK = inked; document.documentElement.classList.toggle('inked', inked); }
   if (busy && !document.hidden) raf = requestAnimationFrame(loop);
 }
 const LISTEN = new Set();
+let HTMLINK = false;
 export const onLight = f => { LISTEN.add(f); return () => LISTEN.delete(f); };
 document.addEventListener('visibilitychange', () => { if (!document.hidden) kick(); });
 export const liveCount = () => LIVE.size;

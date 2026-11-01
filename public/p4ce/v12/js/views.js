@@ -5,7 +5,7 @@
    Type: six sizes (13 mono / 17 body / 22 title / 34 headline / 56 display / 88 hero on a phone, larger on a desktop),
    two weights. Mono only for real data. British/Canadian spelling, CA$, no effect claims. */
 import {CAT, ALL, byId, colOf, servingSize, purpose, directions, cautions, batch, CONC, PACKNAME} from './catalog.js';
-import {$, $$, esc, money, ic, say, store, RM, clamp, lerp, isPhone, Spring} from './util.js';
+import {$, $$, esc, money, ic, say, store, RM, clamp, lerp, isPhone, Spring, E} from './util.js';
 import {Protocol, dispatchLabel} from './protocol.js';
 import {FEED, FEED_KINDS, REVIEWS, reviewOf, PAST, MEMBER, NEW, NOTES, fmtDate, APPROACH} from './content.js';
 import {relight, LIGHT, sweep, setScrollDriver, kick, lightNow, dawn as lightDawn} from './light.js';
@@ -43,6 +43,14 @@ const placeFit = o => (W, H, iw, ih) => {
   const sx = W / (iw * s), sy = H / (ih * s);
   const fx = portrait ? (o.pfx ?? .5) : (o.fx ?? .5), fy = portrait ? (o.pfy ?? .5) : (o.fy ?? .5);
   return {zoom: s / s0, cx: .5 + sx * (.5 - fx), cy: .5 + sy * (.5 - fy), free: true};
+};
+/* the disc: the pack (its box from the manifest, pack and contact shadow) centred in the circle with room around it,
+   its diagonal about 80% of the disc, so nothing is cut by the rim and the pack reads as seated, not cropped */
+const seatFit = shot => (W, H, iw, ih) => {
+  const b = shot && shot.box; const s0 = Math.max(W / iw, H / ih);
+  if (!b) return {zoom: 1.1, cx: .5, cy: .56};
+  const bw = (b[2] - b[0]) * iw, bh = (b[3] - b[1]) * ih, s = .8 * Math.min(W, H) / Math.hypot(bw, bh);
+  return {zoom: s / s0, cx: (b[0] + b[2]) / 2, cy: (b[1] + b[3]) / 2 + .015, free: true};
 };
 /* the first idle sweep: once the picture is on screen, unless a hand or another sweep came recently */
 let lastSweep = -1e9;
@@ -103,7 +111,7 @@ function bindLineup(el, s, onGo) {
   const tr = $('[data-lutr]', lu), items = $$('.lu-i', tr), host = $('[data-lt]', lu);
   const xs = packsOf(s);
   const F = {x: new Spring(xs[0], {k: 170, c: 26}), amt: new Spring(0, {k: 140, c: 24})};
-  let cur = 0, pan = xs[0];
+  let cur = 0, pan = xs[0], panF = 0;
   const phone = () => getComputedStyle(tr).overflowX !== 'visible';
   const set = k => { if (k === cur) return; cur = k; items.forEach((it, j) => it.classList.toggle('on', j === k)); };
   const spacing = xs.length > 1 ? (xs[xs.length - 1] - xs[0]) / (xs.length - 1) : .1;
@@ -111,6 +119,7 @@ function bindLineup(el, s, onGo) {
   /* desktop: each caption starts under its own pack's left edge (the manifest's boxes; the picture spans the width) */
   const L9 = SH.leads(), bx = s && Array.isArray(s.packs) ? L9.map(p => { const q = s.packs.find(q => q && (q.id === p.id || q.product === p.id)); return q && (q.box || q.bbox); }) : null;
   const okBx = bx && bx.every(b => Array.isArray(b) && b[2] <= 1);
+  const boxAt = f => { const a = clamp(Math.floor(f), 0, bx.length - 1), c = Math.min(bx.length - 1, a + 1), t = clamp(f - a); return bx[a].map((v, i) => lerp(v, bx[c][i], t)); };
   const placeCaps = () => {
     if (!okBx || !host || phone()) { tr.style.gridTemplateColumns = ''; tr.style.paddingLeft = ''; return; }
     /* one caption width, each centred under its pack, then nudged apart where two packs stand close */
@@ -134,13 +143,22 @@ function bindLineup(el, s, onGo) {
       fit: (W, H, iw, ih) => {
         const s0 = Math.max(W / iw, H / ih);
         if (phone()) {
-          /* a pack about 46% of the box wide, its neighbours at the edges */
-          const ww = spacing / .46, sc = W / (iw * ww);
-          const sy = H / (ih * sc);
-          /* the packs' feet (from the manifest's boxes) at 80% of the frame, so the floor and the shadows show */
+          /* the camera frames the pack in front: its box (from the manifest, eased between neighbours as the row
+             is swiped) about half the frame wide or 60% of it tall, whichever comes first, its feet at 78% of the
+             frame so the floor and the shadow show; a low tin and a tall pouch both arrive at the same presence */
+          const b = okBx ? boxAt(panF) : null;
+          if (b) {
+            const bw = (b[2] - b[0]) * iw, bh = (b[3] - b[1]) * ih;
+            const sc = Math.min(W * .44 / bw, H * .62 / bh, W / (iw * spacing / .62));
+            const sy = H / (ih * sc);
+            return {zoom: sc / s0, cx: (b[0] + b[2]) / 2, cy: b[3] + (.5 - .78) * sy, free: true};
+          }
+          const ww = spacing / .46, sc = W / (iw * ww), sy = H / (ih * sc);
           return {zoom: sc / s0, cx: pan, cy: clamp(band.b - .3 * sy, sy / 2, 1 - sy / 2), free: true};
         }
-        const sc = W / iw; return {zoom: sc / s0, cx: .5, cy: .5, free: true};
+        /* desktop: the whole row across the width, cropped to the band the packs stand in (not the empty wall) */
+        const sc = W / iw, sy = H / (ih * sc);
+        return {zoom: sc / s0, cx: .5, cy: Math.min(1 - sy / 2, band.b + .13 - sy / 2), free: true};
       },
       focus: () => F.amt.v > .002 ? {x: F.x.v, hw: spacing * .36, amt: F.amt.v, feather: spacing * .42} : null,
       tick: dt => { F.x.step(dt); F.amt.step(dt); return !(F.x.rest && F.amt.rest); },
@@ -169,6 +187,7 @@ function bindLineup(el, s, onGo) {
     set(clamp(k, 0, items.length - 1));
     const a = Math.floor(f), b = Math.min(items.length - 1, a + 1);
     pan = lerp(xs[clamp(a, 0, items.length - 1)], xs[b], f - a);
+    panF = clamp(f, 0, items.length - 1);
     if (!RM && lightNow() - LIGHT.hand > 400) { LIGHT.set(lerp(-.85, .85, t)); }
     if (inst) inst.poDirty = true;
     kick();
@@ -408,7 +427,7 @@ function product(id, vt) {
       const host = $('.disc-lt', el);
       const disc = !!(F.shot && /^disc_/.test(F.shot.name || ''));
       const inst = F.shot ? relight(host, F.shot, {product: p, ink: F.own, hover: true,
-        fit: disc ? (W, H, iw, ih) => ({zoom: 1, cx: .5, cy: .5}) : placeFit({kw: 1.12, kh: 1.12, pfx: .5, pfy: .56, fx: .5, fy: .56, split: 1.2})}) : null;
+        fit: disc ? (W, H, iw, ih) => ({zoom: 1, cx: .5, cy: .5}) : seatFit(F.shot)}) : null;
       const stop = inst ? sweepSoon(inst, 900) : null;
       const f = $('[data-buy]', el), out = $('output', f); let q = 1;
       const sync = () => { const sub = f.m.value === 'sub'; $$('.opt', f).forEach(o => o.classList.toggle('on', o.querySelector('input').checked)); f.fr.disabled = !sub; };

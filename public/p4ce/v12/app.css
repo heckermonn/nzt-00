@@ -101,6 +101,9 @@ html.out .skip { display: none; }
 .lt-po { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; }
 .lt-host:not(.lt) .lt-po { opacity: 1; }
 .lt-pc, .lt-cv, .lt-pk { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+/* the posters were mixed with the light agent's default weights; the live rest frame is a step paler and cooler, so the
+   poster is brought close to it and the dissolve into the live picture does not jump */
+.lt-pc, .lt-pk, .plu-im img, .rc-ph, .lu-ph img, img.fly-im { filter: brightness(1.16) saturate(.62) hue-rotate(-8deg); }
 .lt-pc { opacity: 0; transition: opacity .35s ease; }
 .lt-pcon .lt-pc { opacity: 1; }
 .lt-cv { opacity: 0; transition: opacity .5s ease; }
@@ -142,7 +145,9 @@ html[data-view="product"] .bar:not(.solid) .b-mark { opacity: 0; pointer-events:
 html.dawning .bar, html.dawning .tl { opacity: 0; pointer-events: none; }
 /* the thumb bar rises from below rather than fading: a translucent ink bar over the page reads as a grey flash */
 html.dawning .tb { transform: translateY(100%); pointer-events: none; }
-html.dawning #page { background: var(--ink); }
+html.dawning #page, html.dawned #page { background: var(--ink); }
+/* below the hero the page waits in the dark too, so the night does not end in a strip of Chalk under the tin */
+html.dawning #page.v-home .pg > :not(.hero), html.dawned #page.v-home .pg > :not(.hero) { visibility: hidden; }
 .tl, .tb { transition: opacity .8s ease, transform .7s var(--out), background-color .3s, box-shadow .3s, color .3s; }
 
 /* ================================================================ the phone chrome: the top line and the thumb bar */
@@ -234,13 +239,19 @@ html[data-tone="night"] .foot .wm, html[data-tone="night"] .foot nav a:hover { c
 .hero-t .hero-d { max-width: 24ch; }
 .hero-f { position: absolute; left: 0; right: 0; bottom: var(--s4); z-index: 2; pointer-events: none; }
 .hero-f .ink-l { max-width: 52ch; }
+/* holding the light for the ink: the display line steps aside while the picture leans in to the label */
+.hero-t { transition: opacity .45s var(--out); }
+html.inked .hero-t { opacity: 0; transition-duration: .3s; }
+html.inked .hint { opacity: 0; }
+html.inked .hero-f .ink-l, html.inked .hero-f .ink-c { color: var(--chalk); transition: color .3s; }
+.hero-f .ink-l, .hero-f .ink-c { transition: color .45s; }
 .dark .hero-h, .dark .hero-f { opacity: 0; transition: none; }
 .dark.dawn .hero-h { opacity: 1; transition: opacity 1.1s ease 1.3s; }
 .dark.dawn .hero-f { opacity: 1; transition: opacity 1s ease 2s; }
 
 /* ================================================================ the lineup of the nine: one render, one light */
 .lu { position: relative; }
-.lu-lt { width: 100%; aspect-ratio: 16 / 9; max-height: 82vh; }
+.lu-lt { width: 100%; aspect-ratio: 2.6 / 1; max-height: 70vh; }
 .lu-tr { display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 0; padding: var(--s2) var(--gx) 0; max-width: none; }
 .lu-a { display: block; padding: 0 var(--s1) var(--s1) 0; }
 .lu-cap { display: grid; gap: 4px; max-width: var(--capw, none); transition: opacity .35s ease; }
@@ -249,6 +260,8 @@ html[data-tone="night"] .foot .wm, html[data-tone="night"] .foot nav a:hover { c
 .lu-d { color: var(--muted); font-size: var(--t-mono); line-height: 1.35; }
 .lu-m { color: var(--muted); }
 @media (hover: hover) and (min-width: 861px) { .lu:hover .lu-i:not(.on) .lu-cap { opacity: .2; } }
+/* desktop: under the row only the names (the index that follows carries descriptor, count and range) */
+@media (min-width: 861px) { .lu:not(.lu-none) .lu-d, .lu:not(.lu-none) .lu-m { display: none; } .lu-tr { padding-bottom: var(--s2); } }
 .lu-none .lu-tr { gap: var(--s2); }
 .lu-ph { display: block; aspect-ratio: 4 / 5; overflow: hidden; border-radius: var(--r-img); background: var(--mist); margin-bottom: var(--s2); }
 .lu-ph img { width: 100%; height: 100%; object-fit: cover; }
@@ -562,12 +575,12 @@ html.sh-open .tb { z-index: 63; }
   .hero-d { margin-top: var(--s1); }
   /* the lineup: a swipe track over one canvas that pans with it */
   /* the photograph lies under the track; the track flows, so the section is as tall as the captions need */
-  .lu-lt { position: absolute; left: 0; right: 0; top: 0; aspect-ratio: auto; height: min(64svh, 560px); max-height: none; }
+  .lu-lt { position: absolute; left: 0; right: 0; top: 0; aspect-ratio: auto; height: min(52svh, 480px); max-height: none; }
   .lu-tr { position: relative; z-index: 2; display: flex; overflow-x: auto; scroll-snap-type: x mandatory; padding: 0 15vw; scrollbar-width: none; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
   .lu-tr::-webkit-scrollbar { display: none; }
   .lu-i { flex: 0 0 70vw; scroll-snap-align: center; }
   .lu-a { display: flex; flex-direction: column; justify-content: flex-start; padding: 0; }
-  .lu-a::before { content: ''; display: block; height: min(64svh, 560px); }
+  .lu-a::before { content: ''; display: block; height: min(52svh, 480px); }
   .lu-cap { padding: var(--s2) 0 0; text-align: center; justify-items: center; }
   .lu-i:not(.on) .lu-cap { opacity: .25; }
   .lu-n { font-size: var(--t-title); }

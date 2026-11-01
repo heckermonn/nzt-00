@@ -305,14 +305,16 @@ const enter = {
     history.replaceState(null, '', cleanURL() + '#/');
     setDark();
     ctx.fromGate = true;
-    ctx.onDawn = () => { HTML.classList.remove('dawning'); ctx.onDawn = null; };
+    /* 'dawned' holds the dark under the thumb bar while it rises, so no strip of Chalk shows beneath the tin */
+    const lift = () => { if (!HTML.classList.contains('dawning')) return; HTML.classList.remove('dawning'); HTML.classList.add('dawned'); setTimeout(() => HTML.classList.remove('dawned'), 900); };
+    ctx.onDawn = () => { lift(); ctx.onDawn = null; };
     showChrome();
     S.hist = ['#/'];
     await transition({v: 'home'}, {instant: true});
     ctx.fromGate = false;
     addEventListener('hashchange', route);
     HTML.classList.add('ready');
-    setTimeout(() => HTML.classList.remove('dawning'), 4000);
+    setTimeout(lift, 4000);
   }
 };
 
