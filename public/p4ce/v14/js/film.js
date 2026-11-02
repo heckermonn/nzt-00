@@ -134,7 +134,8 @@ export function createFilm(M, o) {
     let ox = W / 2 - fx * dw;
     if (dw >= W) ox = clamp(ox, W - dw, 0);
     /* narrow: the subject sits in the upper third, above the type; wide: centred, as rendered */
-    let oy = narrow ? H * .355 - fr.fy * dw : (H - dw) / 2;
+    /* v14: the vials stand taller than v9's packs, so a wide screen shows a little more of the top of the frame */
+    let oy = narrow ? H * .355 - fr.fy * dw : (H - dw) / 2 + dw * .075;
     if (dw >= H) oy = clamp(oy, H - dw, 0); else oy = clamp(oy, Math.min(0, H * .04), H - dw);
     return [s, ox, oy];
   }
