@@ -250,7 +250,7 @@ function addFly(id, srcEl, inst) {
   const DUR = 900;
   Protocol.hold(DUR - 60);
   const g = document.createElement('div'); g.className = 'fly-pk';
-  if (img) { img.className = 'fly-im'; g.appendChild(img); } else g.innerHTML = `<img class="fly-im" src="${esc(SH.posterFor(SH.packOf(p)))}" alt="">`;
+  if (img) { img.className = 'fly-im'; g.appendChild(img); } else g.innerHTML = `<img class="fly-im" src="${esc(SH.posterFor(p.id))}" alt="">`;
   Object.assign(g.style, {left: r.x + 'px', top: r.y + 'px', width: r.w + 'px', height: r.h + 'px'});
   FLY.appendChild(g);
   const cx0 = r.x + r.w / 2, cy0 = r.y + r.h / 2, cx1 = pr.left + pr.width / 2, cy1 = pr.top + pr.height / 2;
@@ -274,7 +274,7 @@ export const running = () => started;
 function common() { S.member = true; started = true; buildChrome(); hooks(); }
 const showChrome = () => { BAR.hidden = false; TOP.hidden = false; THUMB.hidden = false; };
 /* the posters of the five format renders are fetched early, so a view transition never lands on an empty frame */
-function warm() { SH.PACKS.forEach(k => { const u = SH.posterFor(k); if (u) { const i = new Image(); i.decoding = 'async'; i.src = u; } }); }
+function warm() { [SH.posterFor('PR6-C-0103'), SH.posterFor()].forEach(u => { if (u) { const i = new Image(); i.decoding = 'async'; i.src = u; } }); }
 export async function boot() {
   await SH.ready;
   common(); showChrome(); warm();

@@ -370,7 +370,7 @@ function paintPoster(inst) {
 /* where the ink sits on each hero's label (centre, in image units, measured from the ink passes): while the ink is up
    the live picture leans in toward it, as you would bring a label closer to read it under a lamp; on a phone that
    takes the printed lines from about 9 px to about 13 px tall */
-const INKAT = {vial_hero: [.536, .507], tin_hero: [.449, .611], pouch_hero: [.432, .595], box_hero: [.57, .5], dropper_hero: [.468, .782], jar_hero: [.368, .754]};
+const INKAT = {vial_hero: [.536, .507], vial_blank: null, tin_hero: [.449, .611], pouch_hero: [.432, .595], box_hero: [.57, .5], dropper_hero: [.468, .782], jar_hero: [.368, .754]};
 function fitOf(inst) {
   const {W, H, iw, ih} = inst;
   const f = Object.assign({}, inst.o.fit ? inst.o.fit(W, H, iw, ih) : {zoom: 1, cx: .5, cy: .5});

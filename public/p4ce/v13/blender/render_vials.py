@@ -22,6 +22,7 @@ import vials  # noqa: E402
 
 HEROES = {
     "vial_hero": dict(pid="PR6-C-0103", cap="orange", yaw=-14, elev=14.0),
+    "vial_blank": dict(pid=None, cap="orange", yaw=-14, elev=14.0),
 }
 LINEUP_CAPS = ["chalk", "steel", "mist", "ink", "orange", "steel", "mist", "chalk", "ink"]
 
@@ -52,7 +53,7 @@ def build_hero(name, scale):
     tgt = Vector((0, 0, ztop * 0.5))
     RL.fit(cam, vs, tgt, s["elev"], 0.62, 0.70, drop=0.03)
     boxes = [dict(id=s["pid"], pack="vial", box=RL.bbox_image(cam, RL.mesh_children(root)))]
-    return dict(product=s["pid"], pack="vial", w=res[0], h=res[1], ink_text=vials.ink_text(s["pid"]), packs=boxes)
+    return dict(product=s["pid"], pack="vial", w=res[0], h=res[1], ink_text=vials.ink_text(s["pid"]) if s["pid"] else "", packs=boxes)
 
 
 def build_pair(scale):

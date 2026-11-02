@@ -40,7 +40,7 @@ function card(l, n) {
   const p = byId(l.id), k = keyOf(l), sz = p.sizes[l.s];
   return `<li class="pc rc${NEW === k ? ' new' : ''}" data-key="${esc(k)}">
     <p class="rc-top mono"><span>LINE / ${pad2(n)}</span><span>${esc(p.lot)}</span></p>
-    <a class="rc-im" href="#/p/${p.id}" data-go aria-hidden="true" tabindex="-1"><img class="rc-ph" src="${esc(posterFor('vial'))}" alt="" loading="lazy" decoding="async"></a>
+    <a class="rc-im" href="#/p/${p.id}" data-go aria-hidden="true" tabindex="-1"><img class="rc-ph" src="${esc(posterFor(p.id))}" alt="" loading="lazy" decoding="async"></a>
     <div class="pc-b">
       <h3 class="pc-n"><a href="#/p/${p.id}" data-go>${esc(p.n)}</a></h3>
       <p class="pc-k"><span class="mono">${p.id}</span> ${esc(p.form)}</p>

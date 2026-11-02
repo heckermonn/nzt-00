@@ -106,7 +106,7 @@ function lineupHTML(s, vt) {
   return `<div class="lu${s ? '' : ' lu-none'}" data-lu>
       ${s ? lightFig(s, {cls: 'lu-lt', label: 'Nine sealed vials, the first entry of each research area, standing in one row in raking light'}) : ''}
       <ol class="lu-tr" data-lutr>${AREAS.map((co, i) => `<li class="lu-i${i ? '' : ' on'}" data-i="${i}">
-        <a class="lu-a" href="#/a/${co.c}" data-c="${co.c}">${s ? '' : `<span class="lu-ph"><img src="${esc(SH.posterFor(SH.packOf(L[i])))}" alt="" loading="lazy" decoding="async"></span>`}
+        <a class="lu-a" href="#/a/${co.c}" data-c="${co.c}">${s ? '' : `<span class="lu-ph"><img src="${esc(SH.posterFor(L[i].id))}" alt="" loading="lazy" decoding="async"></span>`}
           <span class="lu-cap"><span class="lu-n"><span class="mono">${co.c}</span> ${esc(co.n)}</span><span class="lu-d">${esc(co.s)}</span><span class="lu-m mono">${colData(co)}</span></span></a></li>`).join('')}</ol>
     </div>`;
 }
@@ -364,12 +364,12 @@ function index() {
    its compounds, then the list. Every compound is the same sealed vial, so each card's facts are in type. */
 function area(c, vt) {
   const a = AREAS.find(x => x.c === c); if (!a) return notFound();
-  const lead = a.it[0], F = SH.forProduct(lead, {pair: true});
+  const lead = a.it[0], F = SH.forProduct(lead, {area: true});
   const i = AREAS.indexOf(a), prev = AREAS[(i + 8) % 9], next = AREAS[(i + 1) % 9];
   return {
     key: 'col', cls: 'v-col', title: `PR6 · ${a.n}`, crumb: {label: `${a.c} ${a.n}`, back: '#/catalogue'},
     html: `<section class="hero h-col" data-hero aria-labelledby="cH">
-        ${lightFig(F.shot, {cls: 'hero-lt', product: lead, own: F.own, eager: true, desc: 'cInk', poster: F.poster, vt: vt ? 'pack' : '', label: `Two sealed vials, 5 mg and 10 mg, in raking light`})}
+        ${lightFig(F.shot, {cls: 'hero-lt', product: lead, own: F.own, eager: true, desc: 'cInk', poster: F.poster, vt: vt ? 'pack' : '', label: F.shot && F.shot.name === 'pair_hero' ? 'Two sealed vials of ' + lead.n + ', 5 mg and 10 mg, in raking light' : 'A sealed vial, in raking light'})}
         <div class="hero-t wrap"><p class="mono hero-k">${a.c}</p><h1 id="cH" class="t-disp" tabindex="-1">${esc(a.n)}</h1><p class="hero-d">${esc(a.d)}</p></div>
         <div class="hero-f wrap"><p class="ink-l mono" id="cInk"><span class="ink-c">${lead.id}</span> ${esc(lead.n)} <span aria-hidden="true">·</span> ${esc(SH.inkLine(lead))}</p></div>
       </section>

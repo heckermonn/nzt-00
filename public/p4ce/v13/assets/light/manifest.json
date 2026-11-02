@@ -1,6 +1,6 @@
 {
  "version": "pr6-v12-light",
- "generated": "2026-11-02T01:33:54",
+ "generated": "2026-11-02T01:47:31",
  "groups": [
   "key_l",
   "key_r",
@@ -47,6 +47,213 @@
   "Hero shots: product = the catalogue id the print and ink describe. Other products of the same format reuse the image; their facts must come from the catalogue, not from the picture."
  ],
  "shots": {
+  "lineup": {
+   "w": 2400,
+   "h": 1350,
+   "product": null,
+   "pack": "lineup",
+   "ink_text": "LOT 2601-A \u00b7 HPLC xx.x% / LOT 2602-A \u00b7 HPLC xx.x% / LOT 2603-A \u00b7 HPLC xx.x% / LOT 2604-A \u00b7 HPLC xx.x% / LOT 2605-A \u00b7 HPLC xx.x% / LOT 2606-A \u00b7 HPLC xx.x% / LOT 2607-A \u00b7 HPLC xx.x% / LOT 2608-A \u00b7 HPLC xx.x% / LOT 2609-A \u00b7 HPLC xx.x%",
+   "status": "final",
+   "passes": {
+    "key_l": {
+     "scale": 3.341,
+     "d": "lineup/key_l-d.webp",
+     "m": "lineup/key_l-m.webp"
+    },
+    "key_r": {
+     "scale": 2.442,
+     "d": "lineup/key_r-d.webp",
+     "m": "lineup/key_r-m.webp"
+    },
+    "top": {
+     "scale": 0.2857,
+     "d": "lineup/top-d.webp",
+     "m": "lineup/top-m.webp"
+    },
+    "rim": {
+     "scale": 1.304,
+     "d": "lineup/rim-d.webp",
+     "m": "lineup/rim-m.webp"
+    },
+    "amb": {
+     "scale": 0.3544,
+     "d": "lineup/amb-d.webp",
+     "m": "lineup/amb-m.webp"
+    },
+    "ink": {
+     "scale": 0.406,
+     "d": "lineup/ink-d.webp",
+     "m": "lineup/ink-m.webp"
+    }
+   },
+   "sizes": {
+    "d": [
+     2400,
+     1350
+    ],
+    "m": [
+     1366,
+     768
+    ]
+   },
+   "poster": {
+    "d": "lineup/poster-d.webp",
+    "m": "lineup/poster-m.webp"
+   },
+   "poster_ink": {
+    "d": "lineup/poster-ink-d.webp",
+    "m": "lineup/poster-ink-m.webp"
+   },
+   "mask": {
+    "encoding": "png8, value = 25 * pack index (0 = set)",
+    "d": "lineup/mask-d.png",
+    "m": "lineup/mask-m.png"
+   },
+   "packs": [
+    {
+     "index": 1,
+     "id": "PR6-C-0101",
+     "area": "01",
+     "pack": "vial",
+     "cap": "chalk",
+     "box": [
+      0.04,
+      0.4539,
+      0.1155,
+      0.7599
+     ],
+     "ink_text": "LOT 2601-A \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 2,
+     "id": "PR6-C-0201",
+     "area": "02",
+     "pack": "vial",
+     "cap": "steel",
+     "box": [
+      0.148,
+      0.452,
+      0.2219,
+      0.7561
+     ],
+     "ink_text": "LOT 2602-A \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 3,
+     "id": "PR6-C-0301",
+     "area": "03",
+     "pack": "vial",
+     "cap": "mist",
+     "box": [
+      0.2515,
+      0.4542,
+      0.3249,
+      0.7605
+     ],
+     "ink_text": "LOT 2603-A \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 4,
+     "id": "PR6-C-0401",
+     "area": "04",
+     "pack": "vial",
+     "cap": "ink",
+     "box": [
+      0.3573,
+      0.4544,
+      0.4299,
+      0.7608
+     ],
+     "ink_text": "LOT 2604-A \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 5,
+     "id": "PR6-C-0501",
+     "area": "05",
+     "pack": "vial",
+     "cap": "orange",
+     "box": [
+      0.4634,
+      0.4518,
+      0.5349,
+      0.7557
+     ],
+     "ink_text": "LOT 2605-A \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 6,
+     "id": "PR6-C-0601",
+     "area": "06",
+     "pack": "vial",
+     "cap": "steel",
+     "box": [
+      0.5681,
+      0.4527,
+      0.6403,
+      0.7574
+     ],
+     "ink_text": "LOT 2606-A \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 7,
+     "id": "PR6-C-0701",
+     "area": "07",
+     "pack": "vial",
+     "cap": "mist",
+     "box": [
+      0.6732,
+      0.4537,
+      0.7465,
+      0.7595
+     ],
+     "ink_text": "LOT 2607-A \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 8,
+     "id": "PR6-C-0801",
+     "area": "08",
+     "pack": "vial",
+     "cap": "chalk",
+     "box": [
+      0.7759,
+      0.4513,
+      0.8496,
+      0.7548
+     ],
+     "ink_text": "LOT 2608-A \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 9,
+     "id": "PR6-C-0901",
+     "area": "09",
+     "pack": "vial",
+     "cap": "ink",
+     "box": [
+      0.8842,
+      0.455,
+      0.96,
+      0.762
+     ],
+     "ink_text": "LOT 2609-A \u00b7 HPLC xx.x%"
+    }
+   ],
+   "additivity": {
+    "denoised": {
+     "mae": 0.002749,
+     "mean_beauty": 0.57732,
+     "mae_rel": 0.004761,
+     "max_abs": 37.3305
+    },
+    "raw": {
+     "mae": 0.0,
+     "mean_beauty": 0.57808,
+     "mae_rel": 0.0,
+     "max_abs": 0.0001
+    }
+   },
+   "render_s": 849.5,
+   "samples": 160
+  },
   "vial_hero": {
    "w": 1280,
    "h": 1600,

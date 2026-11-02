@@ -44,26 +44,33 @@ def vial_label(pid, key, short=False):
     c = Canvas(VIAL_W, VIAL_H, 34)
     c.rect(0, 0, VIAL_W, VIAL_H, (246, 247, 243, 255))
     fill = INK + (255,)
-    p = P[pid]
+    p = P[pid] if pid else None
     x0 = 15.0
     c.wordmark(x0, 6.4, 3.5, fill)
     m = c.font(MONO, 0.92)
     s = c.font(MONO, 0.62)
-    c.text(x0 + 0.1, 9.4, pid, m, fill, track_mm=0.16)
-    c.text(x0 + 0.1, 11.4, p["n"].upper(), m, fill, track_mm=0.16)
-    c.text(x0 + 0.1, 13.2, "%s · LYOPHILISED" % p["size"].upper(), s, fill, track_mm=0.12)
-    c.text(x0 + 0.1, 14.6, "%s / %s" % (p["c"], AREAS[p["c"]].upper()), s, fill, track_mm=0.12)
+    if p:
+        c.text(x0 + 0.1, 9.4, pid, m, fill, track_mm=0.16)
+        c.text(x0 + 0.1, 11.4, p["n"].upper(), m, fill, track_mm=0.16)
+        c.text(x0 + 0.1, 13.2, "%s · LYOPHILISED" % p["size"].upper(), s, fill, track_mm=0.12)
+        c.text(x0 + 0.1, 14.6, "%s / %s" % (p["c"], AREAS[p["c"]].upper()), s, fill, track_mm=0.12)
+    else:
+        # the house vial: no compound named, so it can stand in for any record without showing another's number
+        c.text(x0 + 0.1, 10.4, "RESEARCH COMPOUND", m, fill, track_mm=0.16)
+        c.text(x0 + 0.1, 13.2, "LYOPHILISED POWDER", s, fill, track_mm=0.12)
     c.text(x0 + 0.1, 16.3, "RESEARCH USE ONLY · NOT FOR HUMAN USE", s, (23, 28, 31, 200), track_mm=0.08)
     # right panel: lot field and a hairline frame, one orange tick
     c.rect(33.2, 2.2, 33.32, 16.6, (23, 28, 31, 140))
     c.text(34.4, 4.4, "LOT", s, fill, track_mm=0.12)
-    c.text(34.4, 6.0, p["lot"].replace("LOT ", ""), m, fill, track_mm=0.12)
+    if p:
+        c.text(34.4, 6.0, p["lot"].replace("LOT ", ""), m, fill, track_mm=0.12)
     c.text(34.4, 8.2, "STORE −20 °C", s, fill, track_mm=0.1)
     c.rect(34.4, 10.0, 37.4, 10.5, ORANGE + (255,))
     c.save(key + "_print.png")
     k = Canvas(VIAL_W, VIAL_H, 34, "L")
     cap = 0.78 if not short else 0.95
-    mono_block(k, x0 + 9.6, 3.5, ink_lines(pid, True), cap, cap * 1.75, 255)
+    if p:
+        mono_block(k, x0 + 9.6, 3.5, ink_lines(pid, True), cap, cap * 1.75, 255)
     k.save(key + "_ink.png")
     return VIAL_W, VIAL_H
 
