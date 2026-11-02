@@ -1,6 +1,6 @@
 {
  "version": "pr6-v12-light",
- "generated": "2026-11-02T01:47:31",
+ "generated": "2026-11-02T02:05:31",
  "groups": [
   "key_l",
   "key_r",
@@ -252,6 +252,198 @@
     }
    },
    "render_s": 849.5,
+   "samples": 160
+  },
+  "pair_hero": {
+   "w": 1280,
+   "h": 1600,
+   "product": "PR6-C-0202",
+   "pack": "vial",
+   "ink_text": "LOT 2602-B \u00b7 HPLC xx.x% \u00b7 MS confirmed \u00b7 CoA 2026-10-11 \u00b7 Tested by [named third-party lab]",
+   "status": "final",
+   "passes": {
+    "key_l": {
+     "scale": 5.373,
+     "d": "pair_hero/key_l-d.webp",
+     "m": "pair_hero/key_l-m.webp"
+    },
+    "key_r": {
+     "scale": 4.872,
+     "d": "pair_hero/key_r-d.webp",
+     "m": "pair_hero/key_r-m.webp"
+    },
+    "top": {
+     "scale": 0.2836,
+     "d": "pair_hero/top-d.webp",
+     "m": "pair_hero/top-m.webp"
+    },
+    "rim": {
+     "scale": 2.127,
+     "d": "pair_hero/rim-d.webp",
+     "m": "pair_hero/rim-m.webp"
+    },
+    "amb": {
+     "scale": 0.3727,
+     "d": "pair_hero/amb-d.webp",
+     "m": "pair_hero/amb-m.webp"
+    },
+    "ink": {
+     "scale": 0.6757,
+     "d": "pair_hero/ink-d.webp",
+     "m": "pair_hero/ink-m.webp"
+    }
+   },
+   "sizes": {
+    "d": [
+     1280,
+     1600
+    ],
+    "m": [
+     819,
+     1024
+    ]
+   },
+   "poster": {
+    "d": "pair_hero/poster-d.webp",
+    "m": "pair_hero/poster-m.webp"
+   },
+   "poster_ink": {
+    "d": "pair_hero/poster-ink-d.webp",
+    "m": "pair_hero/poster-ink-m.webp"
+   },
+   "mask": {
+    "encoding": "png8, 255 = pack, 0 = set",
+    "d": "pair_hero/mask-d.png",
+    "m": "pair_hero/mask-m.png"
+   },
+   "packs": [
+    {
+     "id": "PR6-C-0201",
+     "pack": "vial",
+     "box": [
+      0.1462,
+      0.22,
+      0.4462,
+      0.7966
+     ]
+    },
+    {
+     "id": "PR6-C-0202",
+     "pack": "vial",
+     "box": [
+      0.5382,
+      0.2342,
+      0.8538,
+      0.84
+     ]
+    }
+   ],
+   "additivity": {
+    "denoised": {
+     "mae": 0.00467,
+     "mean_beauty": 0.84764,
+     "mae_rel": 0.005509,
+     "max_abs": 59.547
+    },
+    "raw": {
+     "mae": 0.0,
+     "mean_beauty": 0.84852,
+     "mae_rel": 0.0,
+     "max_abs": 0.0001
+    }
+   },
+   "render_s": 557.9,
+   "samples": 160
+  },
+  "vial_blank": {
+   "w": 1280,
+   "h": 1600,
+   "product": null,
+   "pack": "vial",
+   "ink_text": "",
+   "status": "final",
+   "passes": {
+    "key_l": {
+     "scale": 3.007,
+     "d": "vial_blank/key_l-d.webp",
+     "m": "vial_blank/key_l-m.webp"
+    },
+    "key_r": {
+     "scale": 2.711,
+     "d": "vial_blank/key_r-d.webp",
+     "m": "vial_blank/key_r-m.webp"
+    },
+    "top": {
+     "scale": 0.2807,
+     "d": "vial_blank/top-d.webp",
+     "m": "vial_blank/top-m.webp"
+    },
+    "rim": {
+     "scale": 1.367,
+     "d": "vial_blank/rim-d.webp",
+     "m": "vial_blank/rim-m.webp"
+    },
+    "amb": {
+     "scale": 0.3618,
+     "d": "vial_blank/amb-d.webp",
+     "m": "vial_blank/amb-m.webp"
+    },
+    "ink": {
+     "scale": 0.0001,
+     "d": "vial_blank/ink-d.webp",
+     "m": "vial_blank/ink-m.webp"
+    }
+   },
+   "sizes": {
+    "d": [
+     1280,
+     1600
+    ],
+    "m": [
+     819,
+     1024
+    ]
+   },
+   "poster": {
+    "d": "vial_blank/poster-d.webp",
+    "m": "vial_blank/poster-m.webp"
+   },
+   "poster_ink": {
+    "d": "vial_blank/poster-ink-d.webp",
+    "m": "vial_blank/poster-ink-m.webp"
+   },
+   "mask": {
+    "encoding": "png8, 255 = pack, 0 = set",
+    "d": "vial_blank/mask-d.png",
+    "m": "vial_blank/mask-m.png"
+   },
+   "packs": [
+    {
+     "id": null,
+     "pack": "vial",
+     "box": [
+      0.3192,
+      0.18,
+      0.6808,
+      0.88
+     ]
+    }
+   ],
+   "additivity": {
+    "denoised": {
+     "mae": 0.003302,
+     "mean_beauty": 0.82598,
+     "mae_rel": 0.003997,
+     "max_abs": 10.6209
+    },
+    "raw": {
+     "mae": 0.0,
+     "mean_beauty": 0.82628,
+     "mae_rel": 0.0,
+     "max_abs": 0.0
+    }
+   },
+   "render_s": 496.3,
    "samples": 160
   },
   "vial_hero": {
