@@ -1,0 +1,142 @@
+{
+ "version": "pr6-v12-light",
+ "generated": "2026-11-02T01:33:54",
+ "groups": [
+  "key_l",
+  "key_r",
+  "top",
+  "rim",
+  "amb",
+  "ink"
+ ],
+ "group_roles": {
+  "key_l": "low raking key from the left (warm)",
+  "key_r": "low raking key from the right (cool)",
+  "top": "soft overhead",
+  "rim": "back rim",
+  "amb": "world / fill",
+  "ink": "emission-only invisible ink on the label (zero in every other group)"
+ },
+ "encoding": "srgb8",
+ "decode": "linear_i = srgbToLinear(texel_i.rgb) * passes[group].scale",
+ "mix": "c = exposure * sum_i(w_i * linear_i); out = linearToSrgb(pbrNeutral(c)) (+ dither)",
+ "tonemap": "khronos_pbr_neutral",
+ "tonemap_glsl": "vec3 pbrNeutral(vec3 c){const float s=0.76;const float dsat=0.15;float x=min(c.r,min(c.g,c.b));float off=x<0.08?x-6.25*x*x:0.04;c-=off;float p=max(c.r,max(c.g,c.b));if(p<s)return c;const float d=1.0-s;float np=1.0-d*d/(p+d-s);c*=np/p;float g=1.0-1.0/(dsat*(p-np)+1.0);return mix(c,vec3(np),g);}",
+ "exposure": 1.0,
+ "default_weights": {
+  "key_l": 1.0,
+  "key_r": 0.12,
+  "top": 0.18,
+  "rim": 0.25,
+  "amb": 0.5,
+  "ink": 0.0
+ },
+ "ink_weights": {
+  "key_l": 0.35,
+  "key_r": 0.06,
+  "top": 0.12,
+  "rim": 0.3,
+  "amb": 0.22,
+  "ink": 1.0
+ },
+ "notes": [
+  "Passes are additive in linear light: linearise each texel, multiply by its pass scale, then add.",
+  "poster / poster_ink are already tonemapped with exactly this mix (default_weights / ink_weights).",
+  "Mask: hero 255 = pack, 0 = set (use it to seat the pack in the debossed disc or to dim the set); lineup value = 25 * pack index (1..9, in packs[] order).",
+  "packs[].box = [x0, y0, x1, y1] in 0..1 image space, origin top-left.",
+  "Hero shots: product = the catalogue id the print and ink describe. Other products of the same format reuse the image; their facts must come from the catalogue, not from the picture."
+ ],
+ "shots": {
+  "vial_hero": {
+   "w": 1280,
+   "h": 1600,
+   "product": "PR6-C-0103",
+   "pack": "vial",
+   "ink_text": "LOT 2601-C \u00b7 HPLC xx.x% \u00b7 MS confirmed \u00b7 CoA 2026-10-10 \u00b7 Tested by [named third-party lab]",
+   "status": "final",
+   "passes": {
+    "key_l": {
+     "scale": 3.007,
+     "d": "vial_hero/key_l-d.webp",
+     "m": "vial_hero/key_l-m.webp"
+    },
+    "key_r": {
+     "scale": 2.711,
+     "d": "vial_hero/key_r-d.webp",
+     "m": "vial_hero/key_r-m.webp"
+    },
+    "top": {
+     "scale": 0.2807,
+     "d": "vial_hero/top-d.webp",
+     "m": "vial_hero/top-m.webp"
+    },
+    "rim": {
+     "scale": 1.367,
+     "d": "vial_hero/rim-d.webp",
+     "m": "vial_hero/rim-m.webp"
+    },
+    "amb": {
+     "scale": 0.3618,
+     "d": "vial_hero/amb-d.webp",
+     "m": "vial_hero/amb-m.webp"
+    },
+    "ink": {
+     "scale": 0.1281,
+     "d": "vial_hero/ink-d.webp",
+     "m": "vial_hero/ink-m.webp"
+    }
+   },
+   "sizes": {
+    "d": [
+     1280,
+     1600
+    ],
+    "m": [
+     819,
+     1024
+    ]
+   },
+   "poster": {
+    "d": "vial_hero/poster-d.webp",
+    "m": "vial_hero/poster-m.webp"
+   },
+   "poster_ink": {
+    "d": "vial_hero/poster-ink-d.webp",
+    "m": "vial_hero/poster-ink-m.webp"
+   },
+   "mask": {
+    "encoding": "png8, 255 = pack, 0 = set",
+    "d": "vial_hero/mask-d.png",
+    "m": "vial_hero/mask-m.png"
+   },
+   "packs": [
+    {
+     "id": "PR6-C-0103",
+     "pack": "vial",
+     "box": [
+      0.3192,
+      0.18,
+      0.6808,
+      0.88
+     ]
+    }
+   ],
+   "additivity": {
+    "denoised": {
+     "mae": 0.003446,
+     "mean_beauty": 0.82603,
+     "mae_rel": 0.004172,
+     "max_abs": 10.6584
+    },
+    "raw": {
+     "mae": 0.0,
+     "mean_beauty": 0.82633,
+     "mae_rel": 0.0,
+     "max_abs": 0.0
+    }
+   },
+   "render_s": 504.2,
+   "samples": 160
+  }
+ }
+}
