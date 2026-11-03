@@ -51,8 +51,8 @@ function fillComp(c) {
   const list = c ? areaOf({c}).it : ALL;
   fC.innerHTML = `<option value="">${c ? 'Choose' : 'Any compound'}</option>` + list.map(p => `<option value="${p.id}">${p.id.slice(6)} · ${esc(p.n.replace('Compound ', ''))}</option>`).join('');
 }
-fS.addEventListener('change', () => go(fS.value ? '#/series/' + fS.value : '#/catalogue'));
-fC.addEventListener('change', () => fC.value && go('#/c/' + fC.value));
+fS.addEventListener('change', () => go(fS.value ? '#series-' + fS.value : '#catalogue'));
+fC.addEventListener('change', () => fC.value && go('#c-' + fC.value));
 fZ.addEventListener('change', () => { const id = fZ.dataset.id; if (id) { setSize(id, +fZ.value); } });
 function bar(c, id) {
   fS.value = c || ''; fillComp(c); fC.value = id || '';
@@ -69,7 +69,7 @@ const rowsTable = (list, cap = true) => `
 <table class="rows"><thead><tr><th>Catalogue no.</th><th>Compound</th><th>Class</th><th>Sizes</th><th></th></tr></thead><tbody>
 ${list.map(p => `<tr>
   <td class="c">${p.id}</td>
-  <td class="n"><a href="#/c/${p.id}">${esc(p.n)}</a>${p.isNew ? '<span class="new">NEW</span>' : ''}</td>
+  <td class="n"><a href="#c-${p.id}">${esc(p.n)}</a>${p.isNew ? '<span class="new">NEW</span>' : ''}</td>
   <td class="k">${esc(p.cls)}</td>
   <td class="p tab">${p.sizes.map(s => fmtSize(s) + ' ' + cad(s.price)).join(' / ')}</td>
   <td class="a"><button class="add" data-add="${p.id}" aria-pressed="${!!inQuote(p.id)}">${inQuote(p.id) ? '[✓] In quote' : '[+] Add 5 mg'}</button></td>
@@ -120,10 +120,10 @@ function vIndex() {
     <div style="grid-column:8/13">
       <div class="rule"><span class="m">Contents</span><span class="m">Page</span></div>
       <ol class="toc">
-        <li><a href="#/catalogue"><span class="m">—</span><span class="t">The catalogue</span><span class="m">02</span></a></li>
-        ${AREAS.map((a, i) => `<li><a href="#/series/${a.c}"><span class="m">${a.c}</span><span class="t">${esc(a.f)}</span><span class="m">${String(i + 3).padStart(2, '0')}</span></a></li>`).join('')}
-        <li><a href="#/quote"><span class="m">—</span><span class="t">Quote list</span><span class="m">40</span></a></li>
-        <li><a href="#/record"><span class="m">—</span><span class="t">Institution record</span><span class="m">41</span></a></li>
+        <li><a href="#catalogue"><span class="m">—</span><span class="t">The catalogue</span><span class="m">02</span></a></li>
+        ${AREAS.map((a, i) => `<li><a href="#series-${a.c}"><span class="m">${a.c}</span><span class="t">${esc(a.f)}</span><span class="m">${String(i + 3).padStart(2, '0')}</span></a></li>`).join('')}
+        <li><a href="#quote"><span class="m">—</span><span class="t">Quote list</span><span class="m">40</span></a></li>
+        <li><a href="#record"><span class="m">—</span><span class="t">Institution record</span><span class="m">41</span></a></li>
       </ol>
     </div>
   </section></div>`;
@@ -139,7 +139,7 @@ function vCatalogue() {
     <div class="num"><p class="giant" aria-hidden="true">${a.c}</p></div>
     <div class="info">
       <div class="label"><span class="m">Series ${a.c}</span><span class="m tab">${a.it.length} compounds · ${range(a)}</span></div>
-      <h2 class="h2" id="b${a.c}"><a href="#/series/${a.c}">${esc(a.f)}</a></h2>
+      <h2 class="h2" id="b${a.c}"><a href="#series-${a.c}">${esc(a.f)}</a></h2>
       <p class="body">${esc(a.d)}</p>
       ${rowsTable(a.it)}
     </div></section>`).join('')}
@@ -164,8 +164,8 @@ function vSeries(c) {
   </section>
   <section class="blk">${plate(`assets/plates/s${a.c}.webp`, `Fig. ${a.c}`, `Series ${a.c} · 5 mg and 10 mg vials · Cycles render, sample labels`, `The three compounds of series ${a.c} in sealed vials on a pale set`, '2/1')}</section>
   <nav class="rule blk" aria-label="Series">
-    ${prev ? `<a class="m" href="#/series/${prev.c}">← Series ${prev.c}</a>` : '<span class="m">—</span>'}
-    ${next ? `<a class="m" href="#/series/${next.c}">Series ${next.c} →</a>` : '<a class="m" href="#/catalogue">Catalogue →</a>'}
+    ${prev ? `<a class="m" href="#series-${prev.c}">← Series ${prev.c}</a>` : '<span class="m">—</span>'}
+    ${next ? `<a class="m" href="#series-${next.c}">Series ${next.c} →</a>` : '<a class="m" href="#catalogue">Catalogue →</a>'}
   </nav></div>`;
 }
 
@@ -205,7 +205,7 @@ function vCompound(id) {
     </div>
     <div id="tp" role="tabpanel" aria-labelledby="t-${tab}">${tabBody(p)}</div>
     <section class="blk">
-      <div class="rule"><span class="m">Also in series ${a.c}</span><a class="m" href="#/series/${a.c}">All of series ${a.c} →</a></div>
+      <div class="rule"><span class="m">Also in series ${a.c}</span><a class="m" href="#series-${a.c}">All of series ${a.c} →</a></div>
       ${rowsTable(sib)}
     </section>
   </div>`;
@@ -303,7 +303,7 @@ function vQuote() {
   <section class="blk" style="margin-top:56px">
   ${lines.length ? `<table class="rows qrows"><thead><tr><th>Catalogue no.</th><th>Compound</th><th>Size</th><th>Vials</th><th>Line</th></tr></thead><tbody>
     ${lines.map((l, i) => `<tr>
-      <td class="c">${l.id}</td><td class="n"><a href="#/c/${l.id}">${esc(l.p.n)}</a></td>
+      <td class="c">${l.id}</td><td class="n"><a href="#c-${l.id}">${esc(l.p.n)}</a></td>
       <td class="k">${fmtSize(l.p.sizes[l.s])} · ${cad(l.p.sizes[l.s].price)}</td>
       <td><span class="qty"><button type="button" data-q="${i}" data-d="-1" aria-label="One fewer ${esc(l.p.n)}">−</button><span class="tab">${l.q}</span><button type="button" data-q="${i}" data-d="1" aria-label="One more ${esc(l.p.n)}">+</button></span></td>
       <td class="p tab">${cad(l.q * l.p.sizes[l.s].price)}</td></tr>`).join('')}
@@ -321,7 +321,7 @@ function vQuote() {
     <div class="full buy" style="width:min(100%,460px)"><button class="pill" type="submit">Send quote request</button></div>
   </form>
   <p class="note" id="qok" role="status" hidden>Prototype: nothing was sent. In the portal this becomes a quote request to PR6, answered with a quote and invoice.</p>`
-  : `<div class="empty"><p class="lede">The list is empty. Add vials from any compound page, or from the rows in the <a href="#/catalogue">catalogue</a>.</p></div>`}
+  : `<div class="empty"><p class="lede">The list is empty. Add vials from any compound page, or from the rows in the <a href="#catalogue">catalogue</a>.</p></div>`}
   </section></div>`;
 }
 function wireQuote() {
@@ -359,7 +359,7 @@ function vRecord() {
   </dl><aside><p class="body">To change a contact or address, write to PR6 Liaison. Access is by invitation only, and codes are never reissued by email.</p></aside></section>
   </div>`;
 }
-const vMissing = () => `<div class="sheet empty"><h1 class="h1">Not in the catalogue</h1><p class="lede" style="margin-top:20px">That page does not exist. Go to the <a href="#/catalogue">catalogue</a>.</p></div>`;
+const vMissing = () => `<div class="sheet empty"><h1 class="h1">Not in the catalogue</h1><p class="lede" style="margin-top:20px">That page does not exist. Go to the <a href="#catalogue">catalogue</a>.</p></div>`;
 
 function vGate() {
   return `<section class="gate">
@@ -379,7 +379,9 @@ function vGate() {
 const PATHS = {index: 'Index', catalogue: 'Catalogue', quote: 'Quote list', record: 'Institution record'};
 function render() {
   const h = location.hash.replace(/^#\/?/, '');
-  const [r, arg] = h.split('/');
+  let r = h, arg = '';
+  const m = h.match(/^(series|c)[-/](.+)$/);
+  if (m) { r = m[1]; arg = m[2]; }
   const ok = opened();
   $('#head').hidden = $('#folio').hidden = !ok;
   if (!ok) {
@@ -410,6 +412,6 @@ function render() {
   typeIn(main);
   scrollTo(0, 0);
 }
-addEventListener('hashchange', () => { if (!location.hash.startsWith('#/c/')) tab = 'identity'; render(); });
+addEventListener('hashchange', () => { if (location.hash === '#main') return; if (!location.hash.startsWith('#c-')) tab = 'identity'; render(); });
 counts();
 render();

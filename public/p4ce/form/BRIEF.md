@@ -15,5 +15,5 @@ https://claude.ai/artifact/5QBAk52GvNoRVfasaPK3nJ (lu picked 2, The form). Notes
   vial with blank label + matte sphere), black ADD TO QUOTE pill with orange arrow. Then a raw record with tabs.
 - Orange only as slash, arrow, focus, tab underline and SAMPLE tags.
 - Data: js/catalog.js copied from v16 (SAMPLE). The HPLC trace is a drawn placeholder, labelled as such.
-- Quote request never leaves the browser (prototype note shown on send). Gate: Object 0047, code 0047RSRV.
+- Quote request never leaves the browser (prototype note shown on send). Gate: Object 0047, code 0047RSRV. Routes are plain hashes (#catalogue, #series-01, #c-PR6-C-0103, #quote, #record) so it also runs as a claude.ai artifact: https://claude.ai/artifact/83rcdjVg8Gw7gYni748G1H
 - Series plates: v15 shelf renders converted to an ink/mist duotone with grain (assets/plates).
