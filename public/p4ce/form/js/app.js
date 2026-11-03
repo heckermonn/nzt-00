@@ -2,6 +2,7 @@
    is the product page and the only place with form fields. Catalogue data is SAMPLE (catalog.js). The quote request
    never leaves this browser. Routes are plain hashes so the prototype also runs as a claude.ai artifact. */
 import {AREAS, ALL, byId, areaOf, cad, range, RUO, fmtSize} from './catalog.js';
+import {createCells} from './cells.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
@@ -79,9 +80,11 @@ function tracePath(p) {
 /* ---------- pages ---------- */
 function vIndex() {
   return `
-  <figure class="plate hero dark reveal"><img src="${ED.cells[0]}" alt="${ED.cells[2]}">
+  <figure class="plate hero dark reveal" id="hero"><img src="${ED.cells[0]}" alt="${ED.cells[2]}">
+    <canvas class="cv" id="cellsCv" aria-hidden="true"></canvas><i class="grain" aria-hidden="true"></i>
     <div class="center"><p class="mark">PR6</p><p class="m wide">The practice of progress</p></div>
-    <span class="cap bl m">Fig. 01 · Issue 01</span><span class="cap br m">Catalogue 2026</span></figure>
+    <span class="cap bl m">Fig. 01 · Issue 01 · Live culture, drawn</span><span class="cap br m">Catalogue 2026</span>
+    <a class="cue m" href="#" data-down aria-label="Scroll to the catalogue"><span>Read</span><i></i></a></figure>
   <section class="stmt">
     <h1 class="d1">Research compounds for laboratories and institutions we have met in person.</h1>
     <dl class="meta m"><dt>Series</dt><dd>${AREAS.length}</dd><dt>Compounds</dt><dd>${ALL.length}</dd><dt>Access</dt><dd>By invitation</dd><dt>Data</dt><dd class="sample">Sample, not final</dd></dl>
@@ -234,6 +237,7 @@ function wireCompound(id) {
     main.querySelectorAll('[data-size]').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.size === j)));
     $('#price').textContent = cad(p.sizes[j].price);
     const b = $('#buy'); delete b.dataset.done; b.textContent = 'Add to quote';
+    const d = $('.disc'); if (d && !RM) { d.classList.remove('lift'); void d.offsetWidth; d.classList.add('lift'); }
   };
   main.querySelectorAll('[data-size]').forEach(b => b.addEventListener('click', () => setSize(+b.dataset.size)));
   $('#f-series').addEventListener('change', e => go('#c-' + AREAS.find(x => x.c === e.target.value).it[0].id));
@@ -331,6 +335,56 @@ function vGate() {
     </div></section>`;
 }
 
+/* ---------- motion: slow, physical, quiet. Cells live in the hero; plates come into focus and drift a little
+   against the scroll; headlines rise line by line; the vial breathes in its disc. Reduced motion gets none of it. ---------- */
+let cells = null, io = null, par = [], heroEl = null, ticking = false;
+function unmount() {
+  if (cells) { cells.destroy(); cells = null; }
+  if (io) { io.disconnect(); io = null; }
+  par = []; heroEl = null;
+}
+function mount() {
+  heroEl = $('#hero');
+  const cv = $('#cellsCv');
+  if (cv) {
+    try { cells = createCells(cv); } catch (e) { console.warn('[pr6] cells unavailable', e); }
+    if (cells) { heroEl.classList.add('live'); cells.start(); }
+    const cue = $('[data-down]');
+    cue && cue.addEventListener('click', e => { e.preventDefault(); scrollTo({top: innerHeight - 1, behavior: RM ? 'auto' : 'smooth'}); });
+  }
+  if (RM) return;
+  /* things that arrive: plates focus in, headlines and list rows rise */
+  const rv = main.querySelectorAll('.plate:not(.hero), .d1, .d2, .caps, .stmt .meta, .toc li, .lines li, .note, .more, .tabs, .stage .slab');
+  rv.forEach(el => el.classList.add('rv'));
+  main.querySelectorAll('.toc, .lines').forEach(l => [...l.children].forEach((li, i) => li.style.setProperty('--d', Math.min(i, 9) * 60 + 'ms')));
+  io = new IntersectionObserver(es => es.forEach(e => {
+    if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+  }), {rootMargin: '0px 0px -8% 0px', threshold: .08});
+  rv.forEach(el => io.observe(el));
+  /* parallax: each plate's image sits a little larger than its frame and slides against the scroll */
+  par = [...main.querySelectorAll('.plate:not(.hero) > img')];
+  /* the hero pauses when it is scrolled away */
+  if (cells) new IntersectionObserver(([e]) => { if (!cells) return; e.isIntersecting ? cells.start() : cells.stop(); }).observe(heroEl);
+  frame();
+}
+function frame() {
+  ticking = false;
+  if (RM) return;
+  const vh = innerHeight;
+  for (const img of par) {
+    const r = img.parentElement.getBoundingClientRect();
+    if (r.bottom < -50 || r.top > vh + 50) continue;
+    const k = ((r.top + r.height / 2) - vh / 2) / (vh / 2 + r.height / 2); /* -1..1 across the pass */
+    img.style.transform = `translate3d(0,${(k * -5).toFixed(2)}%,0) scale(1.12)`;
+  }
+  if (heroEl) {
+    const y = Math.min(scrollY / vh, 1);
+    heroEl.style.setProperty('--y', y.toFixed(3));
+  }
+}
+addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(frame); } }, {passive: true});
+addEventListener('resize', () => requestAnimationFrame(frame));
+
 /* ---------- router + head ---------- */
 const go = h => { if (location.hash !== h) location.hash = h; else render(); };
 let overHero = false;
@@ -348,6 +402,7 @@ function render(keep) {
   const ok = opened();
   head.hidden = $('#folio').hidden = !ok;
   if (!ok) {
+    unmount();
     main.innerHTML = vGate();
     $('#gf').addEventListener('submit', e => {
       e.preventDefault();
@@ -364,7 +419,9 @@ function render(keep) {
   else if (r === 'quote') { html = vQuote(); path = 'Quote list'; pg = 40; nav = 'quote'; }
   else if (r === 'record') { html = vRecord(); path = 'Institution record'; pg = 41; nav = 'record'; }
   else { html = vIndex(); path = 'Index'; pg = 1; overHero = true; }
+  unmount();
   main.innerHTML = html;
+  main.classList.remove('enter'); void main.offsetWidth; main.classList.add('enter');
   $('#path').textContent = path;
   $('#pg').textContent = 'P. ' + String(pg).padStart(2, '0');
   document.querySelectorAll('[data-nav]').forEach(a => a.toggleAttribute('aria-current', a.dataset.nav === nav));
@@ -373,6 +430,7 @@ function render(keep) {
   if (r === 'quote') wireQuote();
   typeIn(main);
   if (!keep) scrollTo(0, 0);
+  mount();
   onScroll();
 }
 addEventListener('hashchange', () => { if (location.hash === '#main') return; if (!location.hash.startsWith('#c-')) tab = 'identity'; render(); });
