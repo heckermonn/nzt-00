@@ -35,9 +35,12 @@ Visual version (private): see the "PR6 Slide 4 Overdrive" artifact. Reference im
 6. Kit devices unused: notched tabs, [bracket] labels, slider rule with dot, "+ ×", edge numbering, outlined pill tags.
 7. Fields never became the quote form.
 
-## Overdrive directions (compound page)
-- **A · Breath on glass.** Slab arrives frosted; scroll/drag moves a clear band that brings vial, fields, certificate into focus. WebGL refraction + scroll mask; CSS fallback. Cost medium-high; risk: glass AI tell, blurred text.
-- **B · The spec sheet (recommended).** Slide 4 literal: fields are the quote form; vial back in the slab's disc, lit cool; catalogue number debossed and cropped huge; choosing a size types values in Menlo; the lot's HPLC trace draws as one ink line with an orange leader to purity (marked SAMPLE until real CoA); Abel tabs Identity / This lot / Documents / Handling; pill morphs into the quote list (View Transitions). Low-medium cost, best on phone.
-- **C · The series row.** Compound page is a position in one row of vials; current one sharp on the disc, neighbours blur with distance; swipe to step; fields retype. Needs a render per compound; close to v15 counter set.
+## Overdrive directions: slide 4 as the whole site (separate prototype)
+lu (3 Nov): slide 4 should inform the design of the whole site, overdriven as a separate prototype (not v17).
+- **1 · The tray (recommended).** The store is one long pale slab pressed with wells (kit slide 6 foam case). Each Series is a row: number debossed huge, compounds seated in wells. Tap: the vial lifts out and the slab grows into the slide-4 compound page. Quote list = a small tray of chosen vials. Blender top-down tray tiles + lift frames, View Transitions, CSS deboss. Phone: each row swipes sideways. Medium cost (renders).
+- **2 · The form.** Every page is a filled-in form; nav is a bar of fields (Series / Compound / Size / Quote); changing a field retypes the page in Menlo; catalogue = index sheet with huge cropped Series numbers; purity trace as one ink line. Low cost, rawest, least visual wow.
+- **3 · Under frost.** The whole site under one frosted slab; a clear band passes with scroll; the gate clears it first. WebGL; medium-high cost; glass AI-tell risk.
+
+Superseded first pass (compound page only): A Breath on glass, B The spec sheet, C The series row.
 
 Awaiting lu's pick before building.
