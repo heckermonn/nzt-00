@@ -250,5 +250,25 @@ main{outline:none}
 
 /* pages arrive softly */
 main.enter>*:first-child{animation:fadein .8s ease both}
+
+/* ---------- atmosphere (js/atmos.js): colour worlds and relit b-roll, after Abel ---------- */
+.fx{position:absolute;inset:0;width:100%;height:100%;display:block}
+.fxwrap{position:relative;isolation:isolate}.fxwrap>.fx{z-index:-1}
+.stmt.fxwrap>.fx{opacity:0;transition:opacity 2s var(--out)}.stmt.fx-on>.fx{opacity:1}
+.stage.fxwrap{background-image:none}
+.cplate{isolation:isolate}
+.cplate>canvas.fx{filter:saturate(1.9) contrast(1.05)}.plate.rv.cplate>canvas.fx{filter:saturate(1.9) blur(14px)}.plate.rv.in.cplate>canvas.fx{filter:saturate(1.9)}
+.cplate>img{position:relative;mix-blend-mode:luminosity;opacity:.92}
+.cplate.dark>img{mix-blend-mode:luminosity;opacity:.8}
+.broll>img{position:absolute;inset:0}
+.broll>canvas.fx{opacity:0;transition:opacity 1.6s var(--out)}.broll>canvas.fx.ready{opacity:1}
+.plate.rv>canvas.fx{filter:blur(14px);transition:filter 1.8s var(--out),opacity 1.6s var(--out)}.plate.rv.in>canvas.fx{filter:none}
+.broll .cap{color:var(--white);text-shadow:0 1px 10px rgba(10,20,30,.35)}
+/* breath on glass: a soft band of condensation drifts across the frost plate and clears */
+.plate>img.breath{position:absolute;inset:0;filter:blur(18px) brightness(1.08) saturate(.8);pointer-events:none;
+  -webkit-mask-image:linear-gradient(100deg,transparent 0%,#000 32%,#000 46%,transparent 72%);mask-image:linear-gradient(100deg,transparent 0%,#000 32%,#000 46%,transparent 72%);
+  -webkit-mask-size:260% 100%;mask-size:260% 100%;animation:breath 16s ease-in-out infinite alternate}
+@keyframes breath{from{-webkit-mask-position:100% 0;mask-position:100% 0}to{-webkit-mask-position:0 0;mask-position:0 0}}
+.plate.rv>img.breath{filter:blur(18px) brightness(1.08) saturate(.8)}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 @media (max-width:640px){.plate .br{display:none}.spread>.plate,.sticky{height:62vh;min-height:340px}.full{height:62vh}}
