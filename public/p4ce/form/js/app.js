@@ -3,6 +3,7 @@
    never leaves this browser. Routes are plain hashes so the prototype also runs as a claude.ai artifact. */
 import {AREAS, ALL, byId, areaOf, cad, range, RUO, fmtSize} from './catalog.js';
 import {createCells} from './cells.js';
+import {vLineup, vRail, vRing, mountLineup, mountRail, mountRing} from './swipe.js';
 import {field, relight, world, motion, medium2d} from './atmos.js';
 
 const $ = (s, r = document) => r.querySelector(s);
@@ -126,6 +127,7 @@ function vCatalogue() {
   <section class="page" style="padding-bottom:64px"><div class="intro" style="margin-bottom:0">
     <h1 class="d1">The catalogue</h1>
     <p class="lede">Nine series, grouped by field of study. Prices per vial, Canadian dollars, before tax. <span class="sample">Sample list</span></p>
+    <p class="m sw-try">Swipe prototypes: <a href="#lineup"><span class="u">A The line-up</span></a> · <a href="#rail"><span class="u">B The Series rail</span></a> · <a href="#ring"><span class="u">C The ring</span></a></p>
   </div></section>
   ${AREAS.map((a, i) => `<section class="spread ${i % 2 ? 'flip' : ''}" aria-labelledby="s${a.c}" data-world="${a.c}">
     ${cplate(SERIES_PLATE[i], a.c, a.c)}
@@ -349,11 +351,12 @@ function vGate() {
 
 /* ---------- motion: slow, physical, quiet. Cells live in the hero; plates come into focus and drift a little
    against the scroll; headlines rise line by line; the vial breathes in its disc. Reduced motion gets none of it. ---------- */
-let cells = null, io = null, par = [], heroEl = null, ticking = false, fx = [];
+let cells = null, io = null, par = [], heroEl = null, ticking = false, fx = [], swd = null;
 function unmount() {
   if (cells) { cells.destroy(); cells = null; }
   if (io) { io.disconnect(); io = null; }
   fx.forEach(f => f.destroy()); fx = [];
+  if (swd) { swd(); swd = null; }
   par = []; heroEl = null;
 }
 function mount() {
@@ -461,6 +464,7 @@ function render(keep) {
   else if (r === 'series') { html = vSeries(arg); path = `Catalogue / Series ${arg}`; pg = 2 + parseInt(arg, 10); nav = 'catalogue'; }
   else if (r === 'c') { const p = byId(arg); html = vCompound(arg); path = p ? `Series ${p.c} / ${p.id}` : 'Catalogue'; pg = 12 + ALL.indexOf(p); nav = 'catalogue'; }
   else if (r === 'quote') { html = vQuote(); path = 'Quote list'; pg = 40; nav = 'quote'; }
+  else if (r === 'lineup' || r === 'rail' || r === 'ring') { html = {lineup: vLineup, rail: vRail, ring: vRing}[r](); path = 'Catalogue / ' + {lineup: 'The line-up', rail: 'The Series rail', ring: 'The ring'}[r]; pg = 2; nav = 'catalogue'; }
   else if (r === 'record') { html = vRecord(); path = 'Institution record'; pg = 41; nav = 'record'; }
   else { html = vIndex(); path = 'Index'; pg = 1; overHero = true; }
   unmount();
@@ -476,6 +480,8 @@ function render(keep) {
   if (!keep) scrollTo(0, 0);
   mount();
   watchWorlds();
+  const swr = main.querySelector('.sw');
+  if (swr) { try { swd = ({lineup: mountLineup, rail: mountRail, ring: mountRing})[r](swr, {setWorld: c => medium && medium.setPal(world(c)), go}); } catch (e) { console.warn('[pr6] swipe', e); } }
   onScroll();
 }
 addEventListener('hashchange', () => { if (location.hash === '#main') return; if (!location.hash.startsWith('#c-')) tab = 'identity'; render(); });
