@@ -3,7 +3,7 @@
    never leaves this browser. Routes are plain hashes so the prototype also runs as a claude.ai artifact. */
 import {AREAS, ALL, byId, areaOf, cad, range, RUO, fmtSize} from './catalog.js';
 import {createCells} from './cells.js';
-import {field, relight, world} from './atmos.js';
+import {field, relight, world, motion, medium2d} from './atmos.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
@@ -97,12 +97,12 @@ function vIndex() {
     <div class="center"><p class="mark">PR6</p><p class="m wide">The practice of progress</p></div>
     <span class="cap bl m">Fig. 01 · Issue 01 · Live culture, drawn</span><span class="cap br m">Catalogue 2026</span>
     <a class="cue m" href="#" data-down aria-label="Scroll to the catalogue"><span>Read</span><i></i></a></figure>
-  <section class="stmt fxwrap"><canvas class="fx" data-field="pale" aria-hidden="true"></canvas>
+  <section class="stmt" data-world="pale">
     <h1 class="d1">Research compounds for laboratories and institutions we have met in person.</h1>
     <dl class="meta m"><dt>Series</dt><dd>${AREAS.length}</dd><dt>Compounds</dt><dd>${ALL.length}</dd><dt>Access</dt><dd>By invitation</dd><dt>Data</dt><dd class="sample">Sample, not final</dd></dl>
     <p class="body note">Every lot is tested by an independent laboratory, by RP-HPLC and mass spectrometry. Its certificate travels with the vial.</p>
   </section>
-  <section class="spread">
+  <section class="spread" data-world="05">
     ${plate('frost', '02', 'sticky')}
     <div class="txt">
       <div class="head2"><span class="m">The catalogue</span><span class="m">P. 02</span></div>
@@ -111,7 +111,7 @@ function vIndex() {
     </div>
   </section>
   ${plate('lying', '03', 'full')}
-  <section class="spread flip">
+  <section class="spread flip" data-world="all">
     ${broll('04', 'all')}
     <div class="txt">
       <div class="head2"><span class="m">This lot</span><span class="m">P. 03</span></div>
@@ -127,7 +127,7 @@ function vCatalogue() {
     <h1 class="d1">The catalogue</h1>
     <p class="lede">Nine series, grouped by field of study. Prices per vial, Canadian dollars, before tax. <span class="sample">Sample list</span></p>
   </div></section>
-  ${AREAS.map((a, i) => `<section class="spread ${i % 2 ? 'flip' : ''}" aria-labelledby="s${a.c}">
+  ${AREAS.map((a, i) => `<section class="spread ${i % 2 ? 'flip' : ''}" aria-labelledby="s${a.c}" data-world="${a.c}">
     ${cplate(SERIES_PLATE[i], a.c, a.c)}
     <div class="txt">
       <div class="head2"><span class="m">Series ${a.c}</span><span class="m tab">${a.it.length} compounds · ${range(a)}</span></div>
@@ -141,7 +141,7 @@ function vSeries(c) {
   if (!a) return vMissing();
   const prev = AREAS[i - 1], next = AREAS[i + 1];
   return `
-  <section class="spread">
+  <section class="spread" data-world="${a.c}">
     ${cplate(SERIES_PLATE[i], a.c, a.c)}
     <div class="txt">
       <div class="head2"><span class="m">Series ${a.c}</span><span class="m tab">${a.it.length} compounds</span></div>
@@ -160,7 +160,7 @@ function vCompound(id) {
   const p = byId(id);
   if (!p) return vMissing();
   const a = areaOf(p), s = pick[id] || 0, ai = AREAS.indexOf(a);
-  return `<section class="stage fxwrap" aria-label="${esc(p.n)}"><canvas class="fx" data-field="${a.c}" aria-hidden="true"></canvas>
+  return `<section class="stage fxwrap" aria-label="${esc(p.n)}" data-world="${a.c}"><canvas class="fx" data-field="${a.c}" aria-hidden="true"></canvas>
   <div class="slab">
     <div class="sh"><b>PR6</b><span class="slash" aria-hidden="true">/</span><span class="m">Series ${a.c}</span></div>
     <div class="left">
@@ -179,7 +179,7 @@ function vCompound(id) {
     </div>
     <div class="foot"><span class="m">Per vial, before tax</span><i></i><span class="m">${esc(p.lot)}</span></div>
   </div></section>
-  <section class="spread">
+  <section class="spread" data-world="${a.c}">
     ${broll(p.id.slice(6), a.c)}
     <div class="rec">
       <div class="head2" style="display:flex;justify-content:space-between;color:var(--soft)"><span class="m">The record</span><span class="m">${p.id}</span></div>
@@ -370,9 +370,9 @@ function mount() {
   main.querySelectorAll('[data-relight]').forEach(cv => { try { const f = relight(cv, world(cv.dataset.relight)); if (f) { fx.push(f); f.start(); } } catch (e) { console.warn('[pr6] relight', e); } });
   if (RM) return;
   /* things that arrive: plates focus in, headlines and list rows rise */
-  const rv = main.querySelectorAll('.plate:not(.hero), .d1, .d2, .caps, .stmt .meta, .toc li, .lines li, .note, .more, .tabs, .stage .slab');
+  const rv = main.querySelectorAll('.plate:not(.hero), .d1, .d2, .toc li, .lines li, .stage .slab');
   rv.forEach(el => el.classList.add('rv'));
-  main.querySelectorAll('.toc, .lines').forEach(l => [...l.children].forEach((li, i) => li.style.setProperty('--d', Math.min(i, 9) * 60 + 'ms')));
+  main.querySelectorAll('.toc, .lines').forEach(l => [...l.children].forEach((li, i) => li.style.setProperty('--d', Math.min(i * 40, 280) + 'ms')));
   io = new IntersectionObserver(es => es.forEach(e => {
     if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
   }), {rootMargin: '0px 0px -8% 0px', threshold: .08});
@@ -393,6 +393,8 @@ function frame() {
     const k = ((r.top + r.height / 2) - vh / 2) / (vh / 2 + r.height / 2); /* -1..1 across the pass */
     img.style.transform = `translate3d(0,${(k * -5).toFixed(2)}%,0) scale(1.12)`;
   }
+  const dv = main.querySelector('.disc img');
+  if (dv) dv.style.rotate = `${(-Math.min(scrollY / vh, 1.2) * 14).toFixed(2)}deg`;
   if (heroEl) {
     const y = Math.min(scrollY / vh, 1);
     heroEl.style.setProperty('--y', y.toFixed(3));
@@ -400,6 +402,32 @@ function frame() {
 }
 addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(frame); } }, {passive: true});
 addEventListener('resize', () => requestAnimationFrame(frame));
+
+/* ---------- the medium: one page-wide colour field behind everything. Position picks the world (the Series in view),
+   scroll pushes the colour along, scroll speed stirs it. ---------- */
+let medium = null, wio = null, lastY = scrollY, lastT = performance.now(), stirRaf = 0;
+try { medium = medium2d($('#medium'), world('pale'), {pale: .32}); medium && medium.start(); } catch (e) { console.warn('[pr6] medium', e); }
+function watchWorlds() {
+  if (wio) wio.disconnect();
+  const els = [...main.querySelectorAll('[data-world]')];
+  if (!medium) return;
+  if (!els.length) { medium.setPal(world('pale')); return; }
+  medium.setPal(world(els[0].dataset.world));
+  /* a section owns the medium while it crosses the middle of the screen */
+  wio = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) medium.setPal(world(e.target.dataset.world)); }), {rootMargin: '-48% 0px -48% 0px'});
+  els.forEach(el => wio.observe(el));
+}
+function settle() {
+  stirRaf = 0;
+  motion.stir *= .92;
+  if (motion.stir > .01) stirRaf = requestAnimationFrame(settle); else motion.stir = 0;
+}
+addEventListener('scroll', () => {
+  const now = performance.now(), dt = Math.max(8, now - lastT), v = Math.abs(scrollY - lastY) / dt * 1000;
+  lastY = scrollY; lastT = now;
+  motion.y = scrollY / innerHeight;
+  if (!RM) { motion.stir = Math.max(motion.stir, Math.min(1.5, v / 1400)); if (!stirRaf) stirRaf = requestAnimationFrame(settle); }
+}, {passive: true});
 
 /* ---------- router + head ---------- */
 const go = h => { if (location.hash !== h) location.hash = h; else render(); };
@@ -447,6 +475,7 @@ function render(keep) {
   typeIn(main);
   if (!keep) scrollTo(0, 0);
   mount();
+  watchWorlds();
   onScroll();
 }
 addEventListener('hashchange', () => { if (location.hash === '#main') return; if (!location.hash.startsWith('#c-')) tab = 'identity'; render(); });
