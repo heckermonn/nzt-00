@@ -153,7 +153,7 @@ export const vRail = () => `<section class="sw sw-b" aria-label="The Series rail
     <div class="sw-rail">${AREAS.map(a => `<article class="sw-panel" data-c="${a.c}" style="--w:var(--w${a.c})">
       <div class="sw-big" aria-hidden="true">${a.c}</div>
       <header><p class="m">Series ${a.c} · ${a.it.length} compounds</p><h2 class="d2">${esc(a.f)}</h2><p class="body">${esc(a.d)}</p></header>
-      <div class="sw-set">${a.it.map(p => `<a class="sw-item" href="#c-${p.id}"><img src="${img(p)}" alt="" draggable="false" loading="lazy" decoding="async"><span class="nm">${esc(p.n)}</span><span class="m">${p.id} · from ${cad(p.sizes[0].price)}</span></a>`).join('')}</div>
+      <div class="sw-set">${a.it.map(p => `<a class="sw-item" href="#c-${p.id}"><img src="${img(p)}" alt="" draggable="false" loading="lazy" decoding="async"><span class="nm">${esc(p.n)}</span><span class="m"><span class="sid">${p.id} · </span>from ${cad(p.sizes[0].price)}</span></a>`).join('')}</div>
     </article>`).join('')}</div>
     <div class="sw-railrule">${RULE}</div>
   </div>
@@ -212,7 +212,7 @@ export function mountRing(root, {setWorld, go}) {
     /* a slow drift when nobody is touching it */
     idle += dt; if (!RM && dragBase === null && idle > 4) { pos.t += dt * .12; }
     const mv = pos.step(dt);
-    const mob = W < 700, Rx = mob ? W * .66 : Math.min(W * .44, 720), Rz = 1, hF = Math.min(H * (mob ? .46 : .5), 580);
+    const mob = W < 700, Rx = mob ? W * .78 : Math.min(W * .44, 720), Rz = 1, hF = Math.min(H * (mob ? .34 : .5), 580);
     const cy = H * (mob ? .8 : .84);
     const blur = Math.min(8, Math.abs(pos.v) * 3);
     els.forEach((el, i) => {

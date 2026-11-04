@@ -327,3 +327,22 @@ body::before{content:"";position:fixed;inset:-50%;z-index:0;pointer-events:none;
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 @media (max-width:640px){.plate .br{display:none}.spread>.plate,.sticky{height:62vh;min-height:340px}.full{height:62vh}}
 .sw-v[tabindex="-1"]:focus-visible{outline:none}
+
+/* ---------- phone fit pass (lu, 4 Nov: nothing squished or crammed) ---------- */
+.sw-item{flex:1 1 0;min-width:0;max-width:300px}
+.sw-item img{height:80%;width:100%;max-width:none;object-fit:contain}
+.sw-b.native .sw-set{height:auto;gap:0;align-items:flex-end;margin:0 -4vw}
+.sw-b.native .sw-item{gap:4px}
+.sw-b.native .sw-item img{width:150%;height:auto;aspect-ratio:.56;margin:0 -25% -6%;object-fit:contain}
+.sw-b.native .sw-item .nm{font-size:15px}.sw-b.native .sw-item .m{font-size:10px;letter-spacing:.12em}
+.sw-b.native .sw-item .sid{display:none}
+.sw-b.native .sw-big{font-size:68vw;top:auto;bottom:34%;right:-4vw}
+@media (max-width:640px){
+  .sf .box,.sf select{font-size:12.5px;letter-spacing:.05em;padding:12px 12px}
+  .sf select{padding-right:36px}
+  .sf .box{white-space:normal;line-height:1.35}
+  .sf>.m,.slab .foot .m{letter-spacing:.14em}
+  .caps{letter-spacing:.06em;line-height:1.7}
+  .pill{letter-spacing:.14em;padding:18px 16px}
+  .tabs{gap:4px 20px}
+}
