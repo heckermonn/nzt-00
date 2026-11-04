@@ -3,6 +3,7 @@
    never leaves this browser. Routes are plain hashes so the prototype also runs as a claude.ai artifact. */
 import {AREAS, ALL, byId, areaOf, cad, range, RUO, fmtSize} from './catalog.js';
 import {createCells} from './cells.js';
+import {field, relight, world} from './atmos.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
@@ -56,9 +57,20 @@ function typeIn(root) {
 /* ---------- pieces ---------- */
 const plate = (k, fig, cls = '', extra = '') => {
   const [src, cap, alt] = ED[k];
-  return `<figure class="plate ${cls}"><img src="${src}" alt="${esc(alt)}" ${cls.includes('hero') ? '' : 'loading="lazy"'}>
+  return `<figure class="plate ${cls}"><img src="${src}" alt="${esc(alt)}" ${cls.includes('hero') ? '' : 'loading="lazy"'}>${k === 'frost' ? `<img class="breath" src="${src}" alt="" aria-hidden="true" loading="lazy">` : ''}
     <figcaption class="cap bl m">Fig. ${fig}</figcaption><span class="cap br m">${esc(cap)}</span>${extra}</figure>`;
 };
+/* a colour plate: the series' colour world moving under the plate, the plate's light and shade on top (Abel's
+   one-colour product worlds) */
+const cplate = (k, fig, w, cls = 'sticky') => {
+  const [src, cap, alt] = ED[k];
+  return `<figure class="plate cplate ${cls} ${['03', '04', '06', '07'].includes(w) ? 'dark' : ''}"><canvas class="fx" data-field="${w}" aria-hidden="true"></canvas><img src="${src}" alt="${esc(alt)}" loading="lazy">
+    <figcaption class="cap bl m">Fig. ${fig}</figcaption><span class="cap br m">${esc(cap)} · live colour</span></figure>`;
+};
+/* b-roll: the vial on its glass block, relit live in the colours of a series */
+const broll = (fig, w, cls = 'sticky') => `<figure class="plate broll ${cls}"><img src="assets/broll/still.webp" alt="A sealed PR6 vial on a clear glass block beside a matte sphere, light passing across it" loading="lazy">
+    <canvas class="fx" data-relight="${w}" aria-hidden="true"></canvas>
+    <figcaption class="cap bl m">Fig. ${fig} · In the light</figcaption><span class="cap br m">Cycles render, relit live · sample label</span></figure>`;
 const lines = list => `<ul class="lines">${list.map(p => `<li><a href="#c-${p.id}">
   <span class="nm"><span class="u">${esc(p.n)}</span></span><span class="m id">${p.id}</span><span class="m pr tab">from ${cad(p.sizes[0].price)}</span></a></li>`).join('')}</ul>`;
 
@@ -85,7 +97,7 @@ function vIndex() {
     <div class="center"><p class="mark">PR6</p><p class="m wide">The practice of progress</p></div>
     <span class="cap bl m">Fig. 01 · Issue 01 · Live culture, drawn</span><span class="cap br m">Catalogue 2026</span>
     <a class="cue m" href="#" data-down aria-label="Scroll to the catalogue"><span>Read</span><i></i></a></figure>
-  <section class="stmt">
+  <section class="stmt fxwrap"><canvas class="fx" data-field="pale" aria-hidden="true"></canvas>
     <h1 class="d1">Research compounds for laboratories and institutions we have met in person.</h1>
     <dl class="meta m"><dt>Series</dt><dd>${AREAS.length}</dd><dt>Compounds</dt><dd>${ALL.length}</dd><dt>Access</dt><dd>By invitation</dd><dt>Data</dt><dd class="sample">Sample, not final</dd></dl>
     <p class="body note">Every lot is tested by an independent laboratory, by RP-HPLC and mass spectrometry. Its certificate travels with the vial.</p>
@@ -100,7 +112,7 @@ function vIndex() {
   </section>
   ${plate('lying', '03', 'full')}
   <section class="spread flip">
-    ${plate('macro', '04', 'sticky')}
+    ${broll('04', 'all')}
     <div class="txt">
       <div class="head2"><span class="m">This lot</span><span class="m">P. 03</span></div>
       <div><h2 class="d2">The certificate travels with the vial.</h2><p class="body" style="margin-top:20px">Each record shows the lot, its purity by RP-HPLC, its mass by ESI-MS, the laboratory that tested it and the date. The certificate of analysis and the safety data sheet sit beside it.</p></div>
@@ -116,7 +128,7 @@ function vCatalogue() {
     <p class="lede">Nine series, grouped by field of study. Prices per vial, Canadian dollars, before tax. <span class="sample">Sample list</span></p>
   </div></section>
   ${AREAS.map((a, i) => `<section class="spread ${i % 2 ? 'flip' : ''}" aria-labelledby="s${a.c}">
-    ${plate(SERIES_PLATE[i], a.c, 'sticky')}
+    ${cplate(SERIES_PLATE[i], a.c, a.c)}
     <div class="txt">
       <div class="head2"><span class="m">Series ${a.c}</span><span class="m tab">${a.it.length} compounds · ${range(a)}</span></div>
       <div><h2 class="d2" id="s${a.c}">${esc(a.f)}</h2><p class="body" style="margin-top:18px">${esc(a.d)}</p></div>
@@ -130,7 +142,7 @@ function vSeries(c) {
   const prev = AREAS[i - 1], next = AREAS[i + 1];
   return `
   <section class="spread">
-    ${plate(SERIES_PLATE[i], a.c, 'sticky')}
+    ${cplate(SERIES_PLATE[i], a.c, a.c)}
     <div class="txt">
       <div class="head2"><span class="m">Series ${a.c}</span><span class="m tab">${a.it.length} compounds</span></div>
       <div><h1 class="d1">${esc(a.f)}</h1><p class="lede" style="margin-top:24px">${esc(a.d)}</p></div>
@@ -148,7 +160,7 @@ function vCompound(id) {
   const p = byId(id);
   if (!p) return vMissing();
   const a = areaOf(p), s = pick[id] || 0, ai = AREAS.indexOf(a);
-  return `<section class="stage" aria-label="${esc(p.n)}">
+  return `<section class="stage fxwrap" aria-label="${esc(p.n)}"><canvas class="fx" data-field="${a.c}" aria-hidden="true"></canvas>
   <div class="slab">
     <div class="sh"><b>PR6</b><span class="slash" aria-hidden="true">/</span><span class="m">Series ${a.c}</span></div>
     <div class="left">
@@ -168,7 +180,7 @@ function vCompound(id) {
     <div class="foot"><span class="m">Per vial, before tax</span><i></i><span class="m">${esc(p.lot)}</span></div>
   </div></section>
   <section class="spread">
-    ${plate(SERIES_PLATE[ai] === 'macro' ? 'frost' : 'macro', p.id.slice(6), 'sticky')}
+    ${broll(p.id.slice(6), a.c)}
     <div class="rec">
       <div class="head2" style="display:flex;justify-content:space-between;color:var(--soft)"><span class="m">The record</span><span class="m">${p.id}</span></div>
       <p class="caps">${esc(p.cls)}, supplied as a lyophilised powder in a sealed glass vial. ${esc(p.lot)} was tested by ${esc(p.tested)}, independent of PR6, by RP-HPLC and ESI-MS. The certificate travels with the vial.</p>
@@ -337,10 +349,11 @@ function vGate() {
 
 /* ---------- motion: slow, physical, quiet. Cells live in the hero; plates come into focus and drift a little
    against the scroll; headlines rise line by line; the vial breathes in its disc. Reduced motion gets none of it. ---------- */
-let cells = null, io = null, par = [], heroEl = null, ticking = false;
+let cells = null, io = null, par = [], heroEl = null, ticking = false, fx = [];
 function unmount() {
   if (cells) { cells.destroy(); cells = null; }
   if (io) { io.disconnect(); io = null; }
+  fx.forEach(f => f.destroy()); fx = [];
   par = []; heroEl = null;
 }
 function mount() {
@@ -352,6 +365,9 @@ function mount() {
     const cue = $('[data-down]');
     cue && cue.addEventListener('click', e => { e.preventDefault(); scrollTo({top: innerHeight - 1, behavior: RM ? 'auto' : 'smooth'}); });
   }
+  /* colour fields and relit b-roll (each pauses itself off screen; reduced motion gets a still frame) */
+  main.querySelectorAll('[data-field]').forEach(cv => { try { const f = field(cv, world(cv.dataset.field)); if (f) { fx.push(f); f.start(); cv.parentElement.classList.add('fx-on'); } } catch (e) { console.warn('[pr6] field', e); } });
+  main.querySelectorAll('[data-relight]').forEach(cv => { try { const f = relight(cv, world(cv.dataset.relight)); if (f) { fx.push(f); f.start(); } } catch (e) { console.warn('[pr6] relight', e); } });
   if (RM) return;
   /* things that arrive: plates focus in, headlines and list rows rise */
   const rv = main.querySelectorAll('.plate:not(.hero), .d1, .d2, .caps, .stmt .meta, .toc li, .lines li, .note, .more, .tabs, .stage .slab');
@@ -362,7 +378,7 @@ function mount() {
   }), {rootMargin: '0px 0px -8% 0px', threshold: .08});
   rv.forEach(el => io.observe(el));
   /* parallax: each plate's image sits a little larger than its frame and slides against the scroll */
-  par = [...main.querySelectorAll('.plate:not(.hero) > img')];
+  par = [...main.querySelectorAll('.plate:not(.hero):not(.broll) > img, .plate:not(.hero) > canvas.fx')];
   /* the hero pauses when it is scrolled away */
   if (cells) new IntersectionObserver(([e]) => { if (!cells) return; e.isIntersecting ? cells.start() : cells.stop(); }).observe(heroEl);
   frame();
