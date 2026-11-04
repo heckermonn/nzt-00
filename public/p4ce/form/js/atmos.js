@@ -9,6 +9,9 @@ const RM = matchMedia('(prefers-reduced-motion: reduce)').matches || /[?&]rm\b/.
 
 /* colour worlds per Series, inside the kit: chalk, mist, steel, deep blue 3F668F, sky A5C7DB, ink, and the orange as
    light rather than paint. Four stops each; the field rotates through them. */
+/* scroll feeds the medium: y (in viewport heights) pushes the colour along, stir (scroll speed, 0..~1.5) agitates it
+   and settles when the visitor stops. app.js writes it on every scroll frame. */
+export const motion = {y: 0, stir: 0};
 const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16) / 255);
 export const WORLDS = {
   '01': ['#DCE3E7', '#A5C7DB', '#718B9A', '#F2F3EF'],
@@ -31,12 +34,13 @@ float h(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
 float vn(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x),f.y);}
 float fbm(vec2 p){float s=0.,a=.5;for(int i=0;i<5;i++){s+=a*vn(p);p=p*2.03+17.1;a*=.5;}return s;}`;
 
-const FIELD = `precision highp float;varying vec2 v;uniform vec2 res;uniform float t;uniform vec3 c0,c1,c2,c3;${NOISE}
+const FIELD = `precision highp float;varying vec2 v;uniform vec2 res;uniform float t,sc,st;uniform vec3 c0,c1,c2,c3;${NOISE}
 void main(){
   vec2 q=v*vec2(res.x/res.y,1.)*1.25;
-  vec2 w=vec2(fbm(q+vec2(0.,t*.06)),fbm(q+vec2(5.2,1.3)-t*.05));
-  q+=.55*w;
-  float f1=fbm(q*1.1+t*.035),f2=fbm(q*.75-t*.03+3.),f3=fbm(q*1.7+t*.05+9.);
+  q.y-=sc*.85;
+  vec2 w=vec2(fbm(q+vec2(0.,t*.12)),fbm(q+vec2(5.2,1.3)-t*.1));
+  q+=(.6+.7*st)*w;
+  float f1=fbm(q*1.1+t*.07),f2=fbm(q*.75-t*.06+3.),f3=fbm(q*1.7+t*.1+9.);
   vec3 col=mix(c0,c1,smoothstep(.3,.72,f1));
   col=mix(col,c2,smoothstep(.38,.78,f2)*.85);
   col=mix(col,c3,smoothstep(.58,.86,f3)*.75);
@@ -98,24 +102,32 @@ function surface(canvas, scale, draw) {
 }
 
 /* palette easing: the field always shows the current world, rotating its stops over ~14 s each */
-function paletteAt(P, T, period = 14) {
+function paletteAt(P, T, period = 7) {
   const k = T / period, i = Math.floor(k), f = k - i, s = f * f * (3 - 2 * f);
   return [0, 1, 2, 3].map(j => { const a = P[(i + j) % 4], b = P[(i + j + 1) % 4]; return a.map((x, n) => x + (b[n] - x) * s); });
 }
 
-export function field(canvas, pal) {
+const CHALK = hex('#EEF1EF');
+const paled = (P, k) => P.map(c => c.map((x, n) => x + (CHALK[n] - x) * k));
+/* opts.pale (0..1): lift the world toward chalk so text can sit on it (the page medium); opts.fixed: the canvas is
+   pinned to the viewport, so scroll moves the colour through it rather than the canvas past it */
+export function field(canvas, pal, opts = {}) {
   const g = gl0(canvas, FIELD); if (!g) return null;
-  const {gl, U} = g; const u = {res: U('res'), t: U('t'), c: [U('c0'), U('c1'), U('c2'), U('c3')]};
-  let P = pal, Q = pal, mixT = 1;
-  const s = surface(canvas, .35, (T, dt) => {
-    mixT = Math.min(1, mixT + dt / 1.6);
-    const a = paletteAt(Q, T), b = paletteAt(P, T), e = mixT * mixT * (3 - 2 * mixT);
+  const {gl, U} = g; const u = {res: U('res'), t: U('t'), sc: U('sc'), st: U('st'), c: [U('c0'), U('c1'), U('c2'), U('c3')]};
+  const pl = opts.pale || 0;
+  let P = paled(pal, pl), Q = P, mixT = 1, TT = Math.random() * 30;
+  const s = surface(canvas, opts.scale || .35, (T, dt) => {
+    TT += dt * (1.7 + motion.stir * 3.5);
+    mixT = Math.min(1, mixT + dt / 1.2);
+    const a = paletteAt(Q, TT), b = paletteAt(P, TT), e = mixT * mixT * (3 - 2 * mixT);
+    let sc = motion.y;
+    if (!opts.fixed) { const r = canvas.getBoundingClientRect(); sc = -r.top / innerHeight; }
     gl.viewport(0, 0, canvas.width, canvas.height);
-    gl.uniform2f(u.res, canvas.width, canvas.height); gl.uniform1f(u.t, T);
+    gl.uniform2f(u.res, canvas.width, canvas.height); gl.uniform1f(u.t, TT); gl.uniform1f(u.sc, sc); gl.uniform1f(u.st, Math.min(1.5, motion.stir));
     for (let j = 0; j < 4; j++) gl.uniform3fv(u.c[j], a[j].map((x, n) => x + (b[j][n] - x) * e));
     gl.drawArrays(gl.TRIANGLES, 0, 3);
   });
-  return {...s, setPal(p) { Q = P; P = p; mixT = 0; if (RM) { mixT = 1; s.redraw(); } }, destroy() { s.destroy(); const x = gl.getExtension('WEBGL_lose_context'); x && x.loseContext(); }};
+  return {...s, setPal(p) { const n = paled(p, pl); if (n.join() === P.join()) return; Q = P; P = n; mixT = 0; if (RM) { mixT = 1; s.redraw(); } }, destroy() { s.destroy(); const x = gl.getExtension('WEBGL_lose_context'); x && x.loseContext(); }};
 }
 
 const lum = c => .2126 * c[0] + .7152 * c[1] + .0722 * c[2];
@@ -140,7 +152,9 @@ export function relight(canvas, pal, base = 'assets/broll/') {
   const s = surface(canvas, .8, T => {
     if (ready < G.length) return;
     /* the two keys trade places every ~11 s, like a light passing over the set; colours drift through the world */
-    const sw = .5 + .5 * Math.sin(T * .57), c = paletteAt(P, T, 9);
+    /* scroll scrubs the light: as the plate passes up the screen the warm and cool keys trade sides; a slow drift on top */
+    const r = canvas.getBoundingClientRect(), pr = Math.max(0, Math.min(1, (innerHeight - r.top) / (innerHeight + r.height)));
+    const sw = Math.max(0, Math.min(1, .5 + .5 * Math.sin((pr * 2.2 - .6) * Math.PI) * .85 + .15 * Math.sin(T * .5))), c = paletteAt(P, T + pr * 14, 9);
     const kl = tint(c[0], .3 + 1.25 * sw);
     const kr = tint(c[1], .3 + 1.25 * (1 - sw));
     const tp = tint(mixc(c[2], [1, 1, 1], .65), .55 + .2 * Math.sin(T * .31));
@@ -152,4 +166,35 @@ export function relight(canvas, pal, base = 'assets/broll/') {
     gl.drawArrays(gl.TRIANGLES, 0, 3);
   });
   return {...s, setPal(p) { P = p; s.redraw(); }, destroy() { s.destroy(); const x = gl.getExtension('WEBGL_lose_context'); x && x.loseContext(); }};
+}
+
+/* the page medium, drawn in 2D (a page-wide fixed WebGL layer glitches in software compositing): soft colour blobs of
+   the current world drifting like a lava lamp; scroll carries them up the page, scroll speed stirs them */
+export function medium2d(canvas, pal, opts = {}) {
+  const ctx = canvas.getContext('2d'); if (!ctx) return null;
+  const pl = opts.pale || 0;
+  let P = paled(pal, pl), Q = P, mixT = 1, TT = Math.random() * 30;
+  const B = Array.from({length: 7}, (_, i) => ({ph: Math.random() * 6.28, sp: .6 + Math.random() * .7, r: .38 + Math.random() * .3, ci: i % 4, ox: Math.random(), oy: Math.random() * 1.6}));
+  const css = c => `${Math.round(c[0] * 255)},${Math.round(c[1] * 255)},${Math.round(c[2] * 255)}`;
+  const s = surface(canvas, opts.scale || .22, (T, dt) => {
+    TT += dt * (1.6 + motion.stir * 4);
+    mixT = Math.min(1, mixT + dt / 1.2);
+    const a = paletteAt(Q, TT), b = paletteAt(P, TT), e = mixT * mixT * (3 - 2 * mixT);
+    const C = a.map((x, j) => x.map((v, n) => v + (b[j][n] - v) * e));
+    const W = canvas.width, H = canvas.height, M = Math.max(W, H);
+    ctx.globalCompositeOperation = 'source-over'; ctx.fillStyle = `rgb(${css(C[0])})`; ctx.fillRect(0, 0, W, H);
+    const st = Math.min(1.5, motion.stir);
+    for (const o of B) {
+      /* each blob wanders on its own slow orbit; scroll lifts the whole field (wrapping), stir swells and speeds it */
+      const t = TT * .16 * o.sp + o.ph;
+      const x = (o.ox + .22 * Math.sin(t) + .08 * Math.sin(t * 2.3)) * W;
+      let y = ((o.oy + .18 * Math.cos(t * .8) - motion.y * .32) % 1.6 + 1.6) % 1.6 - .3;
+      y *= H;
+      const r = o.r * M * (1 + .25 * st + .08 * Math.sin(t * 1.7));
+      const g = ctx.createRadialGradient(x, y, 0, x, y, r), col = css(C[o.ci]);
+      g.addColorStop(0, `rgba(${col},.95)`); g.addColorStop(.45, `rgba(${col},.55)`); g.addColorStop(1, `rgba(${col},0)`);
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    }
+  });
+  return {...s, setPal(p) { const n = paled(p, pl); if (n.join() === P.join()) return; Q = P; P = n; mixT = 0; if (RM) { mixT = 1; s.redraw(); } }, destroy() { s.destroy(); }};
 }
