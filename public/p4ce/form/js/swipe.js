@@ -204,7 +204,7 @@ export const vRing = () => `<section class="sw sw-c" tabindex="0" aria-label="Th
 </section>`;
 export function mountRing(root, {setWorld, go}) {
   const els = [...root.querySelectorAll('.sw-v')], N = els.length;
-  const pos = follower(0, 6);
+  const pos = follower(0, 6), STEP = Math.PI * 2 / 13;
   let W = 0, H = 0, dragBase = null, idle = 0;
   const size = () => { const r = root.getBoundingClientRect(); W = r.width; H = r.height; };
   size();
@@ -212,17 +212,21 @@ export function mountRing(root, {setWorld, go}) {
     /* a slow drift when nobody is touching it */
     idle += dt; if (!RM && dragBase === null && idle > 4) { pos.t += dt * .12; }
     const mv = pos.step(dt);
-    const mob = W < 700, Rx = mob ? W * .78 : Math.min(W * .44, 720), Rz = 1, hF = Math.min(H * (mob ? .34 : .5), 580);
+    const mob = W < 700, Rx = mob ? W * .78 : Math.min(W * .44, 720), Rz = 1, hF = Math.min(H * (mob ? .36 : .58), 640);
     const cy = H * (mob ? .8 : .84);
     const blur = Math.min(8, Math.abs(pos.v) * 3);
     els.forEach((el, i) => {
-      const th = (i - pos.x) / N * Math.PI * 2;
+      /* a wider step than 2pi/N: about 13 vials share the ring at once, the rest wait behind it and feed through */
+      let dd = ((i - pos.x) % N + N) % N; if (dd > N / 2) dd -= N;
+      const th = dd * STEP, hide = Math.abs(th) > Math.PI * .96;
+      el.style.visibility = hide ? 'hidden' : '';
       const z = Math.cos(th) * Rz, x = Math.sin(th) * Rx;            /* z: 1 front, -1 back */
       const s = .34 + .66 * Math.pow((z + 1) / 2, 1.6), h = hF * s;
       const y = cy - (1 - z) * H * .11;
       el.style.transform = `translate3d(${(W / 2 + x - h * .28).toFixed(1)}px,${(y - h).toFixed(1)}px,0)`;
       el.style.width = (h * .56).toFixed(1) + 'px'; el.style.height = h.toFixed(1) + 'px';
-      el.style.opacity = clamp(.12 + .88 * Math.pow((z + 1) / 2, 2.2), 0, 1).toFixed(3);
+      const edge = clamp((Math.PI * .96 - Math.abs(th)) / .9, 0, 1);
+      el.style.opacity = (clamp(.12 + .88 * Math.pow((z + 1) / 2, 2.2), 0, 1) * edge).toFixed(3);
       const bl = (1 - z) * 3.2 + (z > .97 ? blur * .3 : blur);
       el.style.filter = bl > .3 ? `blur(${bl.toFixed(1)}px)` : '';
       el.style.zIndex = String(Math.round((z + 1) * 100));
@@ -233,7 +237,7 @@ export function mountRing(root, {setWorld, go}) {
   });
   const det = input(root, {
     onStep(s) { idle = 0; pos.t = Math.round(pos.t) + s; L.kick(); },
-    onDrag(dx) { idle = 0; if (dragBase === null) dragBase = pos.t; pos.t = dragBase - dx / (W < 700 ? W * .3 : 220); L.kick(); },
+    onDrag(dx) { idle = 0; if (dragBase === null) dragBase = pos.t; pos.t = dragBase - dx / ((W < 700 ? W * .78 : Math.min(W * .44, 720)) * STEP * .9); L.kick(); },
     onRelease(dx, v, d, e) {
       idle = 0;
       if (dragBase !== null && d.moved > 6) { pos.t = Math.round(pos.t - v * 4); dragBase = null; return; }
