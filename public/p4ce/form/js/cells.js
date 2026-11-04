@@ -71,21 +71,22 @@ export function createCells(canvas) {
   const add = (x, y, r, vx = 0, vy = 0) => { const c = {x, y, r, tr: r, vx, vy, id: (nid++ * 0.61803) % 1 * 10, ph: Math.random() * 6.28, life: 0}; cells.push(c); return c; };
   function seed() {
     cells.length = 0;
-    const n = A > 1.3 ? 9 : 7;
+    const n = A > 1.3 ? 10 : 8;
     for (let i = 0; i < n; i++) add(((i + .5) / n) * (A > 1 ? A : 1) + (Math.random() - .5) * .15, (A > 1 ? 1 : 1 / A) * (.15 + Math.random() * .7), R0());
   }
+  const target = () => A > 1.3 ? 9 : 7;
   let tSplit = 2.5, tMerge = 7, out = 0, outTo = 0, pointer = null;
   function split() {
     const big = cells.filter(c => c.r > .12 && !c.pair).sort((a, b) => b.r - a.r);
-    if (!big.length || cells.length >= MAX - 1) return;
+    if (!big.length || cells.length >= Math.min(MAX - 1, target() + 2)) return;
     const c = big[Math.floor(Math.random() * Math.min(3, big.length))];
-    const a = Math.random() * Math.PI * 2, r = c.r * .72, s = .028;
+    const a = Math.random() * Math.PI * 2, r = c.r * .72, s = .05;
     const d = add(c.x, c.y, r * .3, Math.cos(a) * s, Math.sin(a) * s);
     c.tr = r; c.vx -= Math.cos(a) * s; c.vy -= Math.sin(a) * s; d.tr = r;
-    c.pair = d; d.pair = c; c.pt = d.pt = 0;
+    c.pair = d; d.pair = c; c.pt = d.pt = 0; d.heat = c.heat; d.hx = Math.min(Math.max(c.x + Math.cos(a) * .25, .1), (A >= 1 ? A : 1) - .1);
   }
   function merge() {
-    if (cells.length <= 5) return;
+    if (cells.length <= target() - 2) return;
     let best = null, bd = 1e9;
     for (let i = 0; i < cells.length; i++) for (let j = i + 1; j < cells.length; j++) {
       const a = cells[i], b = cells[j]; if (a.pair || b.pair) continue;
@@ -93,39 +94,60 @@ export function createCells(canvas) {
     }
     if (best) { best[0].join = best[1]; }
   }
+  /* a lava lamp: every cell carries heat. Near the floor it warms and rises, near the ceiling it cools and sinks,
+     so the field keeps turning over. A slow sideways current, a spring toward its own column and hard walls keep
+     every cell inside the frame; nothing can drift away for good. */
   function step(dt, t) {
     const yMax = A >= 1 ? 1 : 1 / A, xMax = A >= 1 ? A : 1;
     tSplit -= dt; tMerge -= dt;
-    if (tSplit < 0) { split(); tSplit = 5 + Math.random() * 4; }
-    if (tMerge < 0) { merge(); tMerge = 6 + Math.random() * 5; }
+    if (tSplit < 0) { split(); tSplit = 3.5 + Math.random() * 3; }
+    if (tMerge < 0) { merge(); tMerge = 4 + Math.random() * 4; }
+    /* blobs touch and neck, then part: a soft short-range push between cells that are not merging or newly divided */
+    for (let i = 0; i < cells.length; i++) for (let j = i + 1; j < cells.length; j++) {
+      const a = cells[i], b = cells[j];
+      if (a.join === b || b.join === a || a.pair === b) continue;
+      const dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 1e-3, rr = (a.r + b.r) * .95;
+      if (d < rr) { const f = (1 - d / rr) * .22 * dt; a.vx -= dx / d * f; a.vy -= dy / d * f; b.vx += dx / d * f; b.vy += dy / d * f; }
+    }
     for (let i = cells.length - 1; i >= 0; i--) {
       const c = cells[i];
-      /* lava-lamp drift: a slow wandering current plus a gentle rise and fall */
-      const fx = Math.sin(t * .11 + c.ph + c.y * 2.1) * .022, fy = Math.cos(t * .09 + c.ph * 1.7 + c.x * 1.9) * .022;
-      c.vx += fx * dt; c.vy += fy * dt;
+      if (c.heat === undefined) { c.heat = Math.random(); c.hx = c.x; }
+      /* heat exchange: warm at the bottom, cool at the top, a little hysteresis so blobs travel the full height */
+      const yn = c.y / yMax;
+      if (yn > .72) c.heat = Math.min(1, c.heat + dt * (.16 + (yn - .72) * .8));
+      else if (yn < .28) c.heat = Math.max(0, c.heat - dt * (.16 + (.28 - yn) * .8));
+      /* buoyancy: hot rises, cold sinks; bigger blobs move a touch slower */
+      const lift = (c.heat - .5) * .11 / (.7 + c.r * 2.2);
+      c.vy -= lift * dt;
+      /* sideways: a slow wandering current plus a weak spring to the cell's own column */
+      c.vx += (Math.sin(t * .23 + c.ph + c.y * 3.1) * .045 + (c.hx - c.x) * .05) * dt;
+      c.vy += Math.cos(t * .19 + c.ph * 1.7 + c.x * 2.3) * .02 * dt;
       /* daughters push apart for a while, then the pair lets go */
-      if (c.pair) { c.pt += dt; if (c.pt > 7) { c.pair = null; } }
+      if (c.pair) { c.pt += dt; if (c.pt > 5) { c.pair = null; } }
       /* a merge: the two draw together; when they touch, one takes the other's area */
       if (c.join) {
         const o = c.join; if (!cells.includes(o)) { c.join = null; }
         else { const dx = o.x - c.x, dy = o.y - c.y, d = Math.hypot(dx, dy) || 1;
-          c.vx += dx / d * .018 * dt; c.vy += dy / d * .018 * dt; o.vx -= dx / d * .018 * dt; o.vy -= dy / d * .018 * dt;
-          if (d < (c.r + o.r) * .45) { c.tr = Math.min(.22, Math.sqrt(c.r * c.r + o.r * o.r)); c.x = (c.x + o.x) / 2; c.y = (c.y + o.y) / 2; cells.splice(cells.indexOf(o), 1); c.join = null; if (cells.indexOf(c) < i) i--; } }
+          c.vx += dx / d * .05 * dt; c.vy += dy / d * .05 * dt; o.vx -= dx / d * .05 * dt; o.vy -= dy / d * .05 * dt;
+          if (d < (c.r + o.r) * .45) { c.tr = Math.min(.2, Math.sqrt(c.r * c.r + o.r * o.r)); c.x = (c.x + o.x) / 2; c.y = (c.y + o.y) / 2; c.heat = (c.heat + o.heat) / 2; cells.splice(cells.indexOf(o), 1); c.join = null; if (cells.indexOf(c) < i) i--; } }
       }
-      /* the pointer moves the medium a little */
-      if (pointer) { const dx = c.x - pointer.x, dy = c.y - pointer.y, d2 = dx * dx + dy * dy + .02; c.vx += dx / d2 * .0009 * dt * 60; c.vy += dy / d2 * .0009 * dt * 60; }
-      /* stay roughly in the frame (soft walls), damping */
-      const m = .05;
-      if (c.x < -m) c.vx += .02 * dt; if (c.x > xMax + m) c.vx -= .02 * dt;
-      if (c.y < -m) c.vy += .02 * dt; if (c.y > yMax + m) c.vy -= .02 * dt;
-      const damp = Math.pow(.55, dt); c.vx *= damp; c.vy *= damp;
-      c.x += c.vx * dt; c.y += c.vy * dt;
-      c.r += (c.tr - c.r) * Math.min(1, dt * .5);
-      /* a cell slowly grows back to full size, so it can divide again */
-      if (!c.pair && !c.join) c.tr = Math.min(.19, c.tr + dt * .004);
+      /* the pointer stirs the medium, gently and with a cap */
+      if (pointer) { const dx = c.x - pointer.x, dy = c.y - pointer.y, d2 = dx * dx + dy * dy;
+        if (d2 < .09) { const f = (1 - d2 / .09) * .05 * dt, d = Math.sqrt(d2) || 1; c.vx += dx / d * f; c.vy += dy / d * f; } }
+      /* walls: a firm spring a little inside each edge, so a cell turns back while it is still on screen */
+      const mx = c.r * .35;
+      if (c.x < mx) c.vx += (mx - c.x) * 1.2 * dt; if (c.x > xMax - mx) c.vx -= (c.x - xMax + mx) * 1.2 * dt;
+      if (c.y < mx) c.vy += (mx - c.y) * 1.2 * dt; if (c.y > yMax - mx) c.vy -= (c.y - yMax + mx) * 1.2 * dt;
+      const damp = Math.pow(.6, dt); c.vx *= damp; c.vy *= damp;
+      /* speed limit, then move; never further than just past an edge */
+      const sp = Math.hypot(c.vx, c.vy), vmax = .16; if (sp > vmax) { c.vx *= vmax / sp; c.vy *= vmax / sp; }
+      c.x = Math.min(xMax + .02, Math.max(-.02, c.x + c.vx * dt));
+      c.y = Math.min(yMax + .02, Math.max(-.02, c.y + c.vy * dt));
+      c.r += (c.tr - c.r) * Math.min(1, dt * .6);
+      if (!c.pair && !c.join) c.tr = Math.min(A > 1 ? .17 : .16, c.tr + dt * .006);
     }
-    /* keep the population between five and the cap */
-    while (cells.length < 5) add(Math.random() * xMax, Math.random() * yMax, .02).tr = R0();
+    /* keep the population between six and the cap; newcomers well up from the floor */
+    while (cells.length < 6) { const n = add(Math.random() * xMax, yMax * .9, .02); n.tr = R0(); n.heat = 1; n.hx = n.x; }
   }
 
   const DPR = Math.min(devicePixelRatio || 1, 2), SC = .5;
@@ -136,6 +158,7 @@ export function createCells(canvas) {
     const nA = w / hh; if (Math.abs(nA - A) > .2 || !cells.length) { A = nA; seed(); } else A = nA;
     W = w; H = hh;
   }
+  if (/[?&]test\b/.test(location.search)) window.__cells = {cells, step: (dt, t) => step(dt, t), dims: () => ({A})};
   const arr = new Float32Array(MAX * 4);
   let raf = 0, last = 0, T = Math.random() * 100, live = false;
   function draw() {
