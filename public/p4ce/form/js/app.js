@@ -58,20 +58,28 @@ function typeIn(root) {
 /* ---------- pieces ---------- */
 const plate = (k, fig, cls = '', extra = '') => {
   const [src, cap, alt] = ED[k];
-  return `<figure class="plate ${cls}"><img src="${src}" alt="${esc(alt)}" ${cls.includes('hero') ? '' : 'loading="lazy"'}>${k === 'frost' ? `<img class="breath" src="${src}" alt="" aria-hidden="true" loading="lazy">` : ''}
+  return `<figure class="plate ${cls}${cls.includes('hero') ? '' : ' ad ' + k}"><img src="${src}" alt="${esc(alt)}" ${cls.includes('hero') ? '' : 'loading="lazy"'}>${k === 'frost' ? `<img class="breath" src="${src}" alt="" aria-hidden="true" loading="lazy">` : ''}
     <figcaption class="cap bl m">Fig. ${fig}</figcaption><span class="cap br m">${esc(cap)}</span>${extra}</figure>`;
 };
 /* a colour plate: the series' colour world moving under the plate, the plate's light and shade on top (Abel's
    one-colour product worlds) */
 const cplate = (k, fig, w, cls = 'sticky') => {
   const [src, cap, alt] = ED[k];
-  return `<figure class="plate cplate ${cls} ${['03', '04', '06', '07'].includes(w) ? 'dark' : ''}"><canvas class="fx" data-field="${w}" aria-hidden="true"></canvas><img src="${src}" alt="${esc(alt)}" loading="lazy">
+  return `<figure class="plate cplate ad ${cls} ${['03', '04', '06', '07'].includes(w) ? 'dark' : ''}"><canvas class="fx" data-field="${w}" aria-hidden="true"></canvas><img src="${src}" alt="${esc(alt)}" loading="lazy">
     <figcaption class="cap bl m">Fig. ${fig}</figcaption><span class="cap br m">${esc(cap)} · live colour</span></figure>`;
 };
 /* b-roll: the vial on its glass block, relit live in the colours of a series */
 const broll = (fig, w, cls = 'sticky') => `<figure class="plate broll ${cls}"><img src="assets/broll/still.webp" alt="A sealed PR6 vial on a clear glass block beside a matte sphere, light passing across it" loading="lazy">
     <canvas class="fx" data-relight="${w}" aria-hidden="true"></canvas>
     <figcaption class="cap bl m">Fig. ${fig} · In the light</figcaption><span class="cap br m">Cycles render, relit live · sample label</span></figure>`;
+/* the product-ad loop (lu, 5 Nov): a drop lands beside the vial, a ripple runs through the water on the block, a
+   light sweeps the glass, the camera eases in. Path-traced in Cycles (blender/ad04.py), 7 s, seamless. Plays only
+   while on screen; reduced motion keeps the poster. A series colour washes over it where one is given. */
+const adloop = (fig, w, cls = 'sticky') => `<figure class="plate broll adloop ${cls}" ${w && w !== 'all' ? `style="--wash:var(--w${w})"` : ''}>
+    <video muted loop playsinline preload="none" poster="assets/ad/ad04_poster.webp" aria-label="A drop of water lands beside a sealed PR6 vial on a glass block; a ripple spreads and light sweeps across the glass">
+      <source src="assets/ad/ad04.webm" type="video/webm"><source src="assets/ad/ad04.mp4" type="video/mp4"></video>
+    ${w && w !== 'all' ? '<i class="wash" aria-hidden="true"></i>' : ''}
+    <figcaption class="cap bl m">Fig. ${fig} · In the light</figcaption><span class="cap br m">Cycles render, 7 s loop · sample label</span></figure>`;
 const lines = list => `<ul class="lines">${list.map(p => `<li><a href="#c-${p.id}">
   <span class="nm"><span class="u">${esc(p.n)}</span></span><span class="m id">${p.id}</span><span class="m pr tab">from ${cad(p.sizes[0].price)}</span></a></li>`).join('')}</ul>`;
 
@@ -113,7 +121,7 @@ function vIndex() {
   </section>
   ${plate('lying', '03', 'full')}
   <section class="spread flip" data-world="all">
-    ${broll('04', 'all')}
+    ${adloop('04', 'all')}
     <div class="txt">
       <div class="head2"><span class="m">This lot</span><span class="m">P. 03</span></div>
       <div><h2 class="d2">The certificate travels with the vial.</h2><p class="body" style="margin-top:20px">Each record shows the lot, its purity by RP-HPLC, its mass by ESI-MS, the laboratory that tested it and the date. The certificate of analysis and the safety data sheet sit beside it.</p></div>
@@ -182,7 +190,7 @@ function vCompound(id) {
     <div class="foot"><span class="m">Per vial, before tax</span><i></i><span class="m">${esc(p.lot)}</span></div>
   </div></section>
   <section class="spread" data-world="${a.c}">
-    ${broll(p.id.slice(6), a.c)}
+    ${adloop(p.id.slice(6), a.c)}
     <div class="rec">
       <div class="head2" style="display:flex;justify-content:space-between;color:var(--soft)"><span class="m">The record</span><span class="m">${p.id}</span></div>
       <p class="caps">${esc(p.cls)}, supplied as a lyophilised powder in a sealed glass vial. ${esc(p.lot)} was tested by ${esc(p.tested)}, independent of PR6, by RP-HPLC and ESI-MS. The certificate travels with the vial.</p>
@@ -351,12 +359,13 @@ function vGate() {
 
 /* ---------- motion: slow, physical, quiet. Cells live in the hero; plates come into focus and drift a little
    against the scroll; headlines rise line by line; the vial breathes in its disc. Reduced motion gets none of it. ---------- */
-let cells = null, io = null, par = [], heroEl = null, ticking = false, fx = [], swd = null;
+let cells = null, io = null, par = [], heroEl = null, ticking = false, fx = [], swd = null, vio = null;
 function unmount() {
   if (cells) { cells.destroy(); cells = null; }
   if (io) { io.disconnect(); io = null; }
   fx.forEach(f => f.destroy()); fx = [];
   if (swd) { swd(); swd = null; }
+  if (vio) { vio.disconnect(); vio = null; }
   par = []; heroEl = null;
 }
 function mount() {
@@ -371,6 +380,15 @@ function mount() {
   /* colour fields and relit b-roll (each pauses itself off screen; reduced motion gets a still frame) */
   main.querySelectorAll('[data-field]').forEach(cv => { try { const f = field(cv, world(cv.dataset.field)); if (f) { fx.push(f); f.start(); cv.parentElement.classList.add('fx-on'); } } catch (e) { console.warn('[pr6] field', e); } });
   main.querySelectorAll('[data-relight]').forEach(cv => { try { const f = relight(cv, world(cv.dataset.relight)); if (f) { fx.push(f); f.start(); } } catch (e) { console.warn('[pr6] relight', e); } });
+  /* the ad loops play only while on screen; reduced motion keeps the poster frame */
+  const vids = [...main.querySelectorAll('.adloop video')];
+  if (vids.length && !RM) {
+    vio = new IntersectionObserver(es => es.forEach(e => {
+      const v = e.target;
+      if (e.isIntersecting) { if (v.preload !== 'auto') v.preload = 'auto'; const p = v.play(); p && p.catch(() => {}); } else v.pause();
+    }), {rootMargin: '200px 0px'});
+    vids.forEach(v => vio.observe(v));
+  }
   if (RM) return;
   /* things that arrive: plates focus in, headlines and list rows rise */
   const rv = main.querySelectorAll('.plate:not(.hero), .d1, .d2, .toc li, .lines li, .stage .slab');
