@@ -364,3 +364,73 @@ body::before{content:"";position:fixed;inset:-50%;z-index:0;pointer-events:none;
 @keyframes glint{0%,52%{translate:-70% 0}100%{translate:70% 0}}
 .plate.ad.lying{--gd:4s}.plate.ad.frost{--gd:2.5s}
 .plate.rv.ad::after{opacity:0}.plate.rv.in.ad::after{opacity:1;transition:opacity 1s ease 1s}
+
+/* ---------- the travelling vial (js/travel.js). Berths are reserved spaces in the layout: the vial rides in one,
+   then flies to the next. Phone first: berths are sized in svh so the vial stays in proportion to the screen. ---------- */
+.berth{display:block;pointer-events:none}
+.b-hero{position:absolute;left:50%;bottom:17%;height:21svh;width:9svh;translate:-50% 0}
+.b-stmt{position:relative;height:40svh;margin:28px auto 34px;width:16svh}
+.b-stmt span{position:absolute;top:100%;left:50%;translate:-50% 10px;white-space:nowrap;color:var(--soft);font-size:10px}
+.b-frost{position:absolute;left:50%;top:50%;height:46%;width:18%;translate:-50% -50%}
+.b-lying{position:absolute;left:52%;top:50%;height:44%;width:16%;translate:-50% -50%}
+@media (min-width:900px){
+  .b-hero{left:auto;right:13%;bottom:11%;height:38svh;width:16svh;translate:0 0}
+  .stmt .d1{grid-column:2/10}.stmt .note{grid-column:6/10}
+  .b-stmt{grid-column:10/13;grid-row:1/4;align-self:center;height:min(64svh,620px);margin:0 auto;width:100%}
+  .b-frost{height:42%}
+}
+.traveller{position:fixed;left:0;top:0;z-index:30;pointer-events:none;will-change:transform,opacity;transform-origin:50% 60%}
+.traveller img{position:relative;width:100%;height:100%;display:block;object-fit:contain}
+.tr-shadow{position:absolute;left:4%;right:4%;bottom:-4%;height:9%;border-radius:50%;background:radial-gradient(closest-side,rgba(20,32,42,.42),rgba(20,32,42,0));filter:blur(3px)}
+
+/* ---------- phone menu (js/menu.js) ---------- */
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.mbtn{display:none}
+@media (max-width:760px){
+  .rh-nav a[data-nav=catalogue]{display:none}
+  .head{grid-template-columns:1fr auto auto}
+  .mbtn{all:unset;display:inline-flex;align-items:center;gap:10px;height:44px;margin-right:-8px;padding:0 8px;cursor:pointer;-webkit-tap-highlight-color:transparent;position:relative;z-index:2}
+  .mbtn:focus-visible{outline:2px solid var(--orange);outline-offset:2px;border-radius:4px}
+  .mb-l{display:grid;height:15px;overflow:hidden;font-size:10px}
+  .mb-l span{grid-area:1/1;transition:transform .55s cubic-bezier(.7,0,.2,1)}
+  .mb-l span+span{transform:translateY(110%)}
+  .mb-i{position:relative;width:22px;height:12px}
+  .mb-i i{position:absolute;left:0;right:0;height:1.5px;background:currentColor;border-radius:1px;transition:transform .55s cubic-bezier(.7,0,.2,1),width .55s cubic-bezier(.7,0,.2,1)}
+  .mb-i i:first-child{top:2px}.mb-i i:last-child{bottom:2px;width:64%;left:auto}
+  .mbtn[aria-expanded=true] .mb-l span:first-child{transform:translateY(-110%)}
+  .mbtn[aria-expanded=true] .mb-l span+span{transform:translateY(0)}
+  .mbtn[aria-expanded=true] .mb-i i:first-child{transform:translateY(3.25px) rotate(45deg)}
+  .mbtn[aria-expanded=true] .mb-i i:last-child{width:100%;transform:translateY(-3.25px) rotate(-45deg)}
+  .sheet-open .head{background:transparent!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;color:var(--ink)!important}
+  .sheet-open,.sheet-open body{overflow:hidden}
+}
+.sheet{position:fixed;inset:0;z-index:39;overflow-y:auto;overscroll-behavior:contain;color:var(--ink);
+  background:rgba(226,232,235,.66);-webkit-backdrop-filter:blur(30px) saturate(1.35);backdrop-filter:blur(30px) saturate(1.35);
+  clip-path:circle(0 at var(--ox,90%) var(--oy,28px));transition:clip-path .78s cubic-bezier(.76,0,.18,1)}
+.sheet.on{clip-path:circle(150% at var(--ox,90%) var(--oy,28px))}
+.sheet.off{clip-path:circle(0 at var(--ox,90%) var(--oy,28px));transition-duration:.6s;transition-delay:.08s}
+.sheet::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.35;mix-blend-mode:multiply;
+  background:radial-gradient(60% 40% at 85% 0%,rgba(113,139,154,.35),transparent 70%),radial-gradient(50% 40% at 0% 100%,rgba(233,133,70,.16),transparent 70%)}
+.sh-in{position:relative;min-height:100%;display:flex;flex-direction:column;padding:calc(var(--hh) + env(safe-area-inset-top,0px) + 22px) var(--gr) calc(28px + env(safe-area-inset-bottom,0px)) var(--g)}
+.sh-eye{display:flex;justify-content:space-between;color:var(--soft);border-bottom:1px solid var(--ink);padding-bottom:10px;margin:0 0 6px}
+.sh-pages{display:flex;flex-direction:column}
+.sh-pages a{display:flex;align-items:baseline;gap:16px;padding:12px 0 10px;border-bottom:1px solid var(--line)}
+.sh-pages .n{color:var(--soft);min-width:30px;white-space:nowrap}
+.sh-pages .t{font-size:clamp(34px,10.5vw,52px);line-height:1;letter-spacing:-.035em}
+.sh-pages sup{font-size:10px;vertical-align:top;margin-left:4px;letter-spacing:.04em}
+.sheet a[aria-current] .n{color:var(--orange)}
+.sheet a[aria-current] .n::before{content:"/ "}
+.sh-h{margin:34px 0 8px;color:var(--soft)}
+.sh-series{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:minmax(0,1fr)}
+.sh-series a{display:flex;gap:16px;padding:9px 0;border-bottom:1px solid var(--line);font-size:16px;align-items:baseline}
+.sh-series .n{color:var(--soft);min-width:30px;white-space:nowrap;flex:none}
+.sh-foot{margin-top:auto;padding-top:34px;color:var(--soft);font-size:9.5px}
+/* lines rise out of a mask, one after another */
+.sheet .ln{opacity:0;transform:translateY(26px);clip-path:inset(0 0 100% 0);
+  transition:opacity .5s ease,transform .8s cubic-bezier(.2,.8,.2,1),clip-path .8s cubic-bezier(.2,.8,.2,1);transition-delay:0s}
+.sheet.on .ln{opacity:1;transform:none;clip-path:inset(0 0 -20% 0);transition-delay:calc(.22s + var(--i) * 45ms)}
+.sheet.off .ln{opacity:0;transform:translateY(-10px);transition-duration:.3s;transition-delay:0s}
+.sh-pages a:active .t,.sh-series a:active .t{opacity:.55}
+@media (hover:hover){.sh-pages a:hover .t{transform:translateX(6px)}.sh-pages .t{transition:transform .4s var(--out,cubic-bezier(.2,.8,.2,1))}}
+@media (min-width:761px){.sheet{display:none}}
+@media (prefers-reduced-motion:reduce){.sheet,.sheet .ln{transition:none!important;clip-path:none!important}.sheet:not(.on){visibility:hidden}}

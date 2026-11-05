@@ -1,6 +1,8 @@
 /* PR6 / Form, editorial. A cool, misty magazine: full-bleed plates, Abel-style spreads, calm type. The slide-4 slab
    is the product page and the only place with form fields. Catalogue data is SAMPLE (catalog.js). The quote request
    never leaves this browser. Routes are plain hashes so the prototype also runs as a claude.ai artifact. */
+import {mountTravel} from './travel.js';
+import {mountMenu} from './menu.js';
 import {AREAS, ALL, byId, areaOf, cad, range, RUO, fmtSize} from './catalog.js';
 import {createCells} from './cells.js';
 import {vLineup, vRail, vRing, mountLineup, mountRail, mountRing} from './swipe.js';
@@ -10,6 +12,7 @@ const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
 const RM = matchMedia('(prefers-reduced-motion: reduce)').matches || /[?&]rm\b/.test(location.search);
 const main = $('#main'), head = $('#head');
+let menu = null;
 const KEY = '0047RSRV';
 
 /* plates: Cycles renders (cool, shallow focus, sample labels) and the owner's kit (concept art) */
@@ -75,7 +78,7 @@ const broll = (fig, w, cls = 'sticky') => `<figure class="plate broll ${cls}"><i
 /* the product-ad loop (lu, 5 Nov): a drop lands beside the vial, a ripple runs through the water on the block, a
    light sweeps the glass, the camera eases in. Path-traced in Cycles (blender/ad04.py), 7 s, seamless. Plays only
    while on screen; reduced motion keeps the poster. A series colour washes over it where one is given. */
-const adloop = (fig, w, cls = 'sticky') => `<figure class="plate broll adloop ${cls}" ${w && w !== 'all' ? `style="--wash:var(--w${w})"` : ''}>
+const adloop = (fig, w, cls = 'sticky', end = false) => `<figure class="plate broll adloop ${cls}" ${end ? 'data-berth data-end' : ''} ${w && w !== 'all' ? `style="--wash:var(--w${w})"` : ''}>
     <video muted loop playsinline preload="none" poster="assets/ad/ad04_poster.webp" aria-label="A drop of water lands beside a sealed PR6 vial on a glass block; a ripple spreads and light sweeps across the glass">
       <source src="assets/ad/ad04.webm" type="video/webm"><source src="assets/ad/ad04.mp4" type="video/mp4"></video>
     ${w && w !== 'all' ? '<i class="wash" aria-hidden="true"></i>' : ''}
@@ -105,23 +108,25 @@ function vIndex() {
     <canvas class="cv" id="cellsCv" aria-hidden="true"></canvas><i class="grain" aria-hidden="true"></i>
     <div class="center"><p class="mark">PR6</p><p class="m wide">The practice of progress</p></div>
     <span class="cap bl m">Fig. 01 · Issue 01 · Live culture, drawn</span><span class="cap br m">Catalogue 2026</span>
-    <a class="cue m" href="#" data-down aria-label="Scroll to the catalogue"><span>Read</span><i></i></a></figure>
+    <a class="cue m" href="#" data-down aria-label="Scroll to the catalogue"><span>Read</span><i></i></a>
+    <i class="berth b-hero" data-berth aria-hidden="true"></i></figure>
   <section class="stmt" data-world="pale">
     <h1 class="d1">Research compounds for laboratories and institutions we have met in person.</h1>
+    <div class="berth b-stmt" data-berth aria-hidden="true"><span class="m">Sealed · lyophilised · 5 mg</span></div>
     <dl class="meta m"><dt>Series</dt><dd>${AREAS.length}</dd><dt>Compounds</dt><dd>${ALL.length}</dd><dt>Access</dt><dd>By invitation</dd><dt>Data</dt><dd class="sample">Sample, not final</dd></dl>
     <p class="body note">Every lot is tested by an independent laboratory, by RP-HPLC and mass spectrometry. Its certificate travels with the vial.</p>
   </section>
   <section class="spread" data-world="05">
-    ${plate('frost', '02', 'sticky')}
+    ${plate('frost', '02', 'sticky', '<i class="berth b-frost" data-berth data-blur="5" aria-hidden="true"></i>')}
     <div class="txt">
       <div class="head2"><span class="m">The catalogue</span><span class="m">P. 02</span></div>
       <div><h2 class="d2">Nine series, grouped by field of study.</h2><p class="body" style="margin-top:20px">Each compound is listed by catalogue number, sealed as a lyophilised powder, in 5 mg and 10 mg vials. Prices are per vial in Canadian dollars, invoiced on your institution's terms.</p></div>
       <ol class="toc">${AREAS.map(a => `<li><a href="#series-${a.c}"><span class="m">${a.c}</span><span class="t"><span class="u">${esc(a.f)}</span></span><span class="m tab">${String(2 + +a.c).padStart(2, '0')}</span></a></li>`).join('')}</ol>
     </div>
   </section>
-  ${plate('lying', '03', 'full')}
+  ${plate('lying', '03', 'full', '<i class="berth b-lying" data-berth data-tilt="-38" aria-hidden="true"></i>')}
   <section class="spread flip" data-world="all">
-    ${adloop('04', 'all')}
+    ${adloop('04', 'all', 'sticky', true)}
     <div class="txt">
       <div class="head2"><span class="m">This lot</span><span class="m">P. 03</span></div>
       <div><h2 class="d2">The certificate travels with the vial.</h2><p class="body" style="margin-top:20px">Each record shows the lot, its purity by RP-HPLC, its mass by ESI-MS, the laboratory that tested it and the date. The certificate of analysis and the safety data sheet sit beside it.</p></div>
@@ -359,13 +364,14 @@ function vGate() {
 
 /* ---------- motion: slow, physical, quiet. Cells live in the hero; plates come into focus and drift a little
    against the scroll; headlines rise line by line; the vial breathes in its disc. Reduced motion gets none of it. ---------- */
-let cells = null, io = null, par = [], heroEl = null, ticking = false, fx = [], swd = null, vio = null;
+let cells = null, io = null, par = [], heroEl = null, ticking = false, fx = [], swd = null, vio = null, trv = null;
 function unmount() {
   if (cells) { cells.destroy(); cells = null; }
   if (io) { io.disconnect(); io = null; }
   fx.forEach(f => f.destroy()); fx = [];
   if (swd) { swd(); swd = null; }
   if (vio) { vio.disconnect(); vio = null; }
+  if (trv) { trv(); trv = null; }
   par = []; heroEl = null;
 }
 function mount() {
@@ -380,6 +386,7 @@ function mount() {
   /* colour fields and relit b-roll (each pauses itself off screen; reduced motion gets a still frame) */
   main.querySelectorAll('[data-field]').forEach(cv => { try { const f = field(cv, world(cv.dataset.field)); if (f) { fx.push(f); f.start(); cv.parentElement.classList.add('fx-on'); } } catch (e) { console.warn('[pr6] field', e); } });
   main.querySelectorAll('[data-relight]').forEach(cv => { try { const f = relight(cv, world(cv.dataset.relight)); if (f) { fx.push(f); f.start(); } } catch (e) { console.warn('[pr6] relight', e); } });
+  try { trv = mountTravel(main, {reduced: RM}); } catch (e) { console.warn('[pr6] travel', e); }
   /* the ad loops play only while on screen; reduced motion keeps the poster frame */
   const vids = [...main.querySelectorAll('.adloop video')];
   if (vids.length && !RM) {
@@ -504,4 +511,5 @@ function render(keep) {
 }
 addEventListener('hashchange', () => { if (location.hash === '#main') return; if (!location.hash.startsWith('#c-')) tab = 'identity'; render(); });
 counts();
+try { menu = mountMenu({quoteCount: () => quote.reduce((a, l) => a + l.q, 0)}); } catch (e) { console.warn('[pr6] menu', e); }
 render();
