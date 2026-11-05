@@ -5,7 +5,7 @@ import {AREAS} from './catalog.js';
 
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
 
-export function mountMenu({quoteCount}) {
+export function mountMenu({quoteCount, base = ''}) {
   const head = document.getElementById('head');
   const btn = document.createElement('button');
   btn.className = 'mbtn'; btn.type = 'button';
@@ -18,9 +18,9 @@ export function mountMenu({quoteCount}) {
   const pages = [['index', 'Index'], ['catalogue', 'Catalogue'], ['quote', 'Quote list'], ['record', 'Institution record']];
   sheet.innerHTML = `<div class="sh-in">
     <p class="sh-eye m ln"><span>PR6 / Contents</span><span>Issue 01</span></p>
-    <nav class="sh-pages" aria-label="Pages">${pages.map(([k, l], i) => `<a class="ln" href="#${k}" data-sh="${k}"><span class="m n">${String(i + 1).padStart(2, '0')}</span><span class="t">${l}${k === 'quote' ? ' <sup class="m" data-q></sup>' : ''}</span></a>`).join('')}</nav>
+    <nav class="sh-pages" aria-label="Pages">${pages.map(([k, l], i) => `<a class="ln" href="${base}#${k}" data-sh="${k}"><span class="m n">${String(i + 1).padStart(2, '0')}</span><span class="t">${l}${k === 'quote' ? ' <sup class="m" data-q></sup>' : ''}</span></a>`).join('')}</nav>
     <p class="sh-h m ln">Series</p>
-    <ol class="sh-series">${AREAS.map(a => `<li class="ln"><a href="#series-${a.c}" data-sh="series-${a.c}"><span class="m n">${a.c}</span><span class="t">${esc(a.f)}</span></a></li>`).join('')}</ol>
+    <ol class="sh-series">${AREAS.map(a => `<li class="ln"><a href="${base}#series-${a.c}" data-sh="series-${a.c}"><span class="m n">${a.c}</span><span class="t">${esc(a.f)}</span></a></li>`).join('')}</ol>
     <p class="sh-foot m ln">For laboratory research use only · By invitation</p>
   </div>`;
   document.body.appendChild(sheet);
@@ -37,7 +37,7 @@ export function mountMenu({quoteCount}) {
       const r = btn.getBoundingClientRect();
       sheet.style.setProperty('--ox', (r.left + r.width / 2) + 'px'); sheet.style.setProperty('--oy', (r.top + r.height / 2) + 'px');
       const q = sheet.querySelector('[data-q]'); if (q) q.textContent = quoteCount();
-      const here = (location.hash || '#index').slice(1);
+      const here = base ? '' : (location.hash || '#index').slice(1);
       sheet.querySelectorAll('[data-sh]').forEach(a => a.toggleAttribute('aria-current', here === a.dataset.sh || (a.dataset.sh === 'catalogue' && /^(catalogue|lineup|rail|ring)$/.test(here))));
       sheet.hidden = false; void sheet.offsetWidth; sheet.classList.add('on');
       setTimeout(() => sheet.querySelector('.sh-pages a')?.focus({preventScroll: true}), 380);

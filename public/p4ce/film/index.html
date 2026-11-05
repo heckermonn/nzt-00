@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en-CA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PR6 · Film</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preload" href="../form/fonts/FreeSans.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../form/fonts/DejaVuSansMono.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="film.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<canvas id="film" aria-hidden="true"></canvas>
+<i class="grain" aria-hidden="true"></i>
+<header class="head" id="head">
+  <a class="wm" href="#top" aria-label="PR6, back to the start">PR6</a>
+  <span class="rh-path m">Film · prototype</span>
+  <nav class="rh-nav" aria-label="Sections">
+    <a href="../form/#catalogue" data-nav="catalogue"><span class="u">Catalogue</span></a>
+    <a class="nrec" href="../form/#record"><span class="u">Record</span></a>
+    <a href="../form/#quote"><span class="u">Quote</span> <span class="m" id="qn">0</span></a>
+  </nav>
+</header>
+<main id="main" tabindex="-1">
+  <!-- each chapter sits at its moment in the film (data-at, 0..1); its words come in while the camera is there -->
+  <section class="ch c-cover" data-at="0" data-len=".12" id="top" aria-label="PR6">
+    <div class="cap">
+      <p class="mark">PR6</p>
+      <p class="m wide">The practice of progress</p>
+    </div>
+    <p class="cue m" aria-hidden="true"><span>Scroll</span><i></i></p>
+  </section>
+  <section class="ch c-stmt" data-at=".2" data-len=".18" aria-labelledby="h-stmt">
+    <div class="cap">
+      <p class="m eye"><span class="slash">/</span> 01 · Statement</p>
+      <h1 id="h-stmt" class="d1">Research compounds for laboratories and institutions we have met in person.</h1>
+      <dl class="meta m"><dt>Series</dt><dd>9</dd><dt>Compounds</dt><dd>27</dd><dt>Access</dt><dd>By invitation</dd><dt>Data</dt><dd class="sample">Sample, not final</dd></dl>
+    </div>
+  </section>
+  <section class="ch c-cat" data-at=".46" data-len=".26" aria-labelledby="h-cat">
+    <div class="cap">
+      <p class="m eye"><span class="slash">/</span> 02 · The catalogue</p>
+      <h2 id="h-cat" class="d2">Nine series, grouped by field of study.</h2>
+      <ol class="series" id="series"></ol>
+    </div>
+  </section>
+  <section class="ch c-lot" data-at=".76" data-len=".14" aria-labelledby="h-lot">
+    <div class="cap">
+      <p class="m eye"><span class="slash">/</span> 03 · This lot</p>
+      <h2 id="h-lot" class="d2">The certificate travels with the vial.</h2>
+      <p class="body">Every lot is tested by an independent laboratory, by RP-HPLC and mass spectrometry. The record shows the lot, its purity, its mass, the laboratory and the date.</p>
+      <a class="m more" href="../form/#c-PR6-C-0103"><span class="u">Open a sample record</span> <span class="slash">→</span></a>
+    </div>
+  </section>
+  <section class="ch c-end" data-at=".94" data-len=".08" aria-labelledby="h-end">
+    <div class="cap">
+      <p class="m eye"><span class="slash">/</span> 04 · Enter</p>
+      <h2 id="h-end" class="d1">Open the catalogue.</h2>
+      <div class="ctas">
+        <a class="pill" href="../form/#catalogue">The catalogue</a>
+        <a class="m more" href="../form/#quote"><span class="u">Quote list</span></a>
+        <a class="m more" href="../form/#record"><span class="u">Institution record</span></a>
+      </div>
+      <p class="m ruo">For laboratory research use only · Sample data</p>
+    </div>
+  </section>
+</main>
+<!-- the chapter rule: the kit's slider, one tick per chapter; tap to go, drag to scrub the film -->
+<nav class="rule" id="rule" aria-label="Chapters">
+  <div class="track" id="track"><b class="dot" id="dot"></b></div>
+  <ol class="ticks" id="ticks"></ol>
+</nav>
+<p class="loading m" id="loading" aria-live="polite"></p>
+<script type="module" src="film.js"></script>
+</body>
+</html>
