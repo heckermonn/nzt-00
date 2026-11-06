@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>P4CE The Reserve</title>
+<meta name="description" content="The Reserve, P4CE's private members' site. A look test: arrival through frost, The Formulary, 08 Renew in path-traced renders, the product moment and Your Protocol as a daily ritual.">
+<meta name="theme-color" content="#0d1518">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Hanken+Grotesk:wght@300..600&family=Instrument+Serif:ital@1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="app.css">
+<script>
+/* test hooks before first paint: ?rm (reduced motion), ?nogl (no WebGL) */
+(function(){var q=new URLSearchParams(location.search),d=document.documentElement;
+ if(q.has('rm')||matchMedia('(prefers-reduced-motion: reduce)').matches)d.classList.add('rm');
+ if(q.has('nogl'))d.classList.add('nogl');
+ if((location.hash&&location.hash!=='#arrival')||(q.get('s')&&q.get('s')!=='arrival'))d.classList.add('deep');else{var l=document.createElement('link');l.rel='preload';l.as='image';l.type='image/webp';l.href='assets/photos/portrait-calm-1200.webp';document.head.appendChild(l);}
+ if(!CSS.supports('backdrop-filter','blur(2px)')&&!CSS.supports('-webkit-backdrop-filter','blur(2px)'))d.classList.add('nofrost');})();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js"}}</script>
+<script type="module" src="app.js"></script>
+</head>
+<body data-tone="dark">
+<a class="skip" href="#formulary">Skip to The Formulary</a>
+<div id="poster" aria-hidden="true"></div>
+<canvas id="gl" aria-hidden="true"></canvas>
+<div id="ngl" aria-hidden="true"></div>
+<div id="veil" aria-hidden="true"></div>
+
+<header id="bar">
+  <a class="mark" href="#arrival" aria-label="P4CE, The Reserve: back to the arrival">P4CE <span class="rs">The Reserve</span></a>
+  <a class="bl" href="#formulary" aria-label="The Formulary"><svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><path d="M3.5 5.5h13M3.5 10h13M3.5 14.5h8"/></svg><span class="lbl hs">The Formulary</span></a>
+  <a class="bl" href="#search" aria-label="Search"><svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><circle cx="9" cy="9" r="5.5"/><path d="M13.2 13.2L17 17"/></svg><span class="lbl hs">Search</span></a>
+  <a class="bl pro" href="#protocol" data-pc aria-label="Your Protocol"><span class="lbl hs">Protocol</span><span class="cnt tnum" data-cnt>00</span></a>
+  <button class="bl mem" id="memB" type="button" aria-expanded="false" aria-controls="menu"><span class="no">0047</span><span class="lbl">Member</span><svg class="ic s" viewBox="0 0 20 20" aria-hidden="true"><path d="M6 8l4 4 4-4"/></svg></button>
+  <nav class="menu frost" id="menu" aria-label="Member" hidden>
+    <div class="mh"><span class="ktag" aria-hidden="true"><i></i><b class="tnum">0047</b></span><span><b>Member 0047</b><small>Alex Marlow</small></span></div>
+    <a href="#protocol">Your Protocol<small data-cnt2>00</small></a>
+    <a href="#m/dispatches">Dispatches<small>2 in transit</small></a>
+    <a href="#m/cabinet">Your Cabinet<small>3 saved</small></a>
+    <a href="#m/nominations">Nominations<small>2 of 4</small></a>
+    <a href="#m/record">Member Record</a>
+    <a href="#m/dossier">The Dossier</a>
+    <a href="#m/liaison">Member Liaison</a>
+    <hr>
+    <button type="button" class="sndbtn" id="mSnd" aria-pressed="false">Sound<small id="mSndL">Off</small></button>
+    <a href="#m/leave">Leave The Reserve</a>
+  </nav>
+</header>
+
+<main id="main">
+  <!-- 1 · arrival -->
+  <section class="chap" id="arrival" data-tone="dark" aria-labelledby="arrH">
+    <div class="stick">
+      <div class="touch edge" id="touch" aria-hidden="true"><i class="ring"></i><i class="dot"></i><span class="fl mono">Fig. 00</span><span class="tr">a member, behind glass<small>(move across it to clear)</small></span><i class="stem"></i></div>
+      <div class="arr-copy edge" id="arrCopy">
+        <h1 class="disp" id="arrH">Quiet, by <em>design</em>.</h1>
+        <p class="sub mono"><span>The Reserve</span><span>Nine collections</span><span>By invitation</span></p>
+      </div>
+      <div class="arr-foot edge" id="arrFoot">
+        <div class="gate" role="group" aria-label="Sound">
+          <span class="q">Sound is off.</span>
+          <button class="tl" type="button" id="gSnd" aria-pressed="false">Enter with sound</button>
+          <button class="tl" type="button" id="gQuiet">Enter in silence</button>
+        </div>
+        <p class="cue mono" aria-hidden="true"><i></i>Scroll, slowly</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2 · the formulary, briefly -->
+  <section class="chap" id="formulary" data-tone="pale" aria-labelledby="fxH">
+    <div class="stick">
+      <div class="fx-head edge" id="fxHead">
+        <h2 class="disp" id="fxH">The <em>Formulary</em></h2>
+        <p>Nine collections, held in the mist. 08 Renew is open; the others keep their own hours.</p>
+      </div>
+      <div class="fx-hud mono" id="fxHud" aria-hidden="true"></div>
+      <div class="fx-world" id="fxWorld" role="list" aria-label="Collections"></div>
+      <nav class="fx-legend mono edge" id="fxLegend" aria-label="Collection index"></nav>
+    </div>
+  </section>
+
+  <!-- interlude -->
+  <section class="chap" id="interlude" data-tone="dark" aria-label="Interlude">
+    <div class="stick">
+      <div class="met-top mono edge" aria-hidden="true"><span>Fig. 08.5 · Interlude</span><span class="tnum" id="metT">T + 00:00:00</span></div>
+      
+      <div class="met-copy mono edge" id="metCopy">
+        <p>Here is a stone, floating in no particular space.</p>
+        <p>It has been travelling for something like four billion years. It has not once been late.</p>
+        <p>It has no opinion about your morning. Scroll on whenever you are ready.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 · 08 renew -->
+  <section class="chap" id="renew" data-tone="pale" aria-labelledby="rnH">
+    <div class="stick">
+      <img class="rn-far" id="rnFar" alt="" aria-hidden="true" decoding="async" loading="lazy" data-src="assets/photos/skin-veil-1200.webp" data-src2="assets/photos/skin-veil.webp">
+      <div class="rn-head edge" id="rnHead">
+        <h2 class="disp" id="rnH"><span class="c">08 / 09</span><em>Renew</em></h2>
+        <p class="ix mono"><span>Form + function:</span><span>[01]&ensp;Skin, hair and appearance.</span><span>[02]&ensp;Six products, sample prices.</span><span>[03]&ensp;Select one to bring it forward.</span></p>
+      </div>
+      <div class="rn-tools edge">
+        <span class="rn-count mono tnum" id="rnCount">01 / 06</span>
+        <button class="tl" type="button" id="listB" aria-expanded="false" aria-controls="lst">List</button>
+      </div>
+      <figure class="rn-open" id="rnOpen" aria-hidden="true"></figure>
+      <div class="rn-track" id="rnTrack" role="list" aria-label="08 Renew products"></div>
+      <div class="rn-mist" id="rnMist" aria-hidden="true"></div>
+      <div class="rn-foot mono edge" aria-hidden="true"><span id="rnNow">08-1 · Vitamin C Serum</span><span class="rn-prog" id="rnProg"></span></div>
+    </div>
+  </section>
+
+  <!-- 4 · your protocol, as a daily ritual -->
+  <section class="chap" id="protocol" data-tone="pale" aria-labelledby="rtH">
+    <div class="rt-head">
+      <div><h2 class="disp" id="rtH">Your <em>Protocol</em></h2><p>Your products in the order of the day, sorted by their directions. Subscriptions and one-time items are kept on separate lines.</p></div>
+      <div class="rt-now mono"><b class="tnum" id="rtClock">08:02</b>Local time · Member 0047</div>
+    </div>
+    <div class="dial" id="dial" aria-hidden="true"><figure class="dial-mv" id="dialMv"><img alt="" decoding="async" loading="lazy" data-src="assets/photos/movement-cut-1200.webp"></figure><div class="line" id="dialLine"></div></div>
+    <div class="rt-rowh mono"><span id="rtCount" class="tnum"></span><span class="rt-nav" hidden><button type="button" id="rtPrev" aria-label="Earlier in the day">[&larr;]</button><button type="button" id="rtNext" aria-label="Later in the day">[&rarr;]</button></span></div>
+    <div class="rt-grid" id="rtGrid" role="region" tabindex="0" aria-label="Your day, in order"></div>
+    <div class="rt-sum" id="rtSum"></div>
+    <footer class="colo mono">
+      <span>P4CE · The Reserve · Look test v4 · Sample catalogue and prices</span>
+      <span>No claims are made about any product. Evidence is pending.</span>
+      <a href="assets/CREDITS.md">Photo credits</a>
+    </footer>
+  </section>
+</main>
+
+<!-- product moment -->
+<div id="pm" role="dialog" aria-modal="true" aria-labelledby="dzName" hidden>
+  <div class="pm-stage" id="pmStage" tabindex="0" role="img" aria-label="Product turntable. Drag, or use the left and right arrow keys, to turn it.">
+    <div class="pm-obj" id="pmObj"><div class="sh" aria-hidden="true"></div></div>
+    <svg class="pm-svg" id="pmSvg" aria-hidden="true"></svg>
+    <div id="pmCo" aria-hidden="true"></div>
+    <p class="pm-vt mono tnum" id="pmVt" aria-hidden="true"></p>
+    <p class="pm-hint mono" aria-hidden="true"><span id="pmDrag">Drag to turn</span><span class="tnum" id="pmRot">Rot 000°</span></p>
+  </div>
+  <div class="pm-top"><a class="pm-back" href="#renew" id="pmBack"><svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><path d="M16 10H4M8.5 5.5L4 10l4.5 4.5"/></svg>08 Renew</a></div>
+  <p class="pm-fig mono tnum" id="pmFig" aria-hidden="true"></p>
+  <nav class="pm-nav" id="pmNav" aria-label="Neighbouring products"></nav>
+  <aside class="dz frost" id="dz" aria-label="Product dossier"></aside>
+</div>
+
+<!-- list of 08 -->
+<aside class="lst frost" id="lst" aria-label="08 Renew, list view" hidden></aside>
+
+<!-- layers -->
+<div class="lyr" id="lyr" hidden><div class="scrim" data-close></div><section class="pane frost" role="dialog" aria-modal="true" aria-labelledby="lyT" id="lyPane"></section></div>
+
+<div id="toast" class="frost" role="status" aria-live="polite"></div>
+<p class="sr" id="live" aria-live="polite"></p>
+<noscript><p style="position:fixed;inset:auto 16px 16px;z-index:999;color:#e6edf0;font:14px/1.5 sans-serif">The Reserve needs JavaScript for this look test.</p></noscript>
+</body>
+</html>

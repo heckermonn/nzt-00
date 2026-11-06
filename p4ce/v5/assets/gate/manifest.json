@@ -1,0 +1,138 @@
+{
+  "version": 1,
+  "generator": "p4ce/v5/blender/render_gate.py (Blender 5.2 Cycles, CPU, OIDN, AgX Medium High Contrast)",
+  "frameCount": 28,
+  "fps_hint": 24,
+  "orientations": {
+    "land": {
+      "size": [
+        1600,
+        1067
+      ],
+      "files": {
+        "closed": "land/closed.webp",
+        "slot": "land/slot.webp",
+        "open": [
+          "land/open/f_000.webp",
+          "land/open/f_001.webp",
+          "land/open/f_002.webp",
+          "land/open/f_003.webp",
+          "land/open/f_004.webp",
+          "land/open/f_005.webp",
+          "land/open/f_006.webp",
+          "land/open/f_007.webp",
+          "land/open/f_008.webp",
+          "land/open/f_009.webp",
+          "land/open/f_010.webp",
+          "land/open/f_011.webp",
+          "land/open/f_012.webp",
+          "land/open/f_013.webp",
+          "land/open/f_014.webp",
+          "land/open/f_015.webp",
+          "land/open/f_016.webp",
+          "land/open/f_017.webp",
+          "land/open/f_018.webp",
+          "land/open/f_019.webp",
+          "land/open/f_020.webp",
+          "land/open/f_021.webp",
+          "land/open/f_022.webp",
+          "land/open/f_023.webp",
+          "land/open/f_024.webp",
+          "land/open/f_025.webp",
+          "land/open/f_026.webp",
+          "land/open/f_027.webp"
+        ]
+      },
+      "slot": {
+        "x": 0.47,
+        "y": 0.3749,
+        "w": 0.0606,
+        "h": 0.0187
+      },
+      "slotPx": [
+        752,
+        400,
+        97,
+        20
+      ],
+      "lastFrame": {
+        "lightHex": "#EEEAE7",
+        "uniformFraction": 1.0
+      }
+    },
+    "port": {
+      "size": [
+        900,
+        1600
+      ],
+      "files": {
+        "closed": "port/closed.webp",
+        "slot": "port/slot.webp",
+        "open": [
+          "port/open/f_000.webp",
+          "port/open/f_001.webp",
+          "port/open/f_002.webp",
+          "port/open/f_003.webp",
+          "port/open/f_004.webp",
+          "port/open/f_005.webp",
+          "port/open/f_006.webp",
+          "port/open/f_007.webp",
+          "port/open/f_008.webp",
+          "port/open/f_009.webp",
+          "port/open/f_010.webp",
+          "port/open/f_011.webp",
+          "port/open/f_012.webp",
+          "port/open/f_013.webp",
+          "port/open/f_014.webp",
+          "port/open/f_015.webp",
+          "port/open/f_016.webp",
+          "port/open/f_017.webp",
+          "port/open/f_018.webp",
+          "port/open/f_019.webp",
+          "port/open/f_020.webp",
+          "port/open/f_021.webp",
+          "port/open/f_022.webp",
+          "port/open/f_023.webp",
+          "port/open/f_024.webp",
+          "port/open/f_025.webp",
+          "port/open/f_026.webp",
+          "port/open/f_027.webp"
+        ]
+      },
+      "slot": {
+        "x": 0.4289,
+        "y": 0.3894,
+        "w": 0.1433,
+        "h": 0.0169
+      },
+      "slotPx": [
+        386,
+        623,
+        129,
+        27
+      ],
+      "lastFrame": {
+        "lightHex": "#EEEAE7",
+        "uniformFraction": 1.0
+      }
+    }
+  },
+  "lightHex": "#EEEAE7",
+  "notes": [
+    "slot is normalised 0-1 image coords (x, y from top-left, w, h) of the dark letterbox opening, measured from the renders: where closed and slot differ (the plate leaves), grown to the full dark opening. slotPx is the same in pixels. Place eyes.webp to cover it.",
+    "open/f_000 is identical in framing and pose to closed.webp; the leaf swings inward (hinge left), then the camera dollies through the doorway into the light.",
+    "lightHex is the median colour of the last frame; uniformFraction is the share of its pixels within 6/255 of that colour. Light target was #EEEBE5 (Atlas sky).",
+    "No signage: the only mark is a small engraved '4' plate above the door (the v2 door's number).",
+    "Sequence timing: f_001-f_003 barely move (a heavy leaf starting), the leaf is fully open by about f_015, the camera crosses the doorway at about f_016 and the frames are near-uniform light from about f_021. Suggested playback about 24 fps (1.2 s).",
+    "Frames after f_007 were rendered at 70% (dolly, motion-blurred) and 50% (uniform tail), then upsampled.",
+    "Fixed render seed: no frame-to-frame shimmer. Encoded WebP q90 (q82 smeared the brushed steel grain in the dark frames; q90 keeps it and the set stays small)."
+  ],
+  "eyes": {
+    "file": "eyes.webp",
+    "size": [
+      1440,
+      300
+    ],
+    "fit": "cover the slot rect; the photo is dark-edged so its border falls into the slot's shadow"
+  }
+}

@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en-CA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Closed</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#171c1f">
+<link rel="preload" href="fonts/FreeSans.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/FreeSansBold.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="app.css">
+<script>
+/* before first paint: test hooks (?rm reduced motion, ?gate forces the gate, ?key=0047RSRV the NFC key, #/exit forgets
+   this device), and who is at the door */
+(function(){var q=new URLSearchParams(location.search),d=document.documentElement,m=null;
+ try{m=localStorage.getItem('pr6.v11.member')}catch(e){}
+ if(q.has('rm')||matchMedia('(prefers-reduced-motion: reduce)').matches)d.classList.add('rm');
+ var exit=/^#\/exit/.test(location.hash),key=(q.get('key')||'').replace(/\s+/g,'').toUpperCase()==='0047RSRV';
+ if(exit){try{localStorage.removeItem('pr6.v11.member')}catch(e){}m=null}
+ d.classList.add(m==='1'&&!q.has('gate')&&!key?'in':'out');
+})();
+</script>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}</script>
+<script type="module" src="js/main.js"></script>
+</head>
+<body>
+<!-- The gate: the only thing a guest sees, in the night register. The gate module (js/gates/) writes its own markup here. -->
+<section id="gate" aria-label="Closed"></section>
+
+<!-- Members only. Every page lives in #page, one scrolling surface. The Atlas (the v9 film) keeps its own full-screen
+     stage. The chrome: on a desktop a thin bar; on a phone a top line (where you are, and Back) and a thumb bar. -->
+<a class="skip" href="#page">Skip to content</a>
+<header id="bar" hidden></header>
+<div id="top" hidden></div>
+<section id="atlas" class="film" aria-label="The Atlas" hidden>
+  <div class="film-frame" aria-hidden="true"><canvas id="filmCv"></canvas></div>
+  <div class="film-veil" aria-hidden="true"></div>
+  <div class="film-type" id="filmType"></div>
+  <nav class="marks" id="marks" aria-label="Collections"></nav>
+</section>
+<main id="page" tabindex="-1" hidden></main>
+<nav id="thumb" aria-label="Main" hidden></nav>
+<div id="fly" aria-hidden="true"></div>
+<div id="scrim" hidden></div>
+<aside id="drawer" role="dialog" aria-modal="true" aria-labelledby="dwH" hidden></aside>
+<div id="sheet" role="dialog" aria-modal="true" aria-labelledby="shH" hidden></div>
+<p id="live" class="sr" aria-live="polite"></p>
+</body>
+</html>

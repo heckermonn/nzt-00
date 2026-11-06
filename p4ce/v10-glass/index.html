@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en-CA" data-view="home">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PR6</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#bcc7cd">
+<link rel="icon" href="data:,">
+<link rel="preload" href="fonts/FreeSans.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/FreeSansBold.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="app.css">
+<script>if (new URLSearchParams(location.search).has('flat')) document.documentElement.classList.add('flat');</script>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}</script>
+<script type="module" src="js/app.js"></script>
+</head>
+<body>
+<!-- PR6 v10 · "Glass" preview. The live Atlas (js/world.js) draws into #gl; the glass slab is part of that scene, and
+     #panel is its DOM content, laid over the slab and tilted with it. In flat mode #flatbg and a CSS panel stand in. -->
+<div id="flatbg" aria-hidden="true"></div>
+<canvas id="gl" aria-hidden="true"></canvas>
+<header id="bar">
+  <a class="wm" href="#/" aria-label="PR6, all collections">PR6</a>
+  <span id="count" aria-live="polite">Protocol <span class="mono" id="cnt">0</span></span>
+</header>
+<main id="home" aria-label="Collections"></main>
+<div id="glassui"><section id="panel" aria-live="polite"><div id="panelIn"></div></section></div>
+</body>
+</html>

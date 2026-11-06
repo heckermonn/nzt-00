@@ -1,0 +1,715 @@
+{
+ "version": "pr6-v12-light",
+ "generated": "2026-11-01T06:43:52",
+ "groups": [
+  "key_l",
+  "key_r",
+  "top",
+  "rim",
+  "amb",
+  "ink"
+ ],
+ "group_roles": {
+  "key_l": "low raking key from the left (warm)",
+  "key_r": "low raking key from the right (cool)",
+  "top": "soft overhead",
+  "rim": "back rim",
+  "amb": "world / fill",
+  "ink": "emission-only invisible ink on the label (zero in every other group)"
+ },
+ "encoding": "srgb8",
+ "decode": "linear_i = srgbToLinear(texel_i.rgb) * passes[group].scale",
+ "mix": "c = exposure * sum_i(w_i * linear_i); out = linearToSrgb(pbrNeutral(c)) (+ dither)",
+ "tonemap": "khronos_pbr_neutral",
+ "tonemap_glsl": "vec3 pbrNeutral(vec3 c){const float s=0.76;const float dsat=0.15;float x=min(c.r,min(c.g,c.b));float off=x<0.08?x-6.25*x*x:0.04;c-=off;float p=max(c.r,max(c.g,c.b));if(p<s)return c;const float d=1.0-s;float np=1.0-d*d/(p+d-s);c*=np/p;float g=1.0-1.0/(dsat*(p-np)+1.0);return mix(c,vec3(np),g);}",
+ "exposure": 1.0,
+ "default_weights": {
+  "key_l": 1.0,
+  "key_r": 0.12,
+  "top": 0.18,
+  "rim": 0.25,
+  "amb": 0.5,
+  "ink": 0.0
+ },
+ "ink_weights": {
+  "key_l": 0.35,
+  "key_r": 0.06,
+  "top": 0.12,
+  "rim": 0.3,
+  "amb": 0.22,
+  "ink": 1.0
+ },
+ "notes": [
+  "Passes are additive in linear light: linearise each texel, multiply by its pass scale, then add.",
+  "poster / poster_ink are already tonemapped with exactly this mix (default_weights / ink_weights).",
+  "Mask: hero 255 = pack, 0 = set (use it to seat the pack in the debossed disc or to dim the set); lineup value = 25 * pack index (1..9, in packs[] order).",
+  "packs[].box = [x0, y0, x1, y1] in 0..1 image space, origin top-left.",
+  "Hero shots: product = the catalogue id the print and ink describe. Other products of the same format reuse the image; their facts must come from the catalogue, not from the picture."
+ ],
+ "shots": {
+  "tin_hero": {
+   "w": 1280,
+   "h": 1600,
+   "product": "03-2",
+   "pack": "tin",
+   "ink_text": "Creatine monohydrate 5 g \u00b7 per 3 capsules \u00b7 180 capsules",
+   "status": "final",
+   "passes": {
+    "key_l": {
+     "scale": 3.263,
+     "d": "tin_hero/key_l-d.webp",
+     "m": "tin_hero/key_l-m.webp"
+    },
+    "key_r": {
+     "scale": 2.738,
+     "d": "tin_hero/key_r-d.webp",
+     "m": "tin_hero/key_r-m.webp"
+    },
+    "top": {
+     "scale": 0.5634,
+     "d": "tin_hero/top-d.webp",
+     "m": "tin_hero/top-m.webp"
+    },
+    "rim": {
+     "scale": 4.094,
+     "d": "tin_hero/rim-d.webp",
+     "m": "tin_hero/rim-m.webp"
+    },
+    "amb": {
+     "scale": 0.4275,
+     "d": "tin_hero/amb-d.webp",
+     "m": "tin_hero/amb-m.webp"
+    },
+    "ink": {
+     "scale": 1.294,
+     "d": "tin_hero/ink-d.webp",
+     "m": "tin_hero/ink-m.webp"
+    }
+   },
+   "sizes": {
+    "d": [
+     1280,
+     1600
+    ],
+    "m": [
+     819,
+     1024
+    ]
+   },
+   "finish": "natural",
+   "poster": {
+    "d": "tin_hero/poster-d.webp",
+    "m": "tin_hero/poster-m.webp"
+   },
+   "poster_ink": {
+    "d": "tin_hero/poster-ink-d.webp",
+    "m": "tin_hero/poster-ink-m.webp"
+   },
+   "mask": {
+    "encoding": "png8, 255 = pack, 0 = set",
+    "d": "tin_hero/mask-d.png",
+    "m": "tin_hero/mask-m.png"
+   },
+   "packs": [
+    {
+     "id": "03-2",
+     "pack": "tin",
+     "box": [
+      0.15,
+      0.2468,
+      0.85,
+      0.8232
+     ]
+    }
+   ],
+   "additivity": {
+    "denoised": {
+     "mae": 0.002766,
+     "mean_beauty": 0.86618,
+     "mae_rel": 0.003193,
+     "max_abs": 4.2996
+    },
+    "raw": {
+     "mae": 0.0,
+     "mean_beauty": 0.86634,
+     "mae_rel": 0.0,
+     "max_abs": 0.0002
+    }
+   },
+   "render_s": 1186.4,
+   "samples": 224
+  },
+  "pouch_hero": {
+   "w": 1280,
+   "h": 1600,
+   "product": "03-1",
+   "pack": "pouch",
+   "ink_text": "Creatine monohydrate (micronised) 5 g \u00b7 per 5 g serving \u00b7 300 g",
+   "status": "final",
+   "passes": {
+    "key_l": {
+     "scale": 4.295,
+     "d": "pouch_hero/key_l-d.webp",
+     "m": "pouch_hero/key_l-m.webp"
+    },
+    "key_r": {
+     "scale": 0.5697,
+     "d": "pouch_hero/key_r-d.webp",
+     "m": "pouch_hero/key_r-m.webp"
+    },
+    "top": {
+     "scale": 0.2931,
+     "d": "pouch_hero/top-d.webp",
+     "m": "pouch_hero/top-m.webp"
+    },
+    "rim": {
+     "scale": 0.09866,
+     "d": "pouch_hero/rim-d.webp",
+     "m": "pouch_hero/rim-m.webp"
+    },
+    "amb": {
+     "scale": 0.4202,
+     "d": "pouch_hero/amb-d.webp",
+     "m": "pouch_hero/amb-m.webp"
+    },
+    "ink": {
+     "scale": 0.5514,
+     "d": "pouch_hero/ink-d.webp",
+     "m": "pouch_hero/ink-m.webp"
+    }
+   },
+   "sizes": {
+    "d": [
+     1280,
+     1600
+    ],
+    "m": [
+     819,
+     1024
+    ]
+   },
+   "finish": "foil",
+   "poster": {
+    "d": "pouch_hero/poster-d.webp",
+    "m": "pouch_hero/poster-m.webp"
+   },
+   "poster_ink": {
+    "d": "pouch_hero/poster-ink-d.webp",
+    "m": "pouch_hero/poster-ink-m.webp"
+   },
+   "mask": {
+    "encoding": "png8, 255 = pack, 0 = set",
+    "d": "pouch_hero/mask-d.png",
+    "m": "pouch_hero/mask-m.png"
+   },
+   "packs": [
+    {
+     "id": "03-1",
+     "pack": "pouch",
+     "box": [
+      0.1953,
+      0.165,
+      0.8044,
+      0.9049
+     ]
+    }
+   ],
+   "additivity": {
+    "denoised": {
+     "mae": 0.002183,
+     "mean_beauty": 0.67057,
+     "mae_rel": 0.003256,
+     "max_abs": 2.4361
+    },
+    "raw": {
+     "mae": 0.0,
+     "mean_beauty": 0.67092,
+     "mae_rel": 0.0,
+     "max_abs": 0.0
+    }
+   },
+   "render_s": 867.8,
+   "samples": 160
+  },
+  "box_hero": {
+   "w": 1280,
+   "h": 1600,
+   "product": "04-1",
+   "pack": "box",
+   "ink_text": "Sodium (sodium chloride) 500 mg \u00b7 Potassium (potassium citrate) 200 mg \u00b7 Magnesium (magnesium citrate) 60 mg \u00b7 per sachet \u00b7 30 sachets",
+   "status": "final",
+   "passes": {
+    "key_l": {
+     "scale": 1.087,
+     "d": "box_hero/key_l-d.webp",
+     "m": "box_hero/key_l-m.webp"
+    },
+    "key_r": {
+     "scale": 2.46,
+     "d": "box_hero/key_r-d.webp",
+     "m": "box_hero/key_r-m.webp"
+    },
+    "top": {
+     "scale": 0.2984,
+     "d": "box_hero/top-d.webp",
+     "m": "box_hero/top-m.webp"
+    },
+    "rim": {
+     "scale": 3.2,
+     "d": "box_hero/rim-d.webp",
+     "m": "box_hero/rim-m.webp"
+    },
+    "amb": {
+     "scale": 0.2998,
+     "d": "box_hero/amb-d.webp",
+     "m": "box_hero/amb-m.webp"
+    },
+    "ink": {
+     "scale": 0.3553,
+     "d": "box_hero/ink-d.webp",
+     "m": "box_hero/ink-m.webp"
+    }
+   },
+   "sizes": {
+    "d": [
+     1280,
+     1600
+    ],
+    "m": [
+     819,
+     1024
+    ]
+   },
+   "poster": {
+    "d": "box_hero/poster-d.webp",
+    "m": "box_hero/poster-m.webp"
+   },
+   "poster_ink": {
+    "d": "box_hero/poster-ink-d.webp",
+    "m": "box_hero/poster-ink-m.webp"
+   },
+   "mask": {
+    "encoding": "png8, 255 = pack, 0 = set",
+    "d": "box_hero/mask-d.png",
+    "m": "box_hero/mask-m.png"
+   },
+   "packs": [
+    {
+     "id": "04-1",
+     "pack": "box",
+     "box": [
+      0.15,
+      0.2566,
+      0.85,
+      0.8134
+     ]
+    }
+   ],
+   "additivity": {
+    "denoised": {
+     "mae": 0.001788,
+     "mean_beauty": 0.90382,
+     "mae_rel": 0.001979,
+     "max_abs": 2.4687
+    },
+    "raw": {
+     "mae": 0.0,
+     "mean_beauty": 0.90395,
+     "mae_rel": 0.0,
+     "max_abs": 0.0
+    }
+   },
+   "render_s": 734.9,
+   "samples": 160
+  },
+  "dropper_hero": {
+   "w": 1280,
+   "h": 1600,
+   "product": "08-1",
+   "pack": "dropper",
+   "ink_text": "Ascorbic acid 10% \u00b7 Ferulic acid 0.5% \u00b7 Tocopherol 1% \u00b7 Sodium hyaluronate 0.2% \u00b7 of formula \u00b7 30 ml",
+   "status": "final",
+   "passes": {
+    "key_l": {
+     "scale": 1.438,
+     "d": "dropper_hero/key_l-d.webp",
+     "m": "dropper_hero/key_l-m.webp"
+    },
+    "key_r": {
+     "scale": 1.112,
+     "d": "dropper_hero/key_r-d.webp",
+     "m": "dropper_hero/key_r-m.webp"
+    },
+    "top": {
+     "scale": 0.1833,
+     "d": "dropper_hero/top-d.webp",
+     "m": "dropper_hero/top-m.webp"
+    },
+    "rim": {
+     "scale": 0.5237,
+     "d": "dropper_hero/rim-d.webp",
+     "m": "dropper_hero/rim-m.webp"
+    },
+    "amb": {
+     "scale": 0.2707,
+     "d": "dropper_hero/amb-d.webp",
+     "m": "dropper_hero/amb-m.webp"
+    },
+    "ink": {
+     "scale": 0.416,
+     "d": "dropper_hero/ink-d.webp",
+     "m": "dropper_hero/ink-m.webp"
+    }
+   },
+   "sizes": {
+    "d": [
+     1280,
+     1600
+    ],
+    "m": [
+     819,
+     1024
+    ]
+   },
+   "poster": {
+    "d": "dropper_hero/poster-d.webp",
+    "m": "dropper_hero/poster-m.webp"
+   },
+   "poster_ink": {
+    "d": "dropper_hero/poster-ink-d.webp",
+    "m": "dropper_hero/poster-ink-m.webp"
+   },
+   "mask": {
+    "encoding": "png8, 255 = pack, 0 = set",
+    "d": "dropper_hero/mask-d.png",
+    "m": "dropper_hero/mask-m.png"
+   },
+   "packs": [
+    {
+     "id": "08-1",
+     "pack": "dropper",
+     "box": [
+      0.367,
+      0.165,
+      0.633,
+      0.905
+     ]
+    }
+   ],
+   "additivity": {
+    "denoised": {
+     "mae": 0.001822,
+     "mean_beauty": 0.63304,
+     "mae_rel": 0.002879,
+     "max_abs": 1.1701
+    },
+    "raw": {
+     "mae": 0.0,
+     "mean_beauty": 0.63339,
+     "mae_rel": 0.0,
+     "max_abs": 0.0
+    }
+   },
+   "render_s": 709.9,
+   "samples": 160
+  },
+  "jar_hero": {
+   "w": 1280,
+   "h": 1600,
+   "product": "08-3",
+   "pack": "jar",
+   "ink_text": "Ceramide NP, AP and EOP 1% \u00b7 Squalane 5% \u00b7 Cholesterol 0.5% \u00b7 of formula \u00b7 50 ml",
+   "status": "final",
+   "passes": {
+    "key_l": {
+     "scale": 2.486,
+     "d": "jar_hero/key_l-d.webp",
+     "m": "jar_hero/key_l-m.webp"
+    },
+    "key_r": {
+     "scale": 2.156,
+     "d": "jar_hero/key_r-d.webp",
+     "m": "jar_hero/key_r-m.webp"
+    },
+    "top": {
+     "scale": 0.5632,
+     "d": "jar_hero/top-d.webp",
+     "m": "jar_hero/top-m.webp"
+    },
+    "rim": {
+     "scale": 6.441,
+     "d": "jar_hero/rim-d.webp",
+     "m": "jar_hero/rim-m.webp"
+    },
+    "amb": {
+     "scale": 0.4197,
+     "d": "jar_hero/amb-d.webp",
+     "m": "jar_hero/amb-m.webp"
+    },
+    "ink": {
+     "scale": 0.9707,
+     "d": "jar_hero/ink-d.webp",
+     "m": "jar_hero/ink-m.webp"
+    }
+   },
+   "sizes": {
+    "d": [
+     1280,
+     1600
+    ],
+    "m": [
+     819,
+     1024
+    ]
+   },
+   "poster": {
+    "d": "jar_hero/poster-d.webp",
+    "m": "jar_hero/poster-m.webp"
+   },
+   "poster_ink": {
+    "d": "jar_hero/poster-ink-d.webp",
+    "m": "jar_hero/poster-ink-m.webp"
+   },
+   "mask": {
+    "encoding": "png8, 255 = pack, 0 = set",
+    "d": "jar_hero/mask-d.png",
+    "m": "jar_hero/mask-m.png"
+   },
+   "packs": [
+    {
+     "id": "08-3",
+     "pack": "jar",
+     "box": [
+      0.15,
+      0.217,
+      0.85,
+      0.853
+     ]
+    }
+   ],
+   "additivity": {
+    "denoised": {
+     "mae": 0.004155,
+     "mean_beauty": 1.03607,
+     "mae_rel": 0.00401,
+     "max_abs": 9.5463
+    },
+    "raw": {
+     "mae": 0.0,
+     "mean_beauty": 1.0361,
+     "mae_rel": 0.0,
+     "max_abs": 0.0001
+    }
+   },
+   "render_s": 870.1,
+   "samples": 160
+  },
+  "lineup": {
+   "w": 2400,
+   "h": 1350,
+   "product": null,
+   "pack": "lineup",
+   "ink_text": "Vitamin A 800 mcg \u00b7 Vitamin C 80 mg \u00b7 per 2 capsules \u00b7 120 capsules / Hydrolysed bovine collagen peptides 10 g \u00b7 per 10 g serving \u00b7 300 g / Creatine monohydrate 5 g \u00b7 per 5 g serving \u00b7 300 g / Sodium 500 mg \u00b7 Potassium 200 mg \u00b7 per sachet \u00b7 30 sachets / Magnesium 200 mg \u00b7 per 2 capsules \u00b7 120 capsules / L-theanine 200 mg \u00b7 per capsule \u00b7 90 capsules / Glycine 3 g \u00b7 per 3 g serving \u00b7 250 g / Ascorbic acid 10% \u00b7 Ferulic acid 0.5% \u00b7 of formula \u00b7 30 ml / Fish oil concentrate 1000 mg \u00b7 EPA 360 mg \u00b7 per 2 softgels \u00b7 90 softgels",
+   "status": "final",
+   "passes": {
+    "key_l": {
+     "scale": 4.4,
+     "d": "lineup/key_l-d.webp",
+     "m": "lineup/key_l-m.webp"
+    },
+    "key_r": {
+     "scale": 0.612,
+     "d": "lineup/key_r-d.webp",
+     "m": "lineup/key_r-m.webp"
+    },
+    "top": {
+     "scale": 0.2068,
+     "d": "lineup/top-d.webp",
+     "m": "lineup/top-m.webp"
+    },
+    "rim": {
+     "scale": 0.4981,
+     "d": "lineup/rim-d.webp",
+     "m": "lineup/rim-m.webp"
+    },
+    "amb": {
+     "scale": 0.4051,
+     "d": "lineup/amb-d.webp",
+     "m": "lineup/amb-m.webp"
+    },
+    "ink": {
+     "scale": 0.5666,
+     "d": "lineup/ink-d.webp",
+     "m": "lineup/ink-m.webp"
+    }
+   },
+   "sizes": {
+    "d": [
+     2400,
+     1350
+    ],
+    "m": [
+     1366,
+     768
+    ]
+   },
+   "poster": {
+    "d": "lineup/poster-d.webp",
+    "m": "lineup/poster-m.webp"
+   },
+   "poster_ink": {
+    "d": "lineup/poster-ink-d.webp",
+    "m": "lineup/poster-ink-m.webp"
+   },
+   "mask": {
+    "encoding": "png8, value = 25 * pack index (0 = set)",
+    "d": "lineup/mask-d.png",
+    "m": "lineup/mask-m.png"
+   },
+   "packs": [
+    {
+     "index": 1,
+     "id": "01-1",
+     "collection": "01",
+     "pack": "tin",
+     "finish": "natural",
+     "box": [
+      0.035,
+      0.6987,
+      0.1229,
+      0.8227
+     ],
+     "ink_text": "Vitamin A 800 mcg \u00b7 Vitamin C 80 mg \u00b7 per 2 capsules \u00b7 120 capsules"
+    },
+    {
+     "index": 2,
+     "id": "02-1",
+     "collection": "02",
+     "pack": "pouch",
+     "finish": "chalk",
+     "box": [
+      0.1424,
+      0.5292,
+      0.2484,
+      0.8196
+     ],
+     "ink_text": "Hydrolysed bovine collagen peptides 10 g \u00b7 per 10 g serving \u00b7 300 g"
+    },
+    {
+     "index": 3,
+     "id": "03-1",
+     "collection": "03",
+     "pack": "pouch",
+     "finish": "foil",
+     "box": [
+      0.2688,
+      0.5313,
+      0.3802,
+      0.8216
+     ],
+     "ink_text": "Creatine monohydrate 5 g \u00b7 per 5 g serving \u00b7 300 g"
+    },
+    {
+     "index": 4,
+     "id": "04-1",
+     "collection": "04",
+     "pack": "box",
+     "finish": null,
+     "box": [
+      0.401,
+      0.6388,
+      0.4627,
+      0.8223
+     ],
+     "ink_text": "Sodium 500 mg \u00b7 Potassium 200 mg \u00b7 per sachet \u00b7 30 sachets"
+    },
+    {
+     "index": 5,
+     "id": "05-1",
+     "collection": "05",
+     "pack": "tin",
+     "finish": "mist",
+     "box": [
+      0.4842,
+      0.7005,
+      0.57,
+      0.8253
+     ],
+     "ink_text": "Magnesium 200 mg \u00b7 per 2 capsules \u00b7 120 capsules"
+    },
+    {
+     "index": 6,
+     "id": "06-1",
+     "collection": "06",
+     "pack": "tin",
+     "finish": "steel",
+     "box": [
+      0.5908,
+      0.7009,
+      0.6771,
+      0.8259
+     ],
+     "ink_text": "L-theanine 200 mg \u00b7 per capsule \u00b7 90 capsules"
+    },
+    {
+     "index": 7,
+     "id": "07-1",
+     "collection": "07",
+     "pack": "pouch",
+     "finish": "mist",
+     "box": [
+      0.6956,
+      0.5296,
+      0.808,
+      0.8172
+     ],
+     "ink_text": "Glycine 3 g \u00b7 per 3 g serving \u00b7 250 g"
+    },
+    {
+     "index": 8,
+     "id": "08-1",
+     "collection": "08",
+     "pack": "dropper",
+     "finish": null,
+     "box": [
+      0.8266,
+      0.6515,
+      0.8549,
+      0.8167
+     ],
+     "ink_text": "Ascorbic acid 10% \u00b7 Ferulic acid 0.5% \u00b7 of formula \u00b7 30 ml"
+    },
+    {
+     "index": 9,
+     "id": "09-1",
+     "collection": "09",
+     "pack": "tin",
+     "finish": "ink",
+     "box": [
+      0.8764,
+      0.7013,
+      0.965,
+      0.8263
+     ],
+     "ink_text": "Fish oil concentrate 1000 mg \u00b7 EPA 360 mg \u00b7 per 2 softgels \u00b7 90 softgels"
+    }
+   ],
+   "additivity": {
+    "denoised": {
+     "mae": 0.001537,
+     "mean_beauty": 0.61631,
+     "mae_rel": 0.002493,
+     "max_abs": 5.3791
+    },
+    "raw": {
+     "mae": 0.0,
+     "mean_beauty": 0.61637,
+     "mae_rel": 0.0,
+     "max_abs": 0.0002
+    }
+   },
+   "render_s": 1040.4,
+   "samples": 160
+  }
+ }
+}

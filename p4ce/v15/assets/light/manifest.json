@@ -1,0 +1,2026 @@
+{
+ "version": "pr6-v12-light",
+ "generated": "2026-11-03T16:40:58",
+ "groups": [
+  "key_l",
+  "key_r",
+  "top",
+  "rim",
+  "amb",
+  "ink"
+ ],
+ "group_roles": {
+  "key_l": "low raking key from the left (warm)",
+  "key_r": "low raking key from the right (cool)",
+  "top": "soft overhead",
+  "rim": "back rim",
+  "amb": "world / fill",
+  "ink": "emission-only invisible ink on the label (zero in every other group)"
+ },
+ "encoding": "srgb8",
+ "decode": "linear_i = srgbToLinear(texel_i.rgb) * passes[group].scale",
+ "mix": "c = exposure * sum_i(w_i * linear_i); out = linearToSrgb(pbrNeutral(c)) (+ dither)",
+ "tonemap": "khronos_pbr_neutral",
+ "tonemap_glsl": "vec3 pbrNeutral(vec3 c){const float s=0.76;const float dsat=0.15;float x=min(c.r,min(c.g,c.b));float off=x<0.08?x-6.25*x*x:0.04;c-=off;float p=max(c.r,max(c.g,c.b));if(p<s)return c;const float d=1.0-s;float np=1.0-d*d/(p+d-s);c*=np/p;float g=1.0-1.0/(dsat*(p-np)+1.0);return mix(c,vec3(np),g);}",
+ "exposure": 1.0,
+ "default_weights": {
+  "key_l": 1.0,
+  "key_r": 0.12,
+  "top": 0.18,
+  "rim": 0.25,
+  "amb": 0.5,
+  "ink": 0.0
+ },
+ "ink_weights": {
+  "key_l": 0.35,
+  "key_r": 0.06,
+  "top": 0.12,
+  "rim": 0.3,
+  "amb": 0.22,
+  "ink": 1.0
+ },
+ "notes": [
+  "Passes are additive in linear light: linearise each texel, multiply by its pass scale, then add.",
+  "poster / poster_ink are already tonemapped with exactly this mix (default_weights / ink_weights).",
+  "Mask: hero 255 = pack, 0 = set (use it to seat the pack in the debossed disc or to dim the set); lineup value = 25 * pack index (1..9, in packs[] order).",
+  "packs[].box = [x0, y0, x1, y1] in 0..1 image space, origin top-left.",
+  "Hero shots: product = the catalogue id the print and ink describe. Other products of the same format reuse the image; their facts must come from the catalogue, not from the picture."
+ ],
+ "shots": {
+  "lineup": {
+   "w": 2400,
+   "h": 1350,
+   "product": null,
+   "pack": "lineup",
+   "ink_text": "LOT 2601-A \u00b7 HPLC xx.x% / LOT 2602-A \u00b7 HPLC xx.x% / LOT 2603-A \u00b7 HPLC xx.x% / LOT 2604-A \u00b7 HPLC xx.x% / LOT 2605-A \u00b7 HPLC xx.x% / LOT 2606-A \u00b7 HPLC xx.x% / LOT 2607-A \u00b7 HPLC xx.x% / LOT 2608-A \u00b7 HPLC xx.x% / LOT 2609-A \u00b7 HPLC xx.x%",
+   "status": "final",
+   "passes": {
+    "key_l": {
+     "scale": 3.341,
+     "d": "lineup/key_l-d.webp",
+     "m": "lineup/key_l-m.webp"
+    },
+    "key_r": {
+     "scale": 2.442,
+     "d": "lineup/key_r-d.webp",
+     "m": "lineup/key_r-m.webp"
+    },
+    "top": {
+     "scale": 0.2857,
+     "d": "lineup/top-d.webp",
+     "m": "lineup/top-m.webp"
+    },
+    "rim": {
+     "scale": 1.304,
+     "d": "lineup/rim-d.webp",
+     "m": "lineup/rim-m.webp"
+    },
+    "amb": {
+     "scale": 0.3544,
+     "d": "lineup/amb-d.webp",
+     "m": "lineup/amb-m.webp"
+    },
+    "ink": {
+     "scale": 0.406,
+     "d": "lineup/ink-d.webp",
+     "m": "lineup/ink-m.webp"
+    }
+   },
+   "sizes": {
+    "d": [
+     2400,
+     1350
+    ],
+    "m": [
+     1366,
+     768
+    ]
+   },
+   "poster": {
+    "d": "lineup/poster-d.webp",
+    "m": "lineup/poster-m.webp"
+   },
+   "poster_ink": {
+    "d": "lineup/poster-ink-d.webp",
+    "m": "lineup/poster-ink-m.webp"
+   },
+   "mask": {
+    "encoding": "png8, value = 25 * pack index (0 = set)",
+    "d": "lineup/mask-d.png",
+    "m": "lineup/mask-m.png"
+   },
+   "packs": [
+    {
+     "index": 1,
+     "id": "PR6-C-0101",
+     "area": "01",
+     "pack": "vial",
+     "cap": "chalk",
+     "box": [
+      0.04,
+      0.4539,
+      0.1155,
+      0.7599
+     ],
+     "ink_text": "LOT 2601-A \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 2,
+     "id": "PR6-C-0201",
+     "area": "02",
+     "pack": "vial",
+     "cap": "steel",
+     "box": [
+      0.148,
+      0.452,
+      0.2219,
+      0.7561
+     ],
+     "ink_text": "LOT 2602-A \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 3,
+     "id": "PR6-C-0301",
+     "area": "03",
+     "pack": "vial",
+     "cap": "mist",
+     "box": [
+      0.2515,
+      0.4542,
+      0.3249,
+      0.7605
+     ],
+     "ink_text": "LOT 2603-A \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 4,
+     "id": "PR6-C-0401",
+     "area": "04",
+     "pack": "vial",
+     "cap": "ink",
+     "box": [
+      0.3573,
+      0.4544,
+      0.4299,
+      0.7608
+     ],
+     "ink_text": "LOT 2604-A \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 5,
+     "id": "PR6-C-0501",
+     "area": "05",
+     "pack": "vial",
+     "cap": "orange",
+     "box": [
+      0.4634,
+      0.4518,
+      0.5349,
+      0.7557
+     ],
+     "ink_text": "LOT 2605-A \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 6,
+     "id": "PR6-C-0601",
+     "area": "06",
+     "pack": "vial",
+     "cap": "steel",
+     "box": [
+      0.5681,
+      0.4527,
+      0.6403,
+      0.7574
+     ],
+     "ink_text": "LOT 2606-A \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 7,
+     "id": "PR6-C-0701",
+     "area": "07",
+     "pack": "vial",
+     "cap": "mist",
+     "box": [
+      0.6732,
+      0.4537,
+      0.7465,
+      0.7595
+     ],
+     "ink_text": "LOT 2607-A \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 8,
+     "id": "PR6-C-0801",
+     "area": "08",
+     "pack": "vial",
+     "cap": "chalk",
+     "box": [
+      0.7759,
+      0.4513,
+      0.8496,
+      0.7548
+     ],
+     "ink_text": "LOT 2608-A \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 9,
+     "id": "PR6-C-0901",
+     "area": "09",
+     "pack": "vial",
+     "cap": "ink",
+     "box": [
+      0.8842,
+      0.455,
+      0.96,
+      0.762
+     ],
+     "ink_text": "LOT 2609-A \u00b7 HPLC xx.x%"
+    }
+   ],
+   "additivity": {
+    "denoised": {
+     "mae": 0.002749,
+     "mean_beauty": 0.57732,
+     "mae_rel": 0.004761,
+     "max_abs": 37.3305
+    },
+    "raw": {
+     "mae": 0.0,
+     "mean_beauty": 0.57808,
+     "mae_rel": 0.0,
+     "max_abs": 0.0001
+    }
+   },
+   "render_s": 849.5,
+   "samples": 160
+  },
+  "pair_hero": {
+   "w": 1280,
+   "h": 1600,
+   "product": "PR6-C-0202",
+   "pack": "vial",
+   "ink_text": "LOT 2602-B \u00b7 HPLC xx.x% \u00b7 MS confirmed \u00b7 CoA 2026-10-11 \u00b7 Tested by [named third-party lab]",
+   "status": "final",
+   "passes": {
+    "key_l": {
+     "scale": 5.373,
+     "d": "pair_hero/key_l-d.webp",
+     "m": "pair_hero/key_l-m.webp"
+    },
+    "key_r": {
+     "scale": 4.872,
+     "d": "pair_hero/key_r-d.webp",
+     "m": "pair_hero/key_r-m.webp"
+    },
+    "top": {
+     "scale": 0.2836,
+     "d": "pair_hero/top-d.webp",
+     "m": "pair_hero/top-m.webp"
+    },
+    "rim": {
+     "scale": 2.127,
+     "d": "pair_hero/rim-d.webp",
+     "m": "pair_hero/rim-m.webp"
+    },
+    "amb": {
+     "scale": 0.3727,
+     "d": "pair_hero/amb-d.webp",
+     "m": "pair_hero/amb-m.webp"
+    },
+    "ink": {
+     "scale": 0.6757,
+     "d": "pair_hero/ink-d.webp",
+     "m": "pair_hero/ink-m.webp"
+    }
+   },
+   "sizes": {
+    "d": [
+     1280,
+     1600
+    ],
+    "m": [
+     819,
+     1024
+    ]
+   },
+   "poster": {
+    "d": "pair_hero/poster-d.webp",
+    "m": "pair_hero/poster-m.webp"
+   },
+   "poster_ink": {
+    "d": "pair_hero/poster-ink-d.webp",
+    "m": "pair_hero/poster-ink-m.webp"
+   },
+   "mask": {
+    "encoding": "png8, 255 = pack, 0 = set",
+    "d": "pair_hero/mask-d.png",
+    "m": "pair_hero/mask-m.png"
+   },
+   "packs": [
+    {
+     "id": "PR6-C-0201",
+     "pack": "vial",
+     "box": [
+      0.1462,
+      0.22,
+      0.4462,
+      0.7966
+     ]
+    },
+    {
+     "id": "PR6-C-0202",
+     "pack": "vial",
+     "box": [
+      0.5382,
+      0.2342,
+      0.8538,
+      0.84
+     ]
+    }
+   ],
+   "additivity": {
+    "denoised": {
+     "mae": 0.00467,
+     "mean_beauty": 0.84764,
+     "mae_rel": 0.005509,
+     "max_abs": 59.547
+    },
+    "raw": {
+     "mae": 0.0,
+     "mean_beauty": 0.84852,
+     "mae_rel": 0.0,
+     "max_abs": 0.0001
+    }
+   },
+   "render_s": 557.9,
+   "samples": 160
+  },
+  "shelf_01": {
+   "w": 2000,
+   "h": 1000,
+   "product": "PR6-C-0101",
+   "pack": "shelf",
+   "ink_text": "LOT 2601-A \u00b7 HPLC xx.x%",
+   "status": "final",
+   "passes": {
+    "key_l": {
+     "scale": 2.977,
+     "d": "shelf_01/key_l-d.webp",
+     "m": "shelf_01/key_l-m.webp"
+    },
+    "key_r": {
+     "scale": 2.643,
+     "d": "shelf_01/key_r-d.webp",
+     "m": "shelf_01/key_r-m.webp"
+    },
+    "top": {
+     "scale": 0.2786,
+     "d": "shelf_01/top-d.webp",
+     "m": "shelf_01/top-m.webp"
+    },
+    "rim": {
+     "scale": 0.989,
+     "d": "shelf_01/rim-d.webp",
+     "m": "shelf_01/rim-m.webp"
+    },
+    "amb": {
+     "scale": 0.3446,
+     "d": "shelf_01/amb-d.webp",
+     "m": "shelf_01/amb-m.webp"
+    },
+    "ink": {
+     "scale": 0.3761,
+     "d": "shelf_01/ink-d.webp",
+     "m": "shelf_01/ink-m.webp"
+    }
+   },
+   "sizes": {
+    "d": [
+     2000,
+     1000
+    ],
+    "m": [
+     1366,
+     683
+    ]
+   },
+   "poster": {
+    "d": "shelf_01/poster-d.webp",
+    "m": "shelf_01/poster-m.webp"
+   },
+   "poster_ink": {
+    "d": "shelf_01/poster-ink-d.webp",
+    "m": "shelf_01/poster-ink-m.webp"
+   },
+   "mask": {
+    "encoding": "png8, value = 25 * pack index (0 = set)",
+    "d": "shelf_01/mask-d.png",
+    "m": "shelf_01/mask-m.png"
+   },
+   "packs": [
+    {
+     "index": 1,
+     "id": "PR6-C-0101",
+     "size": "10 mg",
+     "pack": "vial",
+     "box": [
+      0.4227,
+      0.3486,
+      0.5099,
+      0.7594
+     ],
+     "ink_text": "LOT 2601-A \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 2,
+     "id": "PR6-C-0101",
+     "size": "5 mg",
+     "pack": "vial",
+     "box": [
+      0.5098,
+      0.5303,
+      0.5768,
+      0.8514
+     ],
+     "ink_text": "LOT 2601-A \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 3,
+     "id": "PR6-C-0102",
+     "size": "10 mg",
+     "pack": "vial",
+     "box": [
+      0.5774,
+      0.4205,
+      0.6631,
+      0.8313
+     ],
+     "ink_text": "LOT 2601-B \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 4,
+     "id": "PR6-C-0102",
+     "size": "5 mg",
+     "pack": "vial",
+     "box": [
+      0.6614,
+      0.5298,
+      0.7284,
+      0.8506
+     ],
+     "ink_text": "LOT 2601-B \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 5,
+     "id": "PR6-C-0103",
+     "size": "10 mg",
+     "pack": "vial",
+     "box": [
+      0.7221,
+      0.4201,
+      0.8088,
+      0.8305
+     ],
+     "ink_text": "LOT 2601-C \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 6,
+     "id": "PR6-C-0103",
+     "size": "5 mg",
+     "pack": "vial",
+     "box": [
+      0.8107,
+      0.5266,
+      0.8785,
+      0.8449
+     ],
+     "ink_text": "LOT 2601-C \u00b7 HPLC xx.x%"
+    }
+   ],
+   "set_box": [
+    0.32,
+    0.3486,
+    0.92,
+    0.8514
+   ],
+   "additivity": {
+    "denoised": {
+     "mae": 0.002963,
+     "mean_beauty": 0.59568,
+     "mae_rel": 0.004975,
+     "max_abs": 8.2298
+    },
+    "raw": {
+     "mae": 0.0,
+     "mean_beauty": 0.59655,
+     "mae_rel": 0.0,
+     "max_abs": 0.0001
+    }
+   },
+   "render_s": 479.9,
+   "samples": 128
+  },
+  "shelf_02": {
+   "w": 2000,
+   "h": 1000,
+   "product": "PR6-C-0201",
+   "pack": "shelf",
+   "ink_text": "LOT 2602-A \u00b7 HPLC xx.x%",
+   "status": "final",
+   "passes": {
+    "key_l": {
+     "scale": 2.977,
+     "d": "shelf_02/key_l-d.webp",
+     "m": "shelf_02/key_l-m.webp"
+    },
+    "key_r": {
+     "scale": 2.644,
+     "d": "shelf_02/key_r-d.webp",
+     "m": "shelf_02/key_r-m.webp"
+    },
+    "top": {
+     "scale": 0.2786,
+     "d": "shelf_02/top-d.webp",
+     "m": "shelf_02/top-m.webp"
+    },
+    "rim": {
+     "scale": 0.9889,
+     "d": "shelf_02/rim-d.webp",
+     "m": "shelf_02/rim-m.webp"
+    },
+    "amb": {
+     "scale": 0.3446,
+     "d": "shelf_02/amb-d.webp",
+     "m": "shelf_02/amb-m.webp"
+    },
+    "ink": {
+     "scale": 0.3798,
+     "d": "shelf_02/ink-d.webp",
+     "m": "shelf_02/ink-m.webp"
+    }
+   },
+   "sizes": {
+    "d": [
+     2000,
+     1000
+    ],
+    "m": [
+     1366,
+     683
+    ]
+   },
+   "poster": {
+    "d": "shelf_02/poster-d.webp",
+    "m": "shelf_02/poster-m.webp"
+   },
+   "poster_ink": {
+    "d": "shelf_02/poster-ink-d.webp",
+    "m": "shelf_02/poster-ink-m.webp"
+   },
+   "mask": {
+    "encoding": "png8, value = 25 * pack index (0 = set)",
+    "d": "shelf_02/mask-d.png",
+    "m": "shelf_02/mask-m.png"
+   },
+   "packs": [
+    {
+     "index": 1,
+     "id": "PR6-C-0201",
+     "size": "10 mg",
+     "pack": "vial",
+     "box": [
+      0.4227,
+      0.3486,
+      0.5099,
+      0.7594
+     ],
+     "ink_text": "LOT 2602-A \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 2,
+     "id": "PR6-C-0201",
+     "size": "5 mg",
+     "pack": "vial",
+     "box": [
+      0.5098,
+      0.5303,
+      0.5768,
+      0.8514
+     ],
+     "ink_text": "LOT 2602-A \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 3,
+     "id": "PR6-C-0202",
+     "size": "10 mg",
+     "pack": "vial",
+     "box": [
+      0.5774,
+      0.4205,
+      0.6631,
+      0.8313
+     ],
+     "ink_text": "LOT 2602-B \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 4,
+     "id": "PR6-C-0202",
+     "size": "5 mg",
+     "pack": "vial",
+     "box": [
+      0.6614,
+      0.5298,
+      0.7284,
+      0.8506
+     ],
+     "ink_text": "LOT 2602-B \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 5,
+     "id": "PR6-C-0203",
+     "size": "10 mg",
+     "pack": "vial",
+     "box": [
+      0.7221,
+      0.4201,
+      0.8088,
+      0.8305
+     ],
+     "ink_text": "LOT 2602-C \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 6,
+     "id": "PR6-C-0203",
+     "size": "5 mg",
+     "pack": "vial",
+     "box": [
+      0.8107,
+      0.5266,
+      0.8785,
+      0.8449
+     ],
+     "ink_text": "LOT 2602-C \u00b7 HPLC xx.x%"
+    }
+   ],
+   "set_box": [
+    0.32,
+    0.3486,
+    0.92,
+    0.8514
+   ],
+   "additivity": {
+    "denoised": {
+     "mae": 0.002969,
+     "mean_beauty": 0.59571,
+     "mae_rel": 0.004984,
+     "max_abs": 8.2273
+    },
+    "raw": {
+     "mae": 0.0,
+     "mean_beauty": 0.59658,
+     "mae_rel": 0.0,
+     "max_abs": 0.0001
+    }
+   },
+   "render_s": 465.0,
+   "samples": 128
+  },
+  "shelf_03": {
+   "w": 2000,
+   "h": 1000,
+   "product": "PR6-C-0301",
+   "pack": "shelf",
+   "ink_text": "LOT 2603-A \u00b7 HPLC xx.x%",
+   "status": "final",
+   "passes": {
+    "key_l": {
+     "scale": 2.977,
+     "d": "shelf_03/key_l-d.webp",
+     "m": "shelf_03/key_l-m.webp"
+    },
+    "key_r": {
+     "scale": 2.637,
+     "d": "shelf_03/key_r-d.webp",
+     "m": "shelf_03/key_r-m.webp"
+    },
+    "top": {
+     "scale": 0.2786,
+     "d": "shelf_03/top-d.webp",
+     "m": "shelf_03/top-m.webp"
+    },
+    "rim": {
+     "scale": 0.9889,
+     "d": "shelf_03/rim-d.webp",
+     "m": "shelf_03/rim-m.webp"
+    },
+    "amb": {
+     "scale": 0.3445,
+     "d": "shelf_03/amb-d.webp",
+     "m": "shelf_03/amb-m.webp"
+    },
+    "ink": {
+     "scale": 0.383,
+     "d": "shelf_03/ink-d.webp",
+     "m": "shelf_03/ink-m.webp"
+    }
+   },
+   "sizes": {
+    "d": [
+     2000,
+     1000
+    ],
+    "m": [
+     1366,
+     683
+    ]
+   },
+   "poster": {
+    "d": "shelf_03/poster-d.webp",
+    "m": "shelf_03/poster-m.webp"
+   },
+   "poster_ink": {
+    "d": "shelf_03/poster-ink-d.webp",
+    "m": "shelf_03/poster-ink-m.webp"
+   },
+   "mask": {
+    "encoding": "png8, value = 25 * pack index (0 = set)",
+    "d": "shelf_03/mask-d.png",
+    "m": "shelf_03/mask-m.png"
+   },
+   "packs": [
+    {
+     "index": 1,
+     "id": "PR6-C-0301",
+     "size": "10 mg",
+     "pack": "vial",
+     "box": [
+      0.4227,
+      0.3486,
+      0.5099,
+      0.7594
+     ],
+     "ink_text": "LOT 2603-A \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 2,
+     "id": "PR6-C-0301",
+     "size": "5 mg",
+     "pack": "vial",
+     "box": [
+      0.5098,
+      0.5303,
+      0.5768,
+      0.8514
+     ],
+     "ink_text": "LOT 2603-A \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 3,
+     "id": "PR6-C-0302",
+     "size": "10 mg",
+     "pack": "vial",
+     "box": [
+      0.5774,
+      0.4205,
+      0.6631,
+      0.8313
+     ],
+     "ink_text": "LOT 2603-B \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 4,
+     "id": "PR6-C-0302",
+     "size": "5 mg",
+     "pack": "vial",
+     "box": [
+      0.6614,
+      0.5298,
+      0.7284,
+      0.8506
+     ],
+     "ink_text": "LOT 2603-B \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 5,
+     "id": "PR6-C-0303",
+     "size": "10 mg",
+     "pack": "vial",
+     "box": [
+      0.7221,
+      0.4201,
+      0.8088,
+      0.8305
+     ],
+     "ink_text": "LOT 2603-C \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 6,
+     "id": "PR6-C-0303",
+     "size": "5 mg",
+     "pack": "vial",
+     "box": [
+      0.8107,
+      0.5266,
+      0.8785,
+      0.8449
+     ],
+     "ink_text": "LOT 2603-C \u00b7 HPLC xx.x%"
+    }
+   ],
+   "set_box": [
+    0.32,
+    0.3486,
+    0.92,
+    0.8514
+   ],
+   "additivity": {
+    "denoised": {
+     "mae": 0.002974,
+     "mean_beauty": 0.59564,
+     "mae_rel": 0.004993,
+     "max_abs": 8.2251
+    },
+    "raw": {
+     "mae": 0.0,
+     "mean_beauty": 0.59651,
+     "mae_rel": 0.0,
+     "max_abs": 0.0001
+    }
+   },
+   "render_s": 474.9,
+   "samples": 128
+  },
+  "shelf_04": {
+   "w": 2000,
+   "h": 1000,
+   "product": "PR6-C-0401",
+   "pack": "shelf",
+   "ink_text": "LOT 2604-A \u00b7 HPLC xx.x%",
+   "status": "final",
+   "passes": {
+    "key_l": {
+     "scale": 2.979,
+     "d": "shelf_04/key_l-d.webp",
+     "m": "shelf_04/key_l-m.webp"
+    },
+    "key_r": {
+     "scale": 2.634,
+     "d": "shelf_04/key_r-d.webp",
+     "m": "shelf_04/key_r-m.webp"
+    },
+    "top": {
+     "scale": 0.2786,
+     "d": "shelf_04/top-d.webp",
+     "m": "shelf_04/top-m.webp"
+    },
+    "rim": {
+     "scale": 0.989,
+     "d": "shelf_04/rim-d.webp",
+     "m": "shelf_04/rim-m.webp"
+    },
+    "amb": {
+     "scale": 0.3446,
+     "d": "shelf_04/amb-d.webp",
+     "m": "shelf_04/amb-m.webp"
+    },
+    "ink": {
+     "scale": 0.3915,
+     "d": "shelf_04/ink-d.webp",
+     "m": "shelf_04/ink-m.webp"
+    }
+   },
+   "sizes": {
+    "d": [
+     2000,
+     1000
+    ],
+    "m": [
+     1366,
+     683
+    ]
+   },
+   "poster": {
+    "d": "shelf_04/poster-d.webp",
+    "m": "shelf_04/poster-m.webp"
+   },
+   "poster_ink": {
+    "d": "shelf_04/poster-ink-d.webp",
+    "m": "shelf_04/poster-ink-m.webp"
+   },
+   "mask": {
+    "encoding": "png8, value = 25 * pack index (0 = set)",
+    "d": "shelf_04/mask-d.png",
+    "m": "shelf_04/mask-m.png"
+   },
+   "packs": [
+    {
+     "index": 1,
+     "id": "PR6-C-0401",
+     "size": "10 mg",
+     "pack": "vial",
+     "box": [
+      0.4227,
+      0.3486,
+      0.5099,
+      0.7594
+     ],
+     "ink_text": "LOT 2604-A \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 2,
+     "id": "PR6-C-0401",
+     "size": "5 mg",
+     "pack": "vial",
+     "box": [
+      0.5098,
+      0.5303,
+      0.5768,
+      0.8514
+     ],
+     "ink_text": "LOT 2604-A \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 3,
+     "id": "PR6-C-0402",
+     "size": "10 mg",
+     "pack": "vial",
+     "box": [
+      0.5774,
+      0.4205,
+      0.6631,
+      0.8313
+     ],
+     "ink_text": "LOT 2604-B \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 4,
+     "id": "PR6-C-0402",
+     "size": "5 mg",
+     "pack": "vial",
+     "box": [
+      0.6614,
+      0.5298,
+      0.7284,
+      0.8506
+     ],
+     "ink_text": "LOT 2604-B \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 5,
+     "id": "PR6-C-0403",
+     "size": "10 mg",
+     "pack": "vial",
+     "box": [
+      0.7221,
+      0.4201,
+      0.8088,
+      0.8305
+     ],
+     "ink_text": "LOT 2604-C \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 6,
+     "id": "PR6-C-0403",
+     "size": "5 mg",
+     "pack": "vial",
+     "box": [
+      0.8107,
+      0.5266,
+      0.8785,
+      0.8449
+     ],
+     "ink_text": "LOT 2604-C \u00b7 HPLC xx.x%"
+    }
+   ],
+   "set_box": [
+    0.32,
+    0.3486,
+    0.92,
+    0.8514
+   ],
+   "additivity": {
+    "denoised": {
+     "mae": 0.002965,
+     "mean_beauty": 0.59561,
+     "mae_rel": 0.004978,
+     "max_abs": 8.2261
+    },
+    "raw": {
+     "mae": 0.0,
+     "mean_beauty": 0.59647,
+     "mae_rel": 0.0,
+     "max_abs": 0.0001
+    }
+   },
+   "render_s": 503.2,
+   "samples": 128
+  },
+  "shelf_05": {
+   "w": 2000,
+   "h": 1000,
+   "product": "PR6-C-0501",
+   "pack": "shelf",
+   "ink_text": "LOT 2605-A \u00b7 HPLC xx.x%",
+   "status": "final",
+   "passes": {
+    "key_l": {
+     "scale": 2.977,
+     "d": "shelf_05/key_l-d.webp",
+     "m": "shelf_05/key_l-m.webp"
+    },
+    "key_r": {
+     "scale": 2.634,
+     "d": "shelf_05/key_r-d.webp",
+     "m": "shelf_05/key_r-m.webp"
+    },
+    "top": {
+     "scale": 0.2786,
+     "d": "shelf_05/top-d.webp",
+     "m": "shelf_05/top-m.webp"
+    },
+    "rim": {
+     "scale": 0.9889,
+     "d": "shelf_05/rim-d.webp",
+     "m": "shelf_05/rim-m.webp"
+    },
+    "amb": {
+     "scale": 0.3446,
+     "d": "shelf_05/amb-d.webp",
+     "m": "shelf_05/amb-m.webp"
+    },
+    "ink": {
+     "scale": 0.3853,
+     "d": "shelf_05/ink-d.webp",
+     "m": "shelf_05/ink-m.webp"
+    }
+   },
+   "sizes": {
+    "d": [
+     2000,
+     1000
+    ],
+    "m": [
+     1366,
+     683
+    ]
+   },
+   "poster": {
+    "d": "shelf_05/poster-d.webp",
+    "m": "shelf_05/poster-m.webp"
+   },
+   "poster_ink": {
+    "d": "shelf_05/poster-ink-d.webp",
+    "m": "shelf_05/poster-ink-m.webp"
+   },
+   "mask": {
+    "encoding": "png8, value = 25 * pack index (0 = set)",
+    "d": "shelf_05/mask-d.png",
+    "m": "shelf_05/mask-m.png"
+   },
+   "packs": [
+    {
+     "index": 1,
+     "id": "PR6-C-0501",
+     "size": "10 mg",
+     "pack": "vial",
+     "box": [
+      0.4227,
+      0.3486,
+      0.5099,
+      0.7594
+     ],
+     "ink_text": "LOT 2605-A \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 2,
+     "id": "PR6-C-0501",
+     "size": "5 mg",
+     "pack": "vial",
+     "box": [
+      0.5098,
+      0.5303,
+      0.5768,
+      0.8514
+     ],
+     "ink_text": "LOT 2605-A \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 3,
+     "id": "PR6-C-0502",
+     "size": "10 mg",
+     "pack": "vial",
+     "box": [
+      0.5774,
+      0.4205,
+      0.6631,
+      0.8313
+     ],
+     "ink_text": "LOT 2605-B \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 4,
+     "id": "PR6-C-0502",
+     "size": "5 mg",
+     "pack": "vial",
+     "box": [
+      0.6614,
+      0.5298,
+      0.7284,
+      0.8506
+     ],
+     "ink_text": "LOT 2605-B \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 5,
+     "id": "PR6-C-0503",
+     "size": "10 mg",
+     "pack": "vial",
+     "box": [
+      0.7221,
+      0.4201,
+      0.8088,
+      0.8305
+     ],
+     "ink_text": "LOT 2605-C \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 6,
+     "id": "PR6-C-0503",
+     "size": "5 mg",
+     "pack": "vial",
+     "box": [
+      0.8107,
+      0.5266,
+      0.8785,
+      0.8449
+     ],
+     "ink_text": "LOT 2605-C \u00b7 HPLC xx.x%"
+    }
+   ],
+   "set_box": [
+    0.32,
+    0.3486,
+    0.92,
+    0.8514
+   ],
+   "additivity": {
+    "denoised": {
+     "mae": 0.002974,
+     "mean_beauty": 0.59564,
+     "mae_rel": 0.004993,
+     "max_abs": 8.2317
+    },
+    "raw": {
+     "mae": 0.0,
+     "mean_beauty": 0.59651,
+     "mae_rel": 0.0,
+     "max_abs": 0.0001
+    }
+   },
+   "render_s": 486.2,
+   "samples": 128
+  },
+  "shelf_06": {
+   "w": 2000,
+   "h": 1000,
+   "product": "PR6-C-0601",
+   "pack": "shelf",
+   "ink_text": "LOT 2606-A \u00b7 HPLC xx.x%",
+   "status": "final",
+   "passes": {
+    "key_l": {
+     "scale": 2.977,
+     "d": "shelf_06/key_l-d.webp",
+     "m": "shelf_06/key_l-m.webp"
+    },
+    "key_r": {
+     "scale": 2.642,
+     "d": "shelf_06/key_r-d.webp",
+     "m": "shelf_06/key_r-m.webp"
+    },
+    "top": {
+     "scale": 0.2786,
+     "d": "shelf_06/top-d.webp",
+     "m": "shelf_06/top-m.webp"
+    },
+    "rim": {
+     "scale": 0.9892,
+     "d": "shelf_06/rim-d.webp",
+     "m": "shelf_06/rim-m.webp"
+    },
+    "amb": {
+     "scale": 0.3446,
+     "d": "shelf_06/amb-d.webp",
+     "m": "shelf_06/amb-m.webp"
+    },
+    "ink": {
+     "scale": 0.3971,
+     "d": "shelf_06/ink-d.webp",
+     "m": "shelf_06/ink-m.webp"
+    }
+   },
+   "sizes": {
+    "d": [
+     2000,
+     1000
+    ],
+    "m": [
+     1366,
+     683
+    ]
+   },
+   "poster": {
+    "d": "shelf_06/poster-d.webp",
+    "m": "shelf_06/poster-m.webp"
+   },
+   "poster_ink": {
+    "d": "shelf_06/poster-ink-d.webp",
+    "m": "shelf_06/poster-ink-m.webp"
+   },
+   "mask": {
+    "encoding": "png8, value = 25 * pack index (0 = set)",
+    "d": "shelf_06/mask-d.png",
+    "m": "shelf_06/mask-m.png"
+   },
+   "packs": [
+    {
+     "index": 1,
+     "id": "PR6-C-0601",
+     "size": "10 mg",
+     "pack": "vial",
+     "box": [
+      0.4227,
+      0.3486,
+      0.5099,
+      0.7594
+     ],
+     "ink_text": "LOT 2606-A \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 2,
+     "id": "PR6-C-0601",
+     "size": "5 mg",
+     "pack": "vial",
+     "box": [
+      0.5098,
+      0.5303,
+      0.5768,
+      0.8514
+     ],
+     "ink_text": "LOT 2606-A \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 3,
+     "id": "PR6-C-0602",
+     "size": "10 mg",
+     "pack": "vial",
+     "box": [
+      0.5774,
+      0.4205,
+      0.6631,
+      0.8313
+     ],
+     "ink_text": "LOT 2606-B \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 4,
+     "id": "PR6-C-0602",
+     "size": "5 mg",
+     "pack": "vial",
+     "box": [
+      0.6614,
+      0.5298,
+      0.7284,
+      0.8506
+     ],
+     "ink_text": "LOT 2606-B \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 5,
+     "id": "PR6-C-0603",
+     "size": "10 mg",
+     "pack": "vial",
+     "box": [
+      0.7221,
+      0.4201,
+      0.8088,
+      0.8305
+     ],
+     "ink_text": "LOT 2606-C \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 6,
+     "id": "PR6-C-0603",
+     "size": "5 mg",
+     "pack": "vial",
+     "box": [
+      0.8107,
+      0.5266,
+      0.8785,
+      0.8449
+     ],
+     "ink_text": "LOT 2606-C \u00b7 HPLC xx.x%"
+    }
+   ],
+   "set_box": [
+    0.32,
+    0.3486,
+    0.92,
+    0.8514
+   ],
+   "additivity": {
+    "denoised": {
+     "mae": 0.002971,
+     "mean_beauty": 0.59583,
+     "mae_rel": 0.004986,
+     "max_abs": 8.2347
+    },
+    "raw": {
+     "mae": 0.0,
+     "mean_beauty": 0.59669,
+     "mae_rel": 0.0,
+     "max_abs": 0.0001
+    }
+   },
+   "render_s": 520.2,
+   "samples": 128
+  },
+  "shelf_07": {
+   "w": 2000,
+   "h": 1000,
+   "product": "PR6-C-0701",
+   "pack": "shelf",
+   "ink_text": "LOT 2607-A \u00b7 HPLC xx.x%",
+   "status": "final",
+   "passes": {
+    "key_l": {
+     "scale": 2.978,
+     "d": "shelf_07/key_l-d.webp",
+     "m": "shelf_07/key_l-m.webp"
+    },
+    "key_r": {
+     "scale": 2.645,
+     "d": "shelf_07/key_r-d.webp",
+     "m": "shelf_07/key_r-m.webp"
+    },
+    "top": {
+     "scale": 0.2786,
+     "d": "shelf_07/top-d.webp",
+     "m": "shelf_07/top-m.webp"
+    },
+    "rim": {
+     "scale": 0.989,
+     "d": "shelf_07/rim-d.webp",
+     "m": "shelf_07/rim-m.webp"
+    },
+    "amb": {
+     "scale": 0.3446,
+     "d": "shelf_07/amb-d.webp",
+     "m": "shelf_07/amb-m.webp"
+    },
+    "ink": {
+     "scale": 0.3728,
+     "d": "shelf_07/ink-d.webp",
+     "m": "shelf_07/ink-m.webp"
+    }
+   },
+   "sizes": {
+    "d": [
+     2000,
+     1000
+    ],
+    "m": [
+     1366,
+     683
+    ]
+   },
+   "poster": {
+    "d": "shelf_07/poster-d.webp",
+    "m": "shelf_07/poster-m.webp"
+   },
+   "poster_ink": {
+    "d": "shelf_07/poster-ink-d.webp",
+    "m": "shelf_07/poster-ink-m.webp"
+   },
+   "mask": {
+    "encoding": "png8, value = 25 * pack index (0 = set)",
+    "d": "shelf_07/mask-d.png",
+    "m": "shelf_07/mask-m.png"
+   },
+   "packs": [
+    {
+     "index": 1,
+     "id": "PR6-C-0701",
+     "size": "10 mg",
+     "pack": "vial",
+     "box": [
+      0.4227,
+      0.3486,
+      0.5099,
+      0.7594
+     ],
+     "ink_text": "LOT 2607-A \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 2,
+     "id": "PR6-C-0701",
+     "size": "5 mg",
+     "pack": "vial",
+     "box": [
+      0.5098,
+      0.5303,
+      0.5768,
+      0.8514
+     ],
+     "ink_text": "LOT 2607-A \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 3,
+     "id": "PR6-C-0702",
+     "size": "10 mg",
+     "pack": "vial",
+     "box": [
+      0.5774,
+      0.4205,
+      0.6631,
+      0.8313
+     ],
+     "ink_text": "LOT 2607-B \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 4,
+     "id": "PR6-C-0702",
+     "size": "5 mg",
+     "pack": "vial",
+     "box": [
+      0.6614,
+      0.5298,
+      0.7284,
+      0.8506
+     ],
+     "ink_text": "LOT 2607-B \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 5,
+     "id": "PR6-C-0703",
+     "size": "10 mg",
+     "pack": "vial",
+     "box": [
+      0.7221,
+      0.4201,
+      0.8088,
+      0.8305
+     ],
+     "ink_text": "LOT 2607-C \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 6,
+     "id": "PR6-C-0703",
+     "size": "5 mg",
+     "pack": "vial",
+     "box": [
+      0.8107,
+      0.5266,
+      0.8785,
+      0.8449
+     ],
+     "ink_text": "LOT 2607-C \u00b7 HPLC xx.x%"
+    }
+   ],
+   "set_box": [
+    0.32,
+    0.3486,
+    0.92,
+    0.8514
+   ],
+   "additivity": {
+    "denoised": {
+     "mae": 0.002963,
+     "mean_beauty": 0.59572,
+     "mae_rel": 0.004973,
+     "max_abs": 8.2233
+    },
+    "raw": {
+     "mae": 0.0,
+     "mean_beauty": 0.59659,
+     "mae_rel": 0.0,
+     "max_abs": 0.0001
+    }
+   },
+   "render_s": 497.6,
+   "samples": 128
+  },
+  "shelf_08": {
+   "w": 2000,
+   "h": 1000,
+   "product": "PR6-C-0801",
+   "pack": "shelf",
+   "ink_text": "LOT 2608-A \u00b7 HPLC xx.x%",
+   "status": "final",
+   "passes": {
+    "key_l": {
+     "scale": 2.977,
+     "d": "shelf_08/key_l-d.webp",
+     "m": "shelf_08/key_l-m.webp"
+    },
+    "key_r": {
+     "scale": 2.635,
+     "d": "shelf_08/key_r-d.webp",
+     "m": "shelf_08/key_r-m.webp"
+    },
+    "top": {
+     "scale": 0.2786,
+     "d": "shelf_08/top-d.webp",
+     "m": "shelf_08/top-m.webp"
+    },
+    "rim": {
+     "scale": 0.989,
+     "d": "shelf_08/rim-d.webp",
+     "m": "shelf_08/rim-m.webp"
+    },
+    "amb": {
+     "scale": 0.3446,
+     "d": "shelf_08/amb-d.webp",
+     "m": "shelf_08/amb-m.webp"
+    },
+    "ink": {
+     "scale": 0.4036,
+     "d": "shelf_08/ink-d.webp",
+     "m": "shelf_08/ink-m.webp"
+    }
+   },
+   "sizes": {
+    "d": [
+     2000,
+     1000
+    ],
+    "m": [
+     1366,
+     683
+    ]
+   },
+   "poster": {
+    "d": "shelf_08/poster-d.webp",
+    "m": "shelf_08/poster-m.webp"
+   },
+   "poster_ink": {
+    "d": "shelf_08/poster-ink-d.webp",
+    "m": "shelf_08/poster-ink-m.webp"
+   },
+   "mask": {
+    "encoding": "png8, value = 25 * pack index (0 = set)",
+    "d": "shelf_08/mask-d.png",
+    "m": "shelf_08/mask-m.png"
+   },
+   "packs": [
+    {
+     "index": 1,
+     "id": "PR6-C-0801",
+     "size": "10 mg",
+     "pack": "vial",
+     "box": [
+      0.4227,
+      0.3486,
+      0.5099,
+      0.7594
+     ],
+     "ink_text": "LOT 2608-A \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 2,
+     "id": "PR6-C-0801",
+     "size": "5 mg",
+     "pack": "vial",
+     "box": [
+      0.5098,
+      0.5303,
+      0.5768,
+      0.8514
+     ],
+     "ink_text": "LOT 2608-A \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 3,
+     "id": "PR6-C-0802",
+     "size": "10 mg",
+     "pack": "vial",
+     "box": [
+      0.5774,
+      0.4205,
+      0.6631,
+      0.8313
+     ],
+     "ink_text": "LOT 2608-B \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 4,
+     "id": "PR6-C-0802",
+     "size": "5 mg",
+     "pack": "vial",
+     "box": [
+      0.6614,
+      0.5298,
+      0.7284,
+      0.8506
+     ],
+     "ink_text": "LOT 2608-B \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 5,
+     "id": "PR6-C-0803",
+     "size": "10 mg",
+     "pack": "vial",
+     "box": [
+      0.7221,
+      0.4201,
+      0.8088,
+      0.8305
+     ],
+     "ink_text": "LOT 2608-C \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 6,
+     "id": "PR6-C-0803",
+     "size": "5 mg",
+     "pack": "vial",
+     "box": [
+      0.8107,
+      0.5266,
+      0.8785,
+      0.8449
+     ],
+     "ink_text": "LOT 2608-C \u00b7 HPLC xx.x%"
+    }
+   ],
+   "set_box": [
+    0.32,
+    0.3486,
+    0.92,
+    0.8514
+   ],
+   "additivity": {
+    "denoised": {
+     "mae": 0.002979,
+     "mean_beauty": 0.59563,
+     "mae_rel": 0.005001,
+     "max_abs": 8.2295
+    },
+    "raw": {
+     "mae": 0.0,
+     "mean_beauty": 0.59649,
+     "mae_rel": 0.0,
+     "max_abs": 0.0001
+    }
+   },
+   "render_s": 465.3,
+   "samples": 128
+  },
+  "shelf_09": {
+   "w": 2000,
+   "h": 1000,
+   "product": "PR6-C-0901",
+   "pack": "shelf",
+   "ink_text": "LOT 2609-A \u00b7 HPLC xx.x%",
+   "status": "final",
+   "passes": {
+    "key_l": {
+     "scale": 2.977,
+     "d": "shelf_09/key_l-d.webp",
+     "m": "shelf_09/key_l-m.webp"
+    },
+    "key_r": {
+     "scale": 2.642,
+     "d": "shelf_09/key_r-d.webp",
+     "m": "shelf_09/key_r-m.webp"
+    },
+    "top": {
+     "scale": 0.2786,
+     "d": "shelf_09/top-d.webp",
+     "m": "shelf_09/top-m.webp"
+    },
+    "rim": {
+     "scale": 0.9889,
+     "d": "shelf_09/rim-d.webp",
+     "m": "shelf_09/rim-m.webp"
+    },
+    "amb": {
+     "scale": 0.3446,
+     "d": "shelf_09/amb-d.webp",
+     "m": "shelf_09/amb-m.webp"
+    },
+    "ink": {
+     "scale": 0.397,
+     "d": "shelf_09/ink-d.webp",
+     "m": "shelf_09/ink-m.webp"
+    }
+   },
+   "sizes": {
+    "d": [
+     2000,
+     1000
+    ],
+    "m": [
+     1366,
+     683
+    ]
+   },
+   "poster": {
+    "d": "shelf_09/poster-d.webp",
+    "m": "shelf_09/poster-m.webp"
+   },
+   "poster_ink": {
+    "d": "shelf_09/poster-ink-d.webp",
+    "m": "shelf_09/poster-ink-m.webp"
+   },
+   "mask": {
+    "encoding": "png8, value = 25 * pack index (0 = set)",
+    "d": "shelf_09/mask-d.png",
+    "m": "shelf_09/mask-m.png"
+   },
+   "packs": [
+    {
+     "index": 1,
+     "id": "PR6-C-0901",
+     "size": "10 mg",
+     "pack": "vial",
+     "box": [
+      0.4227,
+      0.3486,
+      0.5099,
+      0.7594
+     ],
+     "ink_text": "LOT 2609-A \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 2,
+     "id": "PR6-C-0901",
+     "size": "5 mg",
+     "pack": "vial",
+     "box": [
+      0.5098,
+      0.5303,
+      0.5768,
+      0.8514
+     ],
+     "ink_text": "LOT 2609-A \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 3,
+     "id": "PR6-C-0902",
+     "size": "10 mg",
+     "pack": "vial",
+     "box": [
+      0.5774,
+      0.4205,
+      0.6631,
+      0.8313
+     ],
+     "ink_text": "LOT 2609-B \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 4,
+     "id": "PR6-C-0902",
+     "size": "5 mg",
+     "pack": "vial",
+     "box": [
+      0.6614,
+      0.5298,
+      0.7284,
+      0.8506
+     ],
+     "ink_text": "LOT 2609-B \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 5,
+     "id": "PR6-C-0903",
+     "size": "10 mg",
+     "pack": "vial",
+     "box": [
+      0.7221,
+      0.4201,
+      0.8088,
+      0.8305
+     ],
+     "ink_text": "LOT 2609-C \u00b7 HPLC xx.x%"
+    },
+    {
+     "index": 6,
+     "id": "PR6-C-0903",
+     "size": "5 mg",
+     "pack": "vial",
+     "box": [
+      0.8107,
+      0.5266,
+      0.8785,
+      0.8449
+     ],
+     "ink_text": "LOT 2609-C \u00b7 HPLC xx.x%"
+    }
+   ],
+   "set_box": [
+    0.32,
+    0.3486,
+    0.92,
+    0.8514
+   ],
+   "additivity": {
+    "denoised": {
+     "mae": 0.002975,
+     "mean_beauty": 0.5958,
+     "mae_rel": 0.004994,
+     "max_abs": 8.2283
+    },
+    "raw": {
+     "mae": 0.0,
+     "mean_beauty": 0.59667,
+     "mae_rel": 0.0,
+     "max_abs": 0.0001
+    }
+   },
+   "render_s": 462.4,
+   "samples": 128
+  },
+  "vial_blank": {
+   "w": 1280,
+   "h": 1600,
+   "product": null,
+   "pack": "vial",
+   "ink_text": "",
+   "status": "final",
+   "passes": {
+    "key_l": {
+     "scale": 3.007,
+     "d": "vial_blank/key_l-d.webp",
+     "m": "vial_blank/key_l-m.webp"
+    },
+    "key_r": {
+     "scale": 2.711,
+     "d": "vial_blank/key_r-d.webp",
+     "m": "vial_blank/key_r-m.webp"
+    },
+    "top": {
+     "scale": 0.2807,
+     "d": "vial_blank/top-d.webp",
+     "m": "vial_blank/top-m.webp"
+    },
+    "rim": {
+     "scale": 1.367,
+     "d": "vial_blank/rim-d.webp",
+     "m": "vial_blank/rim-m.webp"
+    },
+    "amb": {
+     "scale": 0.3618,
+     "d": "vial_blank/amb-d.webp",
+     "m": "vial_blank/amb-m.webp"
+    },
+    "ink": {
+     "scale": 0.0001,
+     "d": "vial_blank/ink-d.webp",
+     "m": "vial_blank/ink-m.webp"
+    }
+   },
+   "sizes": {
+    "d": [
+     1280,
+     1600
+    ],
+    "m": [
+     819,
+     1024
+    ]
+   },
+   "poster": {
+    "d": "vial_blank/poster-d.webp",
+    "m": "vial_blank/poster-m.webp"
+   },
+   "poster_ink": {
+    "d": "vial_blank/poster-ink-d.webp",
+    "m": "vial_blank/poster-ink-m.webp"
+   },
+   "mask": {
+    "encoding": "png8, 255 = pack, 0 = set",
+    "d": "vial_blank/mask-d.png",
+    "m": "vial_blank/mask-m.png"
+   },
+   "packs": [
+    {
+     "id": null,
+     "pack": "vial",
+     "box": [
+      0.3192,
+      0.18,
+      0.6808,
+      0.88
+     ]
+    }
+   ],
+   "additivity": {
+    "denoised": {
+     "mae": 0.003302,
+     "mean_beauty": 0.82598,
+     "mae_rel": 0.003997,
+     "max_abs": 10.6209
+    },
+    "raw": {
+     "mae": 0.0,
+     "mean_beauty": 0.82628,
+     "mae_rel": 0.0,
+     "max_abs": 0.0
+    }
+   },
+   "render_s": 496.3,
+   "samples": 160
+  },
+  "vial_hero": {
+   "w": 1280,
+   "h": 1600,
+   "product": "PR6-C-0103",
+   "pack": "vial",
+   "ink_text": "LOT 2601-C \u00b7 HPLC xx.x% \u00b7 MS confirmed \u00b7 CoA 2026-10-10 \u00b7 Tested by [named third-party lab]",
+   "status": "final",
+   "passes": {
+    "key_l": {
+     "scale": 3.007,
+     "d": "vial_hero/key_l-d.webp",
+     "m": "vial_hero/key_l-m.webp"
+    },
+    "key_r": {
+     "scale": 2.711,
+     "d": "vial_hero/key_r-d.webp",
+     "m": "vial_hero/key_r-m.webp"
+    },
+    "top": {
+     "scale": 0.2807,
+     "d": "vial_hero/top-d.webp",
+     "m": "vial_hero/top-m.webp"
+    },
+    "rim": {
+     "scale": 1.367,
+     "d": "vial_hero/rim-d.webp",
+     "m": "vial_hero/rim-m.webp"
+    },
+    "amb": {
+     "scale": 0.3618,
+     "d": "vial_hero/amb-d.webp",
+     "m": "vial_hero/amb-m.webp"
+    },
+    "ink": {
+     "scale": 0.1281,
+     "d": "vial_hero/ink-d.webp",
+     "m": "vial_hero/ink-m.webp"
+    }
+   },
+   "sizes": {
+    "d": [
+     1280,
+     1600
+    ],
+    "m": [
+     819,
+     1024
+    ]
+   },
+   "poster": {
+    "d": "vial_hero/poster-d.webp",
+    "m": "vial_hero/poster-m.webp"
+   },
+   "poster_ink": {
+    "d": "vial_hero/poster-ink-d.webp",
+    "m": "vial_hero/poster-ink-m.webp"
+   },
+   "mask": {
+    "encoding": "png8, 255 = pack, 0 = set",
+    "d": "vial_hero/mask-d.png",
+    "m": "vial_hero/mask-m.png"
+   },
+   "packs": [
+    {
+     "id": "PR6-C-0103",
+     "pack": "vial",
+     "box": [
+      0.3192,
+      0.18,
+      0.6808,
+      0.88
+     ]
+    }
+   ],
+   "additivity": {
+    "denoised": {
+     "mae": 0.003446,
+     "mean_beauty": 0.82603,
+     "mae_rel": 0.004172,
+     "max_abs": 10.6584
+    },
+    "raw": {
+     "mae": 0.0,
+     "mean_beauty": 0.82633,
+     "mae_rel": 0.0,
+     "max_abs": 0.0
+    }
+   },
+   "render_s": 504.2,
+   "samples": 160
+  }
+ }
+}
