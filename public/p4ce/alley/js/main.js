@@ -23,11 +23,11 @@ const LINES = [
 ];
 // the order the alley comes up in, one group per footstep
 const REVEAL = ['crimson', 'steam', 'wash', 'amb', 'fluor', 'haze', 'sign', 'holo'];
-const OUT_W = { amb: 0.9, crimson: 1.0, wash: 1.0, steam: 0.6, fluor: 1.0, haze: 1.3, sign: 0.8, holo: 1.0, door: 2.2, inside: 0 };
+const OUT_W = { amb: 0.9, crimson: 0.8, wash: 1.0, steam: 0.45, fluor: 1.0, haze: 1.3, sign: 0.8, holo: 1.0, door: 2.2, inside: 0 };
 // tints that override the render's own (luma-normalised): the sign burns red, not amber
 const TINT = { sign: [2.2, 0.62, 0.55] };
 const IN_W = { amb: 1, bank1: 1, bank2: 1, bank3: 1, bank4: 1, end: 1 };
-const LOOK = { outside: { expo: 1.0, vp: [0.5, 0.537], shiftL: 0.035 }, inside: { expo: 0.9, vp: [0.5, 0.52], shiftL: 0.02 } };
+const LOOK = { outside: { expo: 1.0, vp: [0.5, 0.537], shiftL: 0.035 }, inside: { expo: 0.62, vp: [0.5, 0.52], shiftL: 0.02 } };
 
 { // review: ?w=crimson:.8,steam:.4&expo=1.1 overrides the grade
   const q = new URLSearchParams(location.search);
@@ -285,7 +285,7 @@ async function openDoor() {
   const frames = st.door.map((f) => S.get(st.set, f)).filter(Boolean);
   for (let i = 1; i < frames.length; i++) {
     S.B = frames[i - 1]; S.A = frames[i];
-    st.target.inside = 1.4 * i / (frames.length - 1); S.weights.inside = st.target.inside;
+    st.target.inside = 1.0 * i / (frames.length - 1); S.weights.inside = st.target.inside;
     await animate(RM ? 60 : 230, (t) => { S.mix = t; });
   }
   S.B = null; S.mix = 1;
@@ -359,7 +359,11 @@ function frame(now) {
     if (c && w > 0 && !RM) { const age = now - c; if (age < 700) w *= hash(Math.floor(age / 45) + g.length * 7) < 0.45 ? 0.15 : 1; }
     if (g === 'holo') w *= st.holo.alpha * Math.max(st.holo.signal, 0) * (0.75 + 0.25 * hash(Math.floor(t * 14)));
     w *= flicker(g, t);
-    if (g === 'crimson' && st.world === 'outside') w *= 1 - 0.62 * smooth(0.5, 1, st.wi / Math.max(1, st.walk.length - 1));   // near the door, its own lamp wins
+    if (st.world === 'outside') {   // near the door, its own lamp wins, but the street stays red behind you
+      const near = smooth(0.5, 1, st.wi / Math.max(1, st.walk.length - 1));
+      if (g === 'crimson') w *= 1 - 0.4 * near;
+      if (g === 'door') w *= 1 - 0.55 * near;
+    }
     const cur = S.weights[g] || 0;
     S.weights[g] = cur + (w - cur) * (c && now - c < 700 ? 1 : 0.12);
   }
@@ -431,7 +435,7 @@ function placeTerminal() {
 
 function placeTag() {
   const tag = $('#tag'); const info = S.A && S.A.info; if (!info || !info.locker) return;
-  const near = st.wi >= st.walk.length - 4 && st.phase === 'inwalk';
+  const near = st.wi >= st.walk.length - 4 && st.wi < st.walk.length - 1 && st.phase === 'inwalk';
   const [u, v, z] = info.locker;
   if (!near || z <= 0) { tag.classList.remove('on'); return; }
   const [x, y] = S.toScreen(u, v);
