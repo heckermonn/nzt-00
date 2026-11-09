@@ -1,0 +1,122 @@
+/* PR6 / Alley. Outside: black, wet, crimson; the only type is the hologram's and the terminal's.
+   Inside: the brand kit (chalk F2F3EF, ink 171C1F, mist CAD5DA, steel blue 718B9A, orange E98546 as a tick only),
+   Helvetica (FreeSans clone) and Menlo (DejaVu Sans Mono clone). */
+@font-face{font-family:"FreeSans";src:url(fonts/FreeSans.woff2) format("woff2");font-weight:400;font-display:swap}
+@font-face{font-family:"FreeSans";src:url(fonts/FreeSansBold.woff2) format("woff2");font-weight:700;font-display:swap}
+@font-face{font-family:"DejaVu Sans Mono";src:url(fonts/DejaVuSansMono.woff2) format("woff2");font-display:swap}
+:root{
+  --chalk:#F2F3EF; --ink:#171C1F; --mist:#CAD5DA; --steel:#718B9A; --orange:#E98546;
+  --holo:#FFD9EA; --term:#BFEFFF; --deny:#FF6E8A;
+  --sans:"FreeSans","Helvetica Neue",Helvetica,Arial,sans-serif;
+  --mono:"DejaVu Sans Mono",Menlo,ui-monospace,monospace;
+  --g:max(16px,env(safe-area-inset-left,0px)); --gr:max(16px,env(safe-area-inset-right,0px));
+  color-scheme:dark;
+}
+@media (min-width:900px){:root{--g:max(32px,env(safe-area-inset-left,0px));--gr:max(32px,env(safe-area-inset-right,0px))}}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#000;overflow:hidden;overscroll-behavior:none}
+body{color:var(--chalk);font:400 16px/1.45 var(--sans);-webkit-font-smoothing:antialiased;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+button,input{font:inherit;color:inherit}
+.m{font-family:var(--mono);font-size:10.5px;letter-spacing:.24em;text-transform:uppercase;line-height:1.6}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+:focus-visible{outline:1px solid currentColor;outline-offset:4px}
+
+#scene{position:fixed;inset:0;width:100%;height:100%;display:block}
+#holo{position:fixed;left:0;top:0;width:300px;height:300px;mix-blend-mode:screen;pointer-events:none;opacity:0;will-change:transform}
+#poster{position:fixed;inset:0;width:100%;height:100%;object-fit:cover}
+
+/* the hologram's statements: low on the screen, wide-tracked, breaking up as they arrive */
+.say{position:fixed;left:var(--g);right:var(--gr);top:71%;text-align:center;pointer-events:none;
+  font-family:var(--mono);font-size:clamp(11.5px,1.05vw,15px);letter-spacing:.34em;text-transform:uppercase;color:var(--holo);
+  text-shadow:-1px 0 rgba(90,200,255,.55),1px 0 rgba(255,40,140,.6),0 0 18px rgba(255,60,150,.45);min-height:3em}
+.say span{display:inline-block;transition:opacity .5s}
+.say.out span{opacity:0}
+@media (max-width:640px){.say{top:66%;letter-spacing:.22em;line-height:2}}
+
+.hint{position:fixed;left:0;right:0;bottom:calc(28px + env(safe-area-inset-bottom,0px));margin:0;text-align:center;pointer-events:none;
+  font-family:var(--mono);font-size:10px;letter-spacing:.32em;text-transform:uppercase;color:rgba(255,220,232,.62);animation:breathe 3.4s ease-in-out infinite}
+.is-inside .hint{color:rgba(23,28,31,.56)}
+@keyframes breathe{0%,100%{opacity:.25}50%{opacity:1}}
+
+/* the terminal: a small dark screen beside the door, enlarged on a hairline lead */
+.term{position:fixed;inset:0;pointer-events:none}
+.term .lead{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.term line{stroke:rgba(191,239,255,.55);stroke-width:1;stroke-dasharray:2 3}
+.tpanel{position:absolute;left:0;top:0;width:min(78vw,282px);padding:16px 16px 14px;pointer-events:auto;
+  background:linear-gradient(180deg,rgba(8,16,20,.86),rgba(4,8,10,.9));border:1px solid rgba(191,239,255,.22);border-radius:3px;
+  box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 40px rgba(110,210,255,.10) inset,0 18px 50px rgba(0,0,0,.6);
+  color:var(--term);font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;
+  -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);opacity:0;transform:translateY(6px);transition:opacity .5s,transform .5s}
+.term.on .tpanel{opacity:1;transform:none}
+.tpanel::before{content:"";position:absolute;inset:0;pointer-events:none;border-radius:3px;
+  background:repeating-linear-gradient(180deg,rgba(255,255,255,.035) 0 1px,transparent 1px 3px)}
+.tl{margin:0 0 6px;opacity:0;transition:opacity .15s}
+.tl.on{opacity:1}
+.tl[data-l="0"]{color:#fff}
+.slots{position:relative;display:block;margin:14px 0 10px;height:38px;cursor:text}
+.slots input{position:absolute;inset:0;width:100%;height:100%;opacity:0;border:0;background:none;font-size:16px;caret-color:transparent;text-transform:uppercase}
+.cells{display:grid;grid-template-columns:repeat(8,1fr);gap:5px;height:100%}
+.cells b{display:grid;place-items:center;border-bottom:1px solid rgba(191,239,255,.35);font-weight:400;font-size:15px;color:#fff;letter-spacing:0}
+.cells b.cur{border-bottom-color:#fff;animation:caret 1s steps(2) infinite}
+@keyframes caret{50%{border-bottom-color:rgba(191,239,255,.2)}}
+.tmsg{margin:0;min-height:1.6em;font-size:10px;color:rgba(191,239,255,.5)}
+.term.deny .tpanel{border-color:rgba(255,110,138,.5);animation:shake .32s}
+.term.deny .tmsg{color:var(--deny)}
+.term.deny .cells b{color:var(--deny);border-bottom-color:rgba(255,110,138,.5)}
+.term.ok .tmsg{color:#fff}
+@keyframes shake{20%{transform:translateX(-4px)}45%{transform:translateX(3px)}70%{transform:translateX(-2px)}}
+
+/* start */
+.begin{position:fixed;inset:0;display:grid;place-content:center;justify-items:center;gap:14px;text-align:center;background:#000;transition:opacity 1.2s}
+.begin.gone{opacity:0;pointer-events:none}
+.go{background:none;border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:12px 26px;cursor:pointer;transition:border-color .3s,background .3s}
+.go:not(:disabled):hover{border-color:rgba(255,255,255,.6)}
+.go:disabled{cursor:default;border-color:transparent}
+.sub{margin:0;color:rgba(255,255,255,.4)}
+.quiet{background:none;border:0;padding:6px;cursor:pointer;color:rgba(255,255,255,.32);text-decoration:underline;text-underline-offset:4px}
+.quiet:disabled{visibility:hidden}
+.mute{position:fixed;right:var(--gr);bottom:calc(16px + env(safe-area-inset-bottom,0px));background:none;border:0;padding:8px 0;cursor:pointer;color:rgba(255,255,255,.32);z-index:5}
+.mute[aria-pressed="true"]{text-decoration:line-through}
+.is-inside .mute{color:rgba(23,28,31,.4)}
+.white{position:fixed;inset:0;background:var(--chalk);opacity:0;pointer-events:none}
+.nojs{position:fixed;inset:0;display:grid;place-content:center;color:#888}
+
+/* ---------------- inside: the brand kit ---------------- */
+.chrome{position:fixed;left:0;right:0;top:0;display:flex;justify-content:space-between;align-items:center;
+  padding:calc(14px + env(safe-area-inset-top,0px)) var(--gr) 0 var(--g);color:var(--ink);pointer-events:none;opacity:0;transition:opacity 1.2s}
+.chrome.on{opacity:1}
+.wm{font-weight:700;font-size:22px;letter-spacing:-.045em;line-height:1}
+.id{display:flex;gap:16px;letter-spacing:.2em}
+.id .ok::before{content:"";display:inline-block;width:5px;height:5px;background:var(--orange);margin:0 8px 1px 0;vertical-align:middle}
+.welcome{position:fixed;left:0;right:0;top:42%;text-align:center;color:var(--ink);pointer-events:none;opacity:0;transition:opacity 1.4s}
+.welcome.on{opacity:1}
+.welcome p{margin:0}
+.big{font-size:clamp(54px,8vw,104px);letter-spacing:-.05em}
+.wide{letter-spacing:.42em;margin-top:14px!important}
+.tag{position:fixed;left:0;top:0;display:flex;align-items:center;gap:8px;color:var(--ink);pointer-events:none;opacity:0;transition:opacity .6s}
+.tag.on{opacity:1}
+.tag i{display:block;width:28px;height:1px;background:var(--ink)}
+.tag span::before{content:"";display:inline-block;width:2px;height:9px;background:var(--orange);margin-right:7px;vertical-align:-1px;transform:skewX(-18deg)}
+
+/* the slide-4 slab: thick frosted glass, debossed fields, one black pill */
+.held{position:fixed;inset:0;display:grid;place-items:center;padding:16px;pointer-events:none}
+.slab{pointer-events:auto;width:min(100%,430px);padding:26px 26px 22px;border-radius:26px;color:var(--ink);
+  background:linear-gradient(160deg,rgba(242,243,239,.72),rgba(202,213,218,.55));
+  border:1px solid rgba(255,255,255,.7);box-shadow:0 1px 0 rgba(255,255,255,.9) inset,0 -1px 0 rgba(113,139,154,.25) inset,0 30px 70px rgba(23,28,31,.18);
+  -webkit-backdrop-filter:blur(22px) saturate(1.1);backdrop-filter:blur(22px) saturate(1.1);
+  opacity:0;transform:translateY(14px) scale(.985);transition:opacity .9s cubic-bezier(.16,1,.3,1),transform .9s cubic-bezier(.16,1,.3,1)}
+.held.on .slab{opacity:1;transform:none}
+.slab > .m{display:flex;gap:8px;margin:0 0 30px}
+.slash{color:var(--orange)}
+.slab h1{font-weight:400;font-size:clamp(30px,4vw,40px);line-height:1.04;letter-spacing:-.03em;margin:0 0 26px}
+.slab dl{margin:0 0 26px;display:grid;gap:8px}
+.slab dl div{display:grid;grid-template-columns:96px 1fr;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;
+  background:rgba(202,213,218,.42);box-shadow:inset 0 1px 2px rgba(23,28,31,.12),inset 0 -1px 0 rgba(255,255,255,.7)}
+.slab dt{color:#4A5860;font-size:9.5px}
+.slab dd{margin:0;font-size:15px}
+.pill{display:inline-flex;align-items:center;gap:12px;background:var(--ink);color:var(--chalk);text-decoration:none;border-radius:999px;padding:13px 20px 13px 22px;
+  font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;transition:transform .3s}
+.pill:hover{transform:translateX(3px)}
+.pill:focus-visible{outline:2px solid var(--orange);outline-offset:3px}
+.is-inside{background:var(--chalk)}
+@media (prefers-reduced-motion:reduce){.hint{animation:none;opacity:.8}.term.deny .tpanel{animation:none}}

@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#000000">
+<title>&#8203;</title>
+<link rel="preload" href="fonts/DejaVuSansMono.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="app.css">
+</head>
+<body class="is-black">
+<canvas id="scene" aria-hidden="true"></canvas>
+<canvas id="holo" aria-hidden="true"></canvas>
+<img id="poster" alt="" hidden>
+
+<div id="say" class="say" aria-live="polite"></div>
+<p id="hint" class="hint" hidden></p>
+
+<!-- the door terminal -->
+<div id="term" class="term" hidden>
+  <svg class="lead" aria-hidden="true"><line id="lead" x1="0" y1="0" x2="0" y2="0"/></svg>
+  <form id="tform" class="tpanel" autocomplete="off" novalidate>
+    <p class="tl" data-l="0">SUBJECT IDENTIFICATION</p>
+    <p class="tl" data-l="1">CLEARANCE REQUIRED</p>
+    <p class="tl" data-l="2">ENTER ACCESS CODE</p>
+    <label class="slots" for="code"><span class="vh">Access code</span>
+      <input id="code" name="code" maxlength="12" inputmode="text" autocapitalize="characters" spellcheck="false" autocomplete="off" enterkeyhint="go">
+      <span class="cells" aria-hidden="true"></span>
+    </label>
+    <p id="tmsg" class="tmsg" role="status"></p>
+  </form>
+</div>
+
+<!-- inside -->
+<header id="chrome" class="chrome" hidden>
+  <span class="wm">PR6</span>
+  <span class="m id"><span>SUBJECT 0047</span><span class="ok">CLEARED</span></span>
+</header>
+<div id="tag" class="tag" hidden><i></i><span class="m">0047</span></div>
+<div id="welcome" class="welcome" hidden>
+  <p class="wm big">PR6</p>
+  <p class="m wide">The practice of progress</p>
+</div>
+<section id="held" class="held" hidden aria-labelledby="held-h">
+  <div class="slab">
+    <p class="m"><span>PR6</span><span class="slash">/</span><span>Locker 0047</span></p>
+    <h1 id="held-h">Your place is held.</h1>
+    <dl>
+      <div><dt class="m">Subject</dt><dd>0047</dd></div>
+      <div><dt class="m">Access</dt><dd>By invitation</dd></div>
+      <div><dt class="m">Status</dt><dd>Cleared</dd></div>
+    </dl>
+    <a id="explore" class="pill" href="../form/?key=0047RSRV">Explore PR6 <span aria-hidden="true">&rarr;</span></a>
+  </div>
+</section>
+
+<div id="begin" class="begin">
+  <button id="go" class="go" type="button" disabled><span class="m">&middot; &middot; &middot;</span></button>
+  <p class="m sub" id="gosub">Sound on. Headphones if you have them.</p>
+  <button id="quiet" class="m quiet" type="button" disabled>or in silence</button>
+</div>
+<button id="mute" class="m mute" type="button" hidden aria-pressed="false">Sound</button>
+<div id="white" class="white" aria-hidden="true"></div>
+<noscript><p class="m nojs">This entrance needs JavaScript.</p></noscript>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
