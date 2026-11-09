@@ -325,6 +325,8 @@ area("sign_l", "sign", (W - 0.45, 15.2, 4.7), (-0.2, 13.0, 0.5), 0.6, 160, (1.0,
 # hologram spill: the face's light falling on the alley (the face itself is drawn live in the page)
 area("holo_l", "holo", HOLO + Vector((0, 0, 0.2)), (0, 15.5, 0), 2.4, 1500, MAG, shape="DISK")
 area("holo_c", "holo", HOLO + Vector((0, -0.4, -0.3)), (0, 8.0, 0), 1.6, 380, (0.35, 0.65, 1.0), shape="DISK")
+for _n in ("holo_l", "holo_c"):
+    bpy.data.objects[_n].visible_glossy = False   # no disc in the puddles; the face is drawn live
 # the door: one cold-white lamp, a recessed frame, a sliding steel leaf, the terminal
 DOORW, DOORH = 1.12, 2.36
 box("d_frame_l", (-DOORW / 2 - 0.07, DOOR_Y - 0.02, DOORH / 2), (0.14, 0.12, DOORH + 0.14), STEEL)

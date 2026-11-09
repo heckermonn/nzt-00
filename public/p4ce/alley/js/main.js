@@ -117,6 +117,7 @@ async function begin(withSound) {
 
 async function jump(at) {
   for (const g of Object.keys(OUT_W)) if (g !== 'holo' && g !== 'inside') { st.target[g] = OUT_W[g]; S.weights[g] = OUT_W[g]; }
+  if (at === 'holo') { st.target.door = 0; S.weights.door = 0; startHolo(); return; }
   if (at === 'walk') { st.phase = 'walk'; showHint(); return; }
   if (at === 'door') { while (!S.get(st.set, st.walk[st.walk.length - 1])) await sleep(100); st.wi = st.walk.length - 1; S.A = S.get(st.set, st.walk[st.wi]); openTerminal(); return; }
   if (at === 'inside') { for (const f of st.door) await S.load(st.set, f); openDoor(); }
