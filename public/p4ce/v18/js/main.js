@@ -1,7 +1,8 @@
-// PR6 / Institute: boot, routing, the stage loop and the shell (bar, direct index, preferences, prototype controls).
-// One application, two ways to move through it: Explore (rooms move, authored transitions) and Direct (still, instant).
-// Every screen is ordinary HTML over a picture; nothing essential lives in the canvas.
-import { createStage } from './stage.js';
+// PR6 / Institute: boot, routing, the scene loop and the shell (bar, direct index, preferences, prototype controls).
+// One application, two ways to move through it: Explore (a real-time world, crossed by camera) and Direct (still,
+// instant). Every screen is ordinary HTML over the picture; nothing essential lives in the canvas.
+import { createWorld } from './world.js';
+import { createShots } from './shots.js';
 import { createStill } from './still.js';
 import { createKeeper } from './keeper.js';
 import { createSound } from './sound.js';
@@ -15,21 +16,23 @@ import { passage } from './film.js';
 
 const CHALK = [0.949, 0.953, 0.937], NIGHT = [0.043, 0.055, 0.063];
 const man = await fetch('assets/scenes/manifest.json').then((r) => r.json()).catch(() => ({ frames: {} }));
-let stage = createStage($('#stage'), man, 'assets/scenes/');
-if (!stage) { document.body.classList.add('no-gl'); stage = createStill($('#still'), man, 'assets/scenes/'); }
-const keeper = stage.still ? null : createKeeper($('#keeper'));
+// The world needs WebGL 2. Without it the same screens stand on rendered stills, and everything is Direct.
+const W = /[?&]still\b/.test(location.search) ? null : createWorld($('#stage'));
+let stage = null;
+if (W) document.body.classList.add('gl3'); else { document.body.classList.add('no-gl'); stage = createStill($('#still'), man, 'assets/scenes/'); }
+const keeper = W ? createKeeper($('#keeper')) : null;
 const rm = matchMedia('(prefers-reduced-motion: reduce)');
 const narrowMQ = matchMedia('(max-width: 860px)');
 const view = $('#view'), marks = $('#marks');
-const state = { layout: 'full', theme: 'outside' };
+const state = { layout: 'full', theme: 'outside', shot: null, zone: null };
 let epoch = 0, cur = null, snd = null;
 const tweens = new Set();
 
 const app = {
-  store, stage, keeper, man, view, marks, state,
+  store, stage, world: W, keeper, man, view, marks, state,
   has: (name) => !!man.frames[name],
   narrow: () => narrowMQ.matches,
-  motion: () => { const p = store.prefs.motion; return p === 'explore' || (p !== 'direct' && !rm.matches); },
+  motion: () => { if (!W) return false; const p = store.prefs.motion; return p === 'explore' || (p !== 'direct' && !rm.matches); },
   live: () => { const e = epoch; return () => e === epoch; },
   // tween(seconds, fn(k 0..1)): resolves at the end; in Direct mode it lands at once
   tween: (sec, fn, e = ease.io) => new Promise((res) => {
@@ -54,14 +57,17 @@ const app = {
   buzz: (v) => { if (snd && store.prefs.sound) snd.buzz(v); },
   proto: () => renderProto(),
   chrome: () => chrome(),
+  /** A lamp of the alley (lampL, lampR, tube): 1 is lit. */
+  lamp: (name, v) => { if (W) W.lamps[name] = v; else stage.weights[name] = v; },
 };
+const shots = W ? createShots(W, app) : null; app.shots = shots;
 
 function setLayout(layout, theme) {
   const b = document.body;
   b.classList.remove('stage-full', 'stage-pane', 'stage-off', 'inside', 'outside');
   b.classList.add('stage-' + layout, theme);
   state.layout = layout; state.theme = theme;
-  stage.bg = theme === 'inside' ? CHALK : NIGHT;
+  if (stage) stage.bg = theme === 'inside' ? CHALK : NIGHT;
   const tc = $('meta[name=theme-color]'); if (tc) tc.content = theme === 'inside' ? '#F2F3EF' : '#0B0E10';
 }
 function defaults() {
@@ -69,52 +75,82 @@ function defaults() {
   Object.assign(stage, { rain: 0, expo: 1, vig: inside ? 0.1 : 0.55, grain: inside ? 0.016 : 0.035, parK: 0.012, fogK: 1 });
   stage.weights = {};
 }
-/** Put a frame on the stage. Same layout: glide or cross-fade. New layout or theme: through a veil of the room's own colour. */
-app.scene = async ({ layout, theme, frame, view: vf, need = 0, tiles, slit = null, setup, dur = 0.9 }) => {
-  const ok = app.live();
-  let F = null;
-  if (layout !== 'off' && frame) {
-    try { F = await stage.load(frame); if (tiles) await F.setTiles(tiles, slit); } catch (e) { F = null; }
-  }
-  if (!ok()) return null;
-  const same = state.layout === layout && state.theme === theme && layout !== 'off' && stage.A && F;
-  const V = () => (F && vf ? vf(stage, F) : { cx: 0.5, cy: 0.5, zoom: 1 });
-  if (same && stage.A === F) {
-    const v0 = { ...stage.viewA }; stage.need = need; stage.resize(); defaults(); if (setup) setup(stage, F);
-    const v1 = V(); await app.tween(dur, (k) => { stage.viewA = lerpView(v0, v1, k); });
-    return F;
-  }
-  if (same) {
-    stage.need = need; stage.resize(); defaults(); if (setup) setup(stage, F);
-    stage.B = F; stage.viewB = V(); await app.tween(dur, (k) => { stage.mix = k; });
-    if (!ok()) return null;
-    stage.A = F; stage.viewA = stage.viewB; stage.B = null; stage.mix = 0;
-    return F;
-  }
-  stage.fade = theme === 'inside' ? CHALK : NIGHT;
-  if (state.layout !== 'off' && stage.A && stage.fadeAmt < 1) await app.tween(0.35, (k) => { stage.fadeAmt = Math.max(stage.fadeAmt, k); }, ease.in);
-  if (!ok()) return null;
-  setLayout(layout, theme);
-  stage.A = F; stage.B = null; stage.mix = 0;
-  if (layout === 'off') return null;
-  stage.need = need; stage.resize(); defaults(); if (setup) setup(stage, F);
-  stage.viewA = V(); stage.fadeAmt = 1;
-  app.tween(0.8, (k) => { stage.fadeAmt = 1 - k; }, ease.out);
-  return F;
+/** The door the passage stands behind: the member's own, kept with the invitation that admitted them. */
+const doorSide = () => {
+  const inv = store.invitation(), m = store.member(); if (inv && inv.doorSide) return inv.doorSide;
+  const own = m && Object.values(store.exportAll().invitations).find((x) => x.member === m.id);
+  return (own && own.doorSide) || 'L';
 };
-/** View that fits a rectangle [[x0,y0],[x1,y1]] of the frame into a share of the window. */
+app.doorSide = doorSide;
+const INSIDE = ['passage', 'atrium', 'compass', 'formulary', 'archive'];
+/**
+ * Put the picture behind a screen.
+ * In the world: fly the camera to a named shot (shot, arg). The move is continuous: between rooms the camera goes
+ * through the openings that join them, and a change of layout slides the page over while the view re-centres.
+ * Without WebGL: the rendered still for that screen (frame, view, tiles, slit), placed at once.
+ */
+app.scene = async ({ layout, theme, shot, arg, frame, view: vf, need = 0, tiles, slit = null, setup, dur }) => {
+  const ok = app.live();
+  if (!W) {
+    let F = null;
+    if (layout !== 'off' && frame) { try { F = await stage.load(frame); if (tiles) await F.setTiles(tiles, slit); } catch (e) { F = null; } }
+    if (!ok()) return null;
+    setLayout(layout, theme);
+    stage.A = F; stage.B = null; stage.mix = 0; stage.fadeAmt = 0;
+    if (layout === 'off') return null;
+    stage.need = need; stage.resize(); defaults(); if (setup) setup(stage, F);
+    stage.viewA = F && vf ? vf(stage, F) : { cx: 0.5, cy: 0.5, zoom: 1 };
+    return F;
+  }
+  const was = { ...state };
+  if (layout === 'off') { W.halt(); setLayout(layout, theme); state.shot = null; return null; }
+  const zone = shots.zoneOf(shot), isIn = zone !== 'alley';
+  W.setSide(doorSide());
+  await W.need(isIn ? ['atrium', ...(zone !== 'atrium' ? [zone] : [])] : ['alley']); if (!ok()) return null;
+  const hidden = was.layout === 'off' || !was.shot || !was.zone;
+  const through = !hidden && app.motion() && was.zone === 'alley' && isIn;
+  if (through) { await W.need(['alley', 'passage', 'atrium']); if (!ok()) return null; }
+  W.show(through ? ['alley', ...INSIDE] : isIn ? INSIDE : ['alley']);
+  if (isIn) for (const z of INSIDE) W.load(z).catch(() => {});       // the other rooms arrive behind the haze
+  setLayout(layout, theme);
+  const pose = shots.pose(shot, arg, layout);
+  state.shot = shot; state.arg = arg; state.zone = zone;
+  if (hidden || !app.motion() || (was.zone === 'alley') !== (zone === 'alley') && !through) { W.halt(); await W.fly(pose, { dur: 0 }); return {}; }
+  let o = {}, d = dur ?? 1.2;
+  if (through) {
+    // a returning member: the door they were admitted by opens, and the passage carries them in
+    const D = W.doors[doorSide()]; app.sfx('lock');
+    app.tween(1.5, (k) => { if (D) D.open = k; }, ease.io).then(() => {});
+    o = { via: shots.through(doorSide()), look: 0.55 }; d = 5.4;
+  } else if (was.zone !== zone) { o = shots.via(was.zone, zone); d = Math.min(4.6, Math.max(1.6, 0.9 + shots.length(W.cam.p, o.via, pose.p) / 46)); }
+  const flight = W.fly(pose, { dur: d, ...o });
+  if (through) flight.then(() => { const D = W.doors[doorSide()]; if (D) D.open = 0; if (state.zone !== 'alley') W.show(INSIDE); });
+  // the page may arrive while the camera is still settling
+  await Promise.race([flight, app.wait(through ? d - 0.7 : Math.min(d * 0.62, 2.6))]);
+  return ok() ? {} : null;
+};
+/** View that fits a rectangle [[x0,y0],[x1,y1]] of the frame into a share of the window (stills only). */
 app.fit = (S, rect, share = 0.8, dy = 0) => {
   const w = Math.abs(rect[1][0] - rect[0][0]), h = Math.abs(rect[1][1] - rect[0][1]);
   const zoom = Math.min(share * S.span[0] / w, share * S.span[1] / h);
   return { cx: (rect[0][0] + rect[1][0]) / 2, cy: (rect[0][1] + rect[1][1]) / 2 + dy / zoom, zoom };
 };
-/** Place an element of #marks over a frame rectangle or at a frame point. */
-app.placeRect = (el, rect, v = stage.viewA) => {
-  const a = stage.toScreen(rect[0][0], rect[0][1], v), b = stage.toScreen(rect[1][0], rect[1][1], v);
-  const x = Math.min(a[0], b[0]), y = Math.min(a[1], b[1]);
-  el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`; el.style.width = Math.abs(b[0] - a[0]).toFixed(1) + 'px'; el.style.height = Math.abs(b[1] - a[1]).toFixed(1) + 'px';
+/** The screen box {x, y, w, h} of a named thing in the picture (a door, a niche, a mark), or null. */
+app.box = (name) => {
+  if (W) return W.box(name);
+  const F = stage.A; if (!F) return null;
+  const alias = { slitL: 'openL', slitR: 'openR' }, k = alias[name] || name, r = F.info.rects && F.info.rects[k], m = F.info.marks && F.info.marks[k];
+  if (r) { const a = stage.toScreen(r[0][0], r[0][1]), b = stage.toScreen(r[1][0], r[1][1]); return { x: Math.min(a[0], b[0]), y: Math.min(a[1], b[1]), w: Math.abs(b[0] - a[0]), h: Math.abs(b[1] - a[1]) }; }
+  if (m) { const q = stage.toScreen(m[0], m[1]); return { x: q[0], y: q[1], w: 0, h: 0 }; }
+  return null;
 };
-app.placeAt = (el, u, v, view = stage.viewA) => { const p = stage.toScreen(u, v, view); el.style.left = p[0].toFixed(1) + 'px'; el.style.top = p[1].toFixed(1) + 'px'; };
+/** Place an element of #marks over a named thing; inset trims the box by a share of its size. */
+app.place = (el, name, inset = 0) => {
+  const b = app.box(name); if (!el) return; el.style.visibility = b ? '' : 'hidden'; if (!b) return;
+  if (!b.w && !b.h) { el.style.left = b.x.toFixed(1) + 'px'; el.style.top = b.y.toFixed(1) + 'px'; return; }
+  const ix = b.w * inset, iy = b.h * inset;
+  el.style.transform = `translate(${(b.x + ix).toFixed(1)}px, ${(b.y + iy).toFixed(1)}px)`; el.style.width = (b.w - 2 * ix).toFixed(1) + 'px'; el.style.height = (b.h - 2 * iy).toFixed(1) + 'px';
+};
 
 // ------------------------------------------------------------------ routes
 const ROUTES = {
@@ -128,7 +164,8 @@ async function route() {
   const my = ++epoch;
   for (const tw of tweens) tw.res(); tweens.clear();
   if (cur && cur.leave) { try { cur.leave(); } catch (e) { console.warn(e); } }
-  cur = null; marks.innerHTML = ''; document.body.classList.remove('keeper-on', 'film'); $('#proto').open = false;
+  cur = null; marks.innerHTML = ''; document.body.classList.remove('keeper-on', 'film');
+  if (W) Object.assign(W.lamps, { lampL: 1, lampR: 1, tube: 1 }); $('#proto').open = false;
   const idx = $('#index'); if (idx.open) idx.close();
   const parts = location.hash.replace(/^#\/?/, '').split('?')[0].split('/').filter(Boolean);
   const name = parts[0] || '', args = parts.slice(1).map(decodeURIComponent);
@@ -266,20 +303,29 @@ function frame(ms) {
   if (cur && cur.tick) cur.tick(t, dt, mo);
   if (state.layout !== 'off' && !document.hidden) {
     const k = 1 - Math.pow(0.02, dt), tx = mo ? app.pointer[0] : 0, ty = mo ? app.pointer[1] : 0;
-    stage.par[0] += (tx - stage.par[0]) * k; stage.par[1] += (ty - stage.par[1]) * k;
-    const rain = stage.rain; if (!mo) stage.rain = 0;
-    stage.draw(mo ? t : 0); stage.rain = rain;
-    if (keeper && document.body.classList.contains('keeper-on')) keeper.draw(mo ? t : 2, mo ? dt : 0.016);
+    if (W) {
+      W.motion = mo; W.par[0] += (tx - W.par[0]) * k; W.par[1] += (ty - W.par[1]) * k;
+      if (keeper && document.body.classList.contains('keeper-on')) { keeper.draw(mo ? t : 2, mo ? dt : 0.016); W.keeperDirty(); }
+      W.draw(t, dt);
+      if (cur && cur.after) cur.after(t, dt, mo);
+    } else {
+      stage.par[0] += (tx - stage.par[0]) * k; stage.par[1] += (ty - stage.par[1]) * k;
+      stage.draw(0);
+    }
   }
   requestAnimationFrame(frame);
 }
 addEventListener('pointermove', (e) => { if (e.pointerType === 'mouse') app.pointer = [(e.clientX / innerWidth - 0.5) * 2, (e.clientY / innerHeight - 0.5) * 2]; });
-addEventListener('resize', () => { stage.resize(); if (cur && cur.resize) cur.resize(); });
+addEventListener('resize', () => {
+  if (W) { W.resize(); if (state.shot && !W.flying()) { const p = shots.pose(state.shot, state.arg, state.layout); Object.assign(W.rect, p.rect); W.shift = p.shift; W.cam.fov = p.fov; W.cam.p.copy(p.p); W.cam.t.copy(p.t); } } else stage.resize();
+  if (cur && cur.resize) cur.resize();
+});
 addEventListener('hashchange', route);
 $('#proto').addEventListener('toggle', renderProto);
 
-setLayout('full', 'outside'); stage.resize(); stage.fadeAmt = 1; stage.fade = NIGHT;
+setLayout('full', 'outside');
+if (W) { W.resize(); Object.assign(W.rect, shots.rect('full')); } else { stage.resize(); stage.fadeAmt = 0; }
 $('#snd').textContent = 'Sound off'; store.setPref('sound', false);   // sound never starts by itself
 requestAnimationFrame(frame);
 route();
-window.pr6 = { app, store };   // for the prototype's own tests
+window.pr6 = { app, store, W, get cur() { return cur; } };   // for the prototype's own tests

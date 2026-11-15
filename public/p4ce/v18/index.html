@@ -34,6 +34,8 @@
 
 <!-- Controls that sit on the picture (doors, destinations, niches). Real buttons, placed over what they name. -->
 <div id="marks"></div>
+<!-- The sheet the pages are set on: it slides over the room when a page opens beside it. -->
+<div id="paper" aria-hidden="true"></div>
 
 <main id="view" tabindex="-1"></main>
 
@@ -74,6 +76,7 @@
 </details>
 
 <noscript><p class="noscript">PR6 needs JavaScript to open. Nothing is tracked on this page.</p></noscript>
+<script type="importmap">{ "imports": { "three": "./vendor/three.module.min.js", "three/addons/": "./vendor/addons/" } }</script>
 <script type="module" src="js/main.js"></script>
 </body>
 </html>

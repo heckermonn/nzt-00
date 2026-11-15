@@ -18,7 +18,7 @@ Live path (once on Pages): `/p4ce/v18/`. No build step: plain ES modules, open `
 | A06 Application | `#/apply` | Age and Canada eligibility, password, optional passkey offer. |
 | A07 Review Status | `#/status` | Received, in review, question, decision. Approval is separate from the door. |
 | A08 Member Acceptance | `#/offer` | Offer, generation, founding rights (marked proposed), two explicit acceptances. |
-| A09 Film & Passage | `#/passage` | Nine chapters drawn in one line. Pause, Skip, Esc. Direct mode shows a still list. |
+| A09 Film & Passage | `#/passage` | One take: the door opens and the camera walks the passage into the Atrium while one line of light draws the nine chapters on its walls. Space pauses, arrows step a chapter, Skip or Esc hurries the same walk. Direct mode shows the chapters as a page. |
 | A10 Atrium | `#/atrium` | "What are we pursuing today?" Three destinations plus routine links. |
 | A11 Compass | `#/compass` | Five optional questions, editable. Never maps a goal to a product; fails closed. |
 | A12 Formulary | `#/formulary`, `#/formulary/NN`, `#/record/ID` | Search, status, structured records, checks before any order. |
@@ -29,11 +29,13 @@ Live path (once on Pages): `/p4ce/v18/`. No build step: plain ES modules, open `
 
 Two ways through the same site, as the blueprint asks:
 
-- **Explore**: rooms move, authored transitions, optional sound (off until switched on).
+- **Explore**: one continuous 3D building. Every change of screen is a camera move through it (alley, door, passage,
+  Atrium, the three rooms); pages slide in beside the picture. There are no cross-fades between pictures. Optional
+  sound, off until switched on.
 - **Direct**: still pictures and instant pages. Chosen automatically when the device asks for reduced motion, or from
   the Index (top right, or press `/`), which also lists and searches every room.
 
-A device without WebGL gets the same frames as stills, with the same controls.
+A device without WebGL 2 gets the earlier Cycles stills of the same rooms, with the same controls (`?still` forces it).
 
 ## Palette (kit in place of the blueprint's)
 
@@ -88,23 +90,45 @@ Needs PR6 or a real backend:
 - The real catalogue, evidence, labelling, prices, supplier traceability.
 - Regulatory review of what may be sold, and to whom; privacy, retention and breach documents.
 - Financial and legal sign-off on every founding right.
-- Measured render budgets on real phones (tested here in headless Chromium only).
+- Measured render budgets on real phones and GPUs (tested here in headless Chromium with software rendering only).
 - Payment. The order page stops at "order placed" with no card form.
 
-## Pictures
+## The 3D world
 
-Every scene is a Cycles render packed for a small WebGL shader (`js/stage.js`): steady light, up to three live light
-groups, depth for haze and parallax, and small tiles pasted over a frame (each door's insignia, the shut slit).
+Three.js r180 (vendored in `vendor/`, loaded through the import map in `index.html`; no build step). The building is
+real geometry in one coordinate frame, and its light is path-traced in Blender Cycles and baked into textures, so
+the page draws it with no lights of its own and it still reads as the Cycles picture from any camera position.
+
+- `js/world.js`: loads each zone (`assets/world/<zone>.glb`, `<zone>.json`, `<zone>_<group>_*.webp`), the shaders
+  (baked colour times baked light, per-lamp light for the alley's flicker, fog, exposure, tone curve, grain), wet
+  floor and pool reflections from a mirror pass, rain, the doors, the Keeper in the slit, the invitation card, the
+  Compass blades, the Formulary vials, the Archive stele, the light line, and the camera director (`W.fly`).
+- `js/shots.js`: where the camera stands for each screen and the way it travels between rooms.
+- `js/film.js`: A09. Everything is a function of one clock, so it can be paused and stepped.
+- `js/still.js`: the route without WebGL 2 (stills in `assets/scenes/`).
+
+Zones: alley, passage (nine bays that widen from 1.7 m to 13 m), atrium, compass, formulary, archive.
 
     cd blender
-    ./run_alley.sh      # alley, both doors close up, insignia and slit crops
-    ./run_rooms.sh      # Atrium, invitations, Compass, Formulary, Archive
-    PY post.py RAW_DIR ../assets/scenes     # RAW_DIR is where the two scripts wrote (OUT)
+    PY world.py -- --zone alley --out ../assets/world --q 1 --samples 96     # one zone; about 15 to 40 minutes on 4 cores
+    PY world.py -- --zone archive --out /tmp/try --q 0.25 --samples 8        # a two-minute look at a change
+    PY card.py -- --out ../assets/world                                      # the four invitation cards
 
-Both scripts skip finished frames, so they can be run again after an interruption. `PY` is a Python with `bpy`,
-`numpy` and `pillow`. Two lessons kept in the code: call `view_layer.update()` before projecting a crop border
-(a stale camera matrix gives "Image too small"), and keep the Keeper's light as a live group in the close frames
-or its glow is baked into the door.
+`PY` is a Python with `bpy`, `numpy` and `pillow`. `world.py` builds a zone with the materials in `common.py`, sorts
+its objects into groups, and `bake.py` turns each group into one mesh with one UV layout: `split` (colour and
+light as two textures), `combined` (metal and small parts, gloss as seen from the room's camera), `relief` (the
+insignia: baked from the sculpted relief, drawn as a flat sheet). The manifest is rewritten after every group, so a
+half-finished bake leaves a partial `<zone>.json`; let a zone finish before loading it.
+
+Lessons kept in the code: a relief's flat sheet must sit in front of whatever stands behind it and the body behind
+a sunk relief must start behind its deepest cut (the Archive stele was black until both were true); bind an empty
+texture as the reflection while drawing the mirror pass (a feedback loop otherwise); keep meshes hidden until their
+baked material is on (the glTF default material flashes grey).
+
+The stills for the no-WebGL route come from the older scene scripts (`run_alley.sh`, `run_rooms.sh`, `post.py`).
+
+Tested in headless Chromium with software rendering at 1440x900 and 390x844. Not yet measured on a real GPU or a
+real phone: frame rate, texture memory and the look of the tone curve on a phone screen all need that.
 
 Fonts are free stand-ins (see `fonts/LICENCE.txt`): FreeSans for Helvetica Neue, DejaVu Sans Mono for Menlo, FreeSerif
 for the serif voice.

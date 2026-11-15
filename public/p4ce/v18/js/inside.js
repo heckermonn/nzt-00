@@ -6,10 +6,11 @@ import { INSIGNIA, glyph } from './insignia.js';
 import { store, fmtId } from './store.js';
 import { GENERATIONS, RIGHTS, TOKENS, STANDINGS, CARD, ORDER_STATE, ORDER_NOTE } from './institution.js';
 import { SERIES, ALL, CHECKS, byId, seriesOf, statusOf, cad, canOrder, LABEL_LINE, recordFields, DISPATCHES, dispatch, COMPASS, COMPASS_ORDER, INTEREST_FIELDS, TOPICS, SAFETY_OVERVIEW } from './catalog.js';
-import { $, $$, esc, ease, lerpView, fmtDate, fmtTime, field, setErr } from './ui.js';
+import { $, $$, esc, fmtDate, fmtTime, field, setErr } from './ui.js';
 
 const plain = (app, theme = 'inside') => app.scene({ layout: 'off', theme });
-const pane = (app, frame, view, o = {}) => app.scene({ layout: 'pane', theme: 'inside', frame, view, need: o.need ?? 0.9, dur: o.dur ?? 0.9, setup: o.setup });
+// a room beside the page: the camera stands at a named shot (the world), or a still is fitted (no WebGL)
+const pane = (app, shot, arg, frame, view, o = {}) => app.scene({ layout: 'pane', theme: 'inside', shot, arg, frame, view, need: o.need ?? 0.9, dur: o.dur ?? 1.4, setup: o.setup });
 const tag = (r) => `<span class="tag ${r.status === 'available' ? 'on' : r.status === 'review' ? 'mid' : ''}">${statusOf(r).label}</span>`;
 const hashQuery = () => Object.fromEntries(new URLSearchParams((location.hash.split('?')[1] || '')));
 const left = (m) => 5 - m.nominations.filter((n) => n.state !== 'revoked-unused').length;
@@ -20,16 +21,14 @@ const bindSave = (root, m) => root.addEventListener('click', (e) => { const b = 
 
 // ---------------------------------------------------------------------------------------------- A10 the Atrium
 export async function atrium(app) {
-  const m = store.member(), ok = app.live(), S = app.stage, view = app.view, marks = app.marks;
+  const m = store.member(), ok = app.live(), view = app.view, marks = app.marks;
   const first = !m.seenAtrium;
   app.amb('inside');
   const vf = (S) => (app.narrow() ? { cx: 0.5, cy: (0.5 - 56 / Math.max(1, S.ch)) * S.span[1], zoom: 1 } : { cx: 0.5, cy: 0.5, zoom: 1.05 });
-  const F = await app.scene({ layout: 'full', theme: 'inside', frame: 'atrium', need: app.narrow() ? 0.8 : 0, view: vf, setup: (S) => { S.vig = 0.06; S.parK = 0.02; } });
+  const F = await app.scene({ layout: 'full', theme: 'inside', shot: 'atrium', frame: 'atrium', need: app.narrow() ? 0.8 : 0, view: vf, setup: (S) => { S.vig = 0.06; S.parK = 0.02; }, dur: 1.8 });
   if (!ok()) return null;
-  if (first) { m.seenAtrium = true; store.save(); app.sfx('arrive'); const v1 = vf(S), v0 = { ...v1, zoom: v1.zoom * 0.93 }; app.tween(3.2, (k) => { S.viewA = lerpView(v0, v1, k); }, ease.out); }
+  if (first) { m.seenAtrium = true; store.save(); app.sfx('arrive'); }
   const D = [['compass', 'Discover', 'The Compass'], ['formulary', 'Explore', 'The Formulary'], ['archive', 'View', 'Your Archive']];
-  const fallback = { compass: [0.3, 0.6], formulary: [0.5, 0.6], archive: [0.7, 0.6] };
-  const at = (k) => (F && (F.info.marks[k + '_base'] || F.info.marks[k])) || fallback[k];
   const narrow = app.narrow();
   view.innerHTML = `<section class="atrium">
     <div class="prompt">
@@ -39,37 +38,33 @@ export async function atrium(app) {
     ${narrow ? `<div class="dest-list"><ul class="rows">${D.map(([k, a, t]) => `<li><a class="row" href="#/${k}" data-k="${k}"><span class="n">${a}</span><span class="t">${t}</span></a></li>`).join('')}</ul></div>` : ''}
     <p class="also"><a href="#/orders">Orders</a><a href="#/dispatches">Dispatches</a><a href="#/nominations">Nominations</a><a href="#/support">Support</a></p>
   </section>`;
-  if (!narrow) marks.innerHTML = D.map(([k, a, t]) => `<a class="dest" href="#/${k}" data-k="${k}"><span class="k">${a}</span><span class="t">${t}</span></a>`).join('');
-  let leaving = false;
-  const goTo = (e) => {
-    const a = e.target.closest('[data-k]'); if (!a || leaving || !app.motion() || !F) return;
-    e.preventDefault(); leaving = true; app.sfx('tap');
-    const mk = F.info.marks[a.dataset.k] || at(a.dataset.k), v0 = { ...S.viewA }, v1 = { cx: mk[0], cy: mk[1], zoom: v0.zoom * 2.4 };
-    S.fade = [0.949, 0.953, 0.937];
-    app.tween(0.95, (k) => { S.viewA = lerpView(v0, v1, k); S.fadeAmt = k * k; }, ease.in).then(() => { if (ok()) app.go(a.getAttribute('href')); });
-  };
-  marks.addEventListener('click', goTo); view.addEventListener('click', goTo);
+  // the three openings in the far wall are the three ways on: choosing one walks the camera through it
+  if (!narrow && F) marks.innerHTML = D.map(([k, a, t]) => `<a class="dest" href="#/${k}" data-k="${k}"><span class="k">${a}</span><span class="t">${t}</span></a>`).join('');
+  const place = () => { if (!narrow) for (const el of marks.children) app.place(el, el.dataset.k + '_base'); };
+  place();
   return {
-    title: 'Atrium', crumb: '', noFocus: first,
-    tick: () => { if (!narrow) for (const el of marks.children) { const p = at(el.dataset.k); app.placeAt(el, p[0], p[1]); } },
-    resize: () => { if (app.narrow() !== narrow) app.go('#/atrium'); else S.viewA = vf(S); },
+    title: 'Atrium', crumb: '', noFocus: first, tick: app.world ? null : place, after: place,
+    resize: () => { if (app.narrow() !== narrow) app.go('#/atrium'); else if (app.stage) app.stage.viewA = vf(app.stage); },
   };
 }
 
 // ---------------------------------------------------------------------------------------------- A11 the Compass
 let session = null;   // answers kept for this visit only, when the member has not asked for them to be stored
 export async function compass(app, args) {
-  const m = store.member(), ok = app.live(), view = app.view, S = app.stage;
+  const m = store.member(), ok = app.live(), view = app.view, W3 = app.world;
   const c = (m.compassConsent && m.compass) || session || { a: {}, done: false };
   let step = args[0] === 'edit' ? 0 : c.done ? 5 : -1;
   const frameFor = (s) => { const want = s + 1; let best = null; for (let i = 0; i <= 6; i++) if (app.has('compass' + i) && (best === null || Math.abs(i - want) < Math.abs(best - want))) best = i; return best === null ? 'compass0' : 'compass' + best; };
   const vf = () => ({ cx: 0.5, cy: 0.5, zoom: 1 });
   app.amb('inside');
-  await pane(app, frameFor(step), vf); if (!ok()) return null;
+  // the blades stand scattered until a direction is chosen, and settle a little with every answer
+  const settle = () => { if (W3) W3.compassGoal = (step + 1) / 6; };
+  settle(); if (W3 && !app.motion()) W3.compassT = W3.compassGoal;
+  await pane(app, 'compass', null, frameFor(step), vf); if (!ok()) return null;
   const persist = () => { if (m.compassConsent) { m.compass = c; session = null; } else { m.compass = null; session = c; } store.save(); };
   const label = (k, v) => { const o = COMPASS[k].opts.find((x) => x[0] === v); return o ? o[1] : ''; };
   const render = (focus = true) => {
-    pane(app, frameFor(step), vf, { dur: 1.1 });
+    if (W3) settle(); else pane(app, 'compass', null, frameFor(step), vf);
     if (step === -1) {
       view.innerHTML = `<div class="page"><header><h1 class="title">Choose the direction that deserves your attention.</h1>
         <p class="lead">Five short questions, each one optional. The Compass arranges reading for you. It does not diagnose, and it never matches a product to a goal.</p></header>
@@ -129,7 +124,7 @@ const nicheRect = (F, i) => {
   const p = F.info.marks['n' + i]; return p ? [[p[0] - 0.11, p[1] - 0.12], [p[0] + 0.11, p[1] + 0.12]] : null;
 };
 export async function formulary(app, args) {
-  const m = store.member(), ok = app.live(), view = app.view, marks = app.marks, S = app.stage;
+  const m = store.member(), ok = app.live(), view = app.view, marks = app.marks, W3 = app.world;
   const series = SERIES.find((s) => s.c === args[0]);
   app.amb('inside');
   let F = null;
@@ -141,14 +136,15 @@ export async function formulary(app, args) {
     return { cx: 0.5, cy: 0.5, zoom: Math.max(1, Math.min(v.zoom, Math.max(S.span[0], S.span[1]))) };
   };
   const vf = (S, Fr) => { const r = series && nicheRect(Fr, +series.c); return r ? app.fit(S, r, 0.62) : wall(S, Fr); };
-  F = await pane(app, 'formulary', vf, { need: 1 }); if (!ok()) return null;
+  F = await pane(app, series ? 'niche' : 'formulary', series ? +series.c : null, 'formulary', vf, { need: 1 }); if (!ok()) return null;
+  if (W3) W3.setNiche(series ? +series.c : 0);
   if (series) {
     view.innerHTML = `<div class="page"><a class="back" href="#/formulary">The Formulary</a>
       <header><p class="label">${series.n}</p><h1 class="title" style="margin-top:8px">${series.f}</h1><p class="lead">${series.d}</p></header>
       <p class="sample">SAMPLE DATA. Names, lots, prices and statuses are placeholders that show the shape of a verified record.</p>
       <ul class="rows" style="margin-top:24px">${series.items.map((r) => `<li><a class="row" href="#/record/${r.id}"><span class="n">${r.id.slice(-4)}</span><span><span class="t">${r.name}</span><span class="d">${r.cls} · ${r.sizes.map((z) => `${z.q} ${z.u}`).join(', ')}${canOrder(r) ? ' · from ' + cad(r.sizes[0].price) : ''}</span></span><span class="m">${tag(r)}</span></a></li>`).join('')}</ul>
       <p class="note" style="margin-top:18px">${LABEL_LINE}</p></div>`;
-    return { title: series.n, crumb: 'Formulary' };
+    return { title: series.n, crumb: 'Formulary', leave: () => { if (W3) W3.setNiche(0); } };
   }
   let filter = 'all', q = '';
   view.innerHTML = `<div class="page"><header><h1 class="title">The Formulary</h1><p class="lead">Information first. Action with clarity.</p></header>
@@ -173,14 +169,18 @@ export async function formulary(app, args) {
   // the niches in the picture are the same nine links
   if (F) {
     marks.innerHTML = SERIES.map((s) => `<a class="niche" href="#/formulary/${s.c}" data-n="${+s.c}" aria-label="${s.n}, ${s.f}"><span>${s.c}</span></a>`).join('');
-    const hot = (n, on) => { const el = $(`.niche[data-n="${n}"]`, marks); if (el) el.classList.toggle('hot', on); };
+    const hot = (n, on) => { const el = $(`.niche[data-n="${n}"]`, marks); if (el) el.classList.toggle('hot', on); if (W3) W3.setNiche(on ? +n : 0); };
+    marks.addEventListener('pointerover', (e) => { const a = e.target.closest('[data-n]'); if (a && W3) W3.setNiche(+a.dataset.n); });
+    marks.addEventListener('pointerout', () => { if (W3) W3.setNiche(0); });
     out.addEventListener('pointerover', (e) => { const a = e.target.closest('[data-n]'); if (a) hot(a.dataset.n, true); });
     out.addEventListener('pointerout', (e) => { const a = e.target.closest('[data-n]'); if (a) hot(a.dataset.n, false); });
     out.addEventListener('focusin', (e) => { const a = e.target.closest('[data-n]'); $$('.niche', marks).forEach((x) => x.classList.remove('hot')); if (a) hot(a.dataset.n, true); });
   }
+  const place = () => { for (const el of marks.children) app.place(el, 'n' + el.dataset.n); };
+  place();
   return {
     title: 'Formulary', crumb: 'Formulary',
-    tick: () => { if (F) for (const el of marks.children) { const r = nicheRect(F, +el.dataset.n); if (r) app.placeRect(el, r); } },
+    tick: W3 ? null : place, after: place, leave: () => { if (W3) W3.setNiche(0); },
   };
 }
 
@@ -189,7 +189,8 @@ export async function record(app, args) {
   if (!r) { app.go('#/formulary'); return null; }
   const s = seriesOf(r);
   app.amb('inside');
-  await pane(app, 'formulary', (S, F) => { const rc = nicheRect(F, +s.c); return rc ? app.fit(S, rc, 0.9) : { cx: 0.5, cy: 0.5, zoom: 1 }; }, { need: 1 }); if (!ok()) return null;
+  await pane(app, 'record', +s.c, 'formulary', (S, F) => { const rc = nicheRect(F, +s.c); return rc ? app.fit(S, rc, 0.9) : { cx: 0.5, cy: 0.5, zoom: 1 }; }, { need: 1 }); if (!ok()) return null;
+  if (app.world) app.world.setNiche(+s.c);
   const able = canOrder(r), missing = CHECKS.filter(([k]) => !r.checks[k]).map(([, t]) => t.toLowerCase());
   view.innerHTML = `<div class="page"><a class="back" href="#/formulary/${s.c}">${s.n} · ${s.f}</a>
     <div class="rec-head"><div><p class="label">${r.id}</p><h1 class="title" style="margin-top:8px">${r.name}</h1><p class="lead dim" style="margin-top:8px">${r.cls}, ${r.form.toLowerCase()}</p><p style="margin-top:16px">${tag(r)}</p></div>
@@ -215,7 +216,7 @@ export async function record(app, args) {
       $('#added', view).innerHTML = `Added. <a href="#/order">Open your order list</a>`;
     });
   }
-  return { title: r.name, crumb: 'Formulary' };
+  return { title: r.name, crumb: 'Formulary', leave: () => { if (app.world) app.world.setNiche(0); } };
 }
 
 // ---------------------------------------------------------------------------------------------- order list and orders (A15)
@@ -291,7 +292,8 @@ const KEEPER_LINES = ['There you are.', 'I wondered when you would arrive.', 'Yo
 export async function archive(app) {
   const m = store.member(), ok = app.live(), view = app.view, I = INSIGNIA[m.lineage];
   app.amb('inside');
-  await pane(app, 'archive_' + m.lineage, () => ({ cx: 0.5, cy: 0.5, zoom: 1 }), { need: 0.6 }); if (!ok()) return null;
+  if (app.world) app.world.setLineage(m.lineage);
+  await pane(app, 'archive', null, 'archive_' + m.lineage, () => ({ cx: 0.5, cy: 0.5, zoom: 1 }), { need: 0.6 }); if (!ok()) return null;
   const inv = Object.values(store.exportAll().invitations).find((i) => i.member === m.id) || {};
   const answer = { discover: 'To discover', create: 'To create', become: 'To become', unknown: 'I do not know yet' }[inv.pursuit];
   view.innerHTML = `<div class="page"><header><h1 class="title">A record of where you began.</h1></header>

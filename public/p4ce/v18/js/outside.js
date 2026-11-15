@@ -25,10 +25,11 @@ let tries = 0, holdUntil = 0;
 export async function entry(app) {
   const ok = app.live(), view = app.view;
   app.amb('city');
-  await app.scene({ layout: 'full', theme: 'outside', frame: 'wide', tiles: ['medL_shen', 'medR_ouroboros'], view: frontView(app), dur: 1.6, setup: (S) => { alleyLight(S); S.expo = 0.5; S.vig = 0.9; S.rain = 0.7; } });
+  const W3 = app.world, inv = store.invitation();
+  if (W3) { W3.setCard(null); W3.setDoors(inv && store.doors() ? store.doors() : { L: 'shen', R: 'ouroboros' }); }
+  await app.scene({ layout: 'full', theme: 'outside', shot: 'front', frame: 'wide', tiles: ['medL_shen', 'medR_ouroboros'], view: frontView(app), dur: 1.8, setup: (S) => { alleyLight(S); S.expo = 0.5; S.vig = 0.9; S.rain = 0.7; } });
   if (!ok()) return null;
   scrim(1);
-  const inv = store.invitation();
   const ask = () => {
     view.innerHTML = `<section class="front">
       <h1>Some doors were never meant to be found.</h1>
@@ -74,8 +75,8 @@ export async function entry(app) {
     });
   };
   const recognised = async (inv, fresh) => {
-    const has = app.has('invite_' + inv.symbol);
-    view.innerHTML = `<section class="front">
+    const has = W3 ? true : app.has('invite_' + inv.symbol);
+    view.innerHTML = `<section class="front${W3 ? ' with-card' : ''}">
       ${has ? '' : seal(inv.symbol)}
       <h1 tabindex="-1">${fresh ? 'Invitation recognised.' : 'Your invitation is open.'}</h1>
       <p class="lead">This is your seal. One of two doors carries it.</p>
@@ -85,23 +86,26 @@ export async function entry(app) {
     </section>`;
     $('#other', view).addEventListener('click', () => { store.leaveInvitation(); app.proto(); app.go('#/'); });
     if (fresh) $('h1', view).focus();
-    if (has) await app.scene({ layout: 'full', theme: 'outside', frame: 'invite_' + inv.symbol, dur: 1.2, view: (S) => (app.narrow() ? { cx: 0.5, cy: 0.68, zoom: 0.92 } : { cx: 0.3, cy: 0.5, zoom: 0.9 }), setup: (S) => { S.vig = 0.5; S.grain = 0.03; } });
+    // the card comes up into the hand, in the alley, in front of the doors
+    if (W3) { W3.cardAt = app.narrow() ? [0, 0.4] : [0.22, 0.02]; W3.cardScale = app.narrow() ? 0.8 : 1; W3.setCard(inv.symbol); if (fresh) app.sfx('key'); }
+    else if (has) await app.scene({ layout: 'full', theme: 'outside', frame: 'invite_' + inv.symbol, view: (S) => (app.narrow() ? { cx: 0.5, cy: 0.68, zoom: 0.92 } : { cx: 0.3, cy: 0.5, zoom: 0.9 }), setup: (S) => { S.vig = 0.5; S.grain = 0.03; } });
   };
   if (inv && ['issued', 'validated'].includes(inv.state) && !store.lock()) await recognised(inv, false);
   else if (inv) { view.innerHTML = `<section class="front"><h1>Your invitation is open.</h1><div class="actions"><a class="btn" href="${resume(inv)}">Continue</a><button class="link" type="button" id="other">Use a different invitation</button></div></section>`; $('#other', view).addEventListener('click', () => { store.leaveInvitation(); app.proto(); app.go('#/'); }); }
   else ask();
-  return { title: 'Invitation', tick: (t, dt, mo) => { app.stage.weights.tube = mo ? flicker(t) : 1; app.soundTick(t); }, leave: () => scrim(0) };
+  return { title: 'Invitation', tick: (t, dt, mo) => { app.lamp('tube', mo ? flicker(t) : 1); app.soundTick(t); }, leave: () => { scrim(0); if (W3) W3.setCard(null); } };
 }
 
 // ---------------------------------------------------------------------------------------------- A02 to A04 the alley
 export async function alley(app) {
-  const inv = store.invitation(), ok = app.live(), S = app.stage, view = app.view, marks = app.marks;
+  const inv = store.invitation(), ok = app.live(), S = app.stage, W3 = app.world, view = app.view, marks = app.marks;
   if (!['issued', 'validated'].includes(inv.state)) { app.go(resume(inv)); return null; }
   const doors = store.doors();
   app.amb('city');
-  const W = await app.scene({ layout: 'full', theme: 'outside', frame: 'wide', tiles: ['medL_' + doors.L, 'medR_' + doors.R], view: farView(app), dur: 2.6, setup: alleyLight });
+  if (W3) W3.setDoors(doors);
+  const W = await app.scene({ layout: 'full', theme: 'outside', shot: 'alley', frame: 'wide', tiles: ['medL_' + doors.L, 'medR_' + doors.R], view: farView(app), dur: 2.8, setup: alleyLight });
   if (!ok()) return null;
-  const tiled = (k) => !!(W && W.info.tiles && W.info.tiles['med' + k + '_' + doors[k]]);
+  const tiled = (k) => !!(W3 || (W && W.info.tiles && W.info.tiles['med' + k + '_' + doors[k]]));
   if (app.motion()) [0.1, 0.62, 1.15, 1.7].forEach((d, i) => app.sfx('step', true, 1 - i * 0.12, d));
   let mode = store.lock() ? 'denied' : 'choose', chosen = null, busy = false;
   const name = { L: 'left', R: 'right' };
@@ -128,6 +132,11 @@ export async function alley(app) {
     if (focus) { const h = $('h2', sheet); if (h) h.focus(); }
   };
   const toClose = async (side, fwd) => {
+    if (W3) {                                        // walk up to the door, or step back from it
+      if (fwd) [0, 0.5, 1.0].forEach((dl) => app.sfx('step', true, 0.9, dl));
+      await app.scene({ layout: 'full', theme: 'outside', shot: fwd ? 'door' : 'alley', arg: side, dur: 1.7 });
+      return;
+    }
     const C = await S.load('close' + side).catch(() => null);
     if (C) await C.setTiles(['med' + side + '_' + doors[side]], 0);
     if (!ok() || !C || !W) return;
@@ -163,27 +172,24 @@ export async function alley(app) {
       return app.go('#/keeper');
     }
     app.sfx('deny'); app.announce('The door stays shut.');
-    await app.tween(1.4, (k) => { S.weights['lamp' + chosen] = k > 0.85 ? 0.06 : (Math.sin(k * 60) > 0 ? 1 : 0.2) * (1 - k * 0.6); }, ease.lin);
+    await app.tween(1.4, (k) => { app.lamp('lamp' + chosen, k > 0.85 ? 0.06 : (Math.sin(k * 60) > 0 ? 1 : 0.2) * (1 - k * 0.6)); }, ease.lin);
     if (!ok()) return;
     busy = false; await back();
   };
   marks.addEventListener('click', (e) => { const b = e.target.closest('.door'); if (b) pick(b.dataset.side); });
-  if (mode === 'denied') { S.weights.lampL = 0.25; S.weights.lampR = 0.25; }
+  if (mode === 'denied') { app.lamp('lampL', 0.25); app.lamp('lampR', 0.25); }
   paint(false);
   const place = () => {
     if (!W || mode !== 'choose') return;
-    for (const k of ['L', 'R']) {
-      app.placeRect($(`.door[data-side=${k}]`, marks), W.info.rects['door' + k]);
-      const r = W.info.rects['med' + k], mx = (r[1][0] - r[0][0]) * 0.14, my = (r[1][1] - r[0][1]) * 0.14;
-      app.placeRect($(`[data-plate=${k}]`, marks), [[r[0][0] + mx, r[0][1] + my], [r[1][0] - mx, r[1][1] - my]]);
-    }
+    for (const k of ['L', 'R']) { app.place($(`.door[data-side=${k}]`, marks), 'door' + k); app.place($(`[data-plate=${k}]`, marks), 'med' + k, 0.14); }
   };
   return {
     title: 'The alley',
     tick: (t, dt, mo) => {
-      const f = mo ? flicker(t) : 1; S.weights.tube = f; app.buzz(mo ? 1 - f : 0); app.soundTick(t); place();
+      const f = mo ? flicker(t) : 1; app.lamp('tube', f); app.buzz(mo ? 1 - f : 0); app.soundTick(t); if (!W3) place();
       if (mode === 'denied' && !busy && !store.lock()) { store.clearLock(); app.go('#/alley'); }
     },
+    after: place,                                    // the buttons follow the doors once the camera has moved
     leave: () => app.buzz(0),
   };
 }
@@ -191,12 +197,16 @@ export async function alley(app) {
 // ---------------------------------------------------------------------------------------------- A05 the Keeper
 const STOP = Symbol('stop');
 export async function keeper(app) {
-  const inv = store.invitation(), ok = app.live(), S = app.stage, K = app.keeper, view = app.view, marks = app.marks;
+  const inv = store.invitation(), ok = app.live(), S = app.stage, W3 = app.world, K = app.keeper, view = app.view, marks = app.marks;
   if (inv.state !== 'door') { app.go(resume(inv)); return null; }
   const side = inv.doorSide || 'L', sym = inv.symbol;
   app.amb('city');
-  const C = await app.scene({ layout: 'full', theme: 'outside', frame: 'close' + side, tiles: ['med' + side + '_' + sym], slit: 0, view: closeView(app), dur: 0.8, setup: alleyLight });
+  if (W3) W3.setDoors(store.doors());
+  const C = await app.scene({ layout: 'full', theme: 'outside', shot: 'door', arg: side, frame: 'close' + side, tiles: ['med' + side + '_' + sym], slit: 0, view: closeView(app), dur: 1.2, setup: alleyLight });
   if (!ok()) return null;
+  const D = W3 ? W3.doors[side] : null;
+  const setSlit = (v) => { if (D) D.slit = v; else if (C) C.setSlit(v); };
+  if (W3 && K) { K.place(0, 0, 400, 100); W3.setKeeper(document.getElementById('keeper'), side); }
   view.innerHTML = `<h1 class="sr">The Keeper</h1>
     <div class="keeper-ui"><p class="caption off" id="cap" aria-live="polite"></p>
       <div class="choices" id="choices" role="group" aria-label="Your answer. Optional; there is no right one." hidden>
@@ -204,7 +214,7 @@ export async function keeper(app) {
       </div></div>
     <div class="keeper-ctl"><button class="btn ghost" type="button" id="next">Continue</button><button class="link small" type="button" id="skip">Skip to the application</button></div>`;
   const cap = $('#cap', view), choices = $('#choices', view), next = $('#next', view);
-  const open = C ? C.info.rects['open' + side] : [[0.39, 0.63], [0.61, 0.69]];
+  const open = !W3 && C ? C.info.rects['open' + side] : [[0.39, 0.63], [0.61, 0.69]];
   const slitView = (S) => {
     const w = Math.abs(open[1][0] - open[0][0]), zoom = (app.narrow() ? 0.88 : 0.46) * S.span[0] / w;
     return { cx: (open[0][0] + open[1][0]) / 2, cy: (open[0][1] + open[1][1]) / 2 + 0.1 * S.span[1] / zoom, zoom };
@@ -227,7 +237,7 @@ export async function keeper(app) {
     cap.classList.add('off'); choices.hidden = true; app.sfx('holo', 0);
     if (!fast) {
       await app.tween(0.8, (k) => { lvl.open = 1 - k; });
-      app.sfx('slide'); if (C) await app.tween(0.7, (k) => C.setSlit(1 - k), ease.lin);
+      app.sfx('slide'); await app.tween(0.7, (k) => setSlit(1 - k), ease.lin);
     }
     if (ok()) app.go('#/apply');
   };
@@ -244,11 +254,11 @@ export async function keeper(app) {
   (async () => {
     try {
       await step(app.beat(1.3));
-      app.sfx('slide'); if (C) await step(app.tween(0.8, (k) => C.setSlit(k), ease.lin));
+      app.sfx('slide'); await step(app.tween(0.8, (k) => setSlit(k), ease.lin));
       document.body.classList.add('keeper-on');
-      const v0 = { ...S.viewA }, v1 = slitView(S);
       app.tween(1.8, (k) => { lvl.open = k; });
-      await step(app.tween(2.6, (k) => { S.viewA = lerpView(v0, v1, k); }));
+      if (W3) await step(app.scene({ layout: 'full', theme: 'outside', shot: 'slit', arg: side, dur: 2.8 }));
+      else { const v0 = { ...S.viewA }, v1 = slitView(S); await step(app.tween(2.6, (k) => { S.viewA = lerpView(v0, v1, k); })); }
       await step(app.beat(0.6));
       await say('There you are.');
       await step(app.beat(0.9));
@@ -265,22 +275,25 @@ export async function keeper(app) {
   return {
     title: 'The Keeper', noFocus: true,
     tick: (t, dt, mo) => {
-      const a = S.toScreen(open[0][0], open[0][1]), b = S.toScreen(open[1][0], open[1][1]);
-      const x = Math.min(a[0], b[0]), y = Math.min(a[1], b[1]), w = Math.abs(b[0] - a[0]), h = Math.abs(b[1] - a[1]);
-      if (K) { K.place(x, y, w, h); K.open = lvl.open; K.warm = lvl.warm; K.roots = lvl.roots; K.glitch = mo && Math.sin(t * 0.37) > 0.995 ? 0.5 : 0; }
+      const bx = app.box('slit' + side) || { x: innerWidth * 0.3, y: innerHeight * 0.45, w: innerWidth * 0.4, h: 40 }, { x, y, w, h } = bx;
+      if (K) { K.open = lvl.open; K.warm = lvl.warm; K.roots = lvl.roots; K.glitch = mo && Math.sin(t * 0.37) > 0.995 ? 0.5 : 0; }
       if (fb) { Object.assign(fb.style, { transform: `translate(${x}px, ${y}px)`, width: w + 'px', height: h + 'px', opacity: lvl.open }); }
-      S.weights.holo = lvl.open * (0.5 + 0.6 * lvl.warm) * (mo ? 0.94 + 0.06 * Math.sin(t * 23) : 1);
-      S.weights.tube = mo ? flicker(t) : 1;
+      const holo = lvl.open * (0.5 + 0.6 * lvl.warm) * (mo ? 0.94 + 0.06 * Math.sin(t * 23) : 1);
+      if (W3) {                                      // her light falls on the door around the slit, and on the rain
+        const a = W3.anchors['slit' + side].rect, c = W3.pt('alley', [(a[0][0] + a[1][0]) / 2, a[0][1] - 0.22, (a[0][2] + a[1][2]) / 2]);
+        W3.light(1, c, [0.5 * holo + 0.5 * holo * lvl.warm, 0.8 * holo, 1.1 * holo - 0.3 * holo * lvl.warm], 0.05);
+      }
+      app.lamp('tube', mo ? flicker(t) : 1);
       view.style.setProperty('--cap-top', Math.round(Math.min(innerHeight - 250, y + h + Math.max(34, h * 0.5))) + 'px');
       app.soundTick(t);
     },
-    leave: () => { done = true; if (adv) adv(); app.sfx('holo', 0); document.body.classList.remove('keeper-on'); if (K) K.gazeT = [0, 0]; },
+    leave: () => { done = true; if (adv) adv(); app.sfx('holo', 0); document.body.classList.remove('keeper-on'); if (K) K.gazeT = [0, 0]; if (W3) { W3.setKeeper(null); W3.light(1, null); if (D) D.slit = 0; } },
   };
 }
 
 // ---------------------------------------------------------------------------------------------- A06 application
 const doorPane = async (app, inv, frame) => app.scene({
-  layout: 'pane', theme: 'outside', frame: frame || 'close' + (inv.doorSide || 'L'), need: 0.8,
+  layout: 'pane', theme: 'outside', shot: 'doorpane', arg: inv.doorSide || 'L', dur: 1.6, frame: frame || 'close' + (inv.doorSide || 'L'), need: 0.8,
   tiles: frame ? undefined : ['med' + (inv.doorSide || 'L') + '_' + inv.symbol], slit: frame ? null : 0,
   view: frame ? (S) => ({ cx: 0.5, cy: 0.5, zoom: 0.95 }) : doorView(app), setup: (S) => { S.rain = frame ? 0 : 0.5; S.vig = 0.5; S.expo = frame ? 1 : 0.8; S.weights.holo = 0; },
 });
@@ -288,6 +301,7 @@ export async function apply(app) {
   const inv = store.invitation(), ok = app.live(), view = app.view;
   if (inv.state !== 'keeper') { app.go(resume(inv)); return null; }
   app.amb('city');
+  if (app.world) app.world.setDoors(store.doors());
   await doorPane(app, inv); if (!ok()) return null;
   view.innerHTML = `<div class="page">
     <header><h1 class="title">Application</h1><p class="lead">An invitation is an opportunity to apply. A person reviews every application, and admission is not automatic.</p></header>
@@ -339,6 +353,7 @@ export async function status(app) {
   if (!a || !['applied', 'approved'].includes(inv.state)) { app.go(resume(inv)); return null; }
   if (a.status === 'approved') { app.go('#/offer'); return null; }
   app.amb('city');
+  if (app.world) app.world.setDoors(store.doors());
   await doorPane(app, inv); if (!ok()) return null;
   const declined = a.status === 'declined';
   view.innerHTML = `<div class="page">
@@ -369,9 +384,13 @@ export async function offer(app) {
   const inv = store.invitation(), a = store.application(), ok = app.live(), view = app.view;
   if (!a || inv.state !== 'approved') { app.go(resume(inv)); return null; }
   app.amb('none');
+  const W3 = app.world;
+  if (W3) W3.setDoors(store.doors());
   await doorPane(app, inv, app.has('invite_' + inv.symbol) ? 'invite_' + inv.symbol : null); if (!ok()) return null;
+  // the invitation again, in the hand, at the door it opened
+  if (W3) { W3.cardAt = [0, app.narrow() ? 0 : 0.08]; W3.cardScale = app.narrow() ? 0.62 : 0.9; W3.setCard(inv.symbol); }
   view.innerHTML = `<div class="page">
-    <header><p class="label">Offer of membership</p><h1 class="title">You have been offered a place.</h1>
+    <header><h1 class="title">You have been offered a place.</h1>
       <p class="lead">Generation I, The First Record. Two hundred places, never refilled. This offer is open until ${fmtDate(a.offerUntil)}.</p></header>
     <section><h2>What acceptance records</h2><dl class="kv">
       <dt>Generation</dt><dd>I · The First Record</dd>
@@ -400,7 +419,7 @@ export async function offer(app) {
       <div class="actions"><a class="btn" href="#/passage">Enter</a></div></div>`;
     $('h1', view).focus(); app.announce('Membership accepted.');
   });
-  return { title: 'Offer of membership' };
+  return { title: 'Offer of membership', leave: () => { if (W3) W3.setCard(null); } };
 }
 
 // ---------------------------------------------------------------------------------------------- returning member
@@ -408,7 +427,8 @@ export async function signIn(app) {
   const ok = app.live(), view = app.view;
   if (store.member()) { app.go('#/atrium'); return null; }
   app.amb('city');
-  await app.scene({ layout: 'full', theme: 'outside', frame: 'wide', tiles: ['medL_shen', 'medR_ouroboros'], view: frontView(app), dur: 1.2, setup: (S) => { alleyLight(S); S.expo = 0.5; S.vig = 0.9; S.rain = 0.7; } });
+  if (app.world) { app.world.setCard(null); app.world.setDoors({ L: 'shen', R: 'ouroboros' }); }
+  await app.scene({ layout: 'full', theme: 'outside', shot: 'front', frame: 'wide', tiles: ['medL_shen', 'medR_ouroboros'], view: frontView(app), dur: 1.4, setup: (S) => { alleyLight(S); S.expo = 0.5; S.vig = 0.9; S.rain = 0.7; } });
   if (!ok()) return null;
   scrim(1);
   view.innerHTML = `<section class="front">
@@ -430,5 +450,5 @@ export async function signIn(app) {
     app.go(next);
   });
   $('#forgot', view).addEventListener('click', () => { $('#msg', view).textContent = 'In the live service a recovery link goes to your verified email. The metal card is never needed to recover an account. In this prototype, use Reset in the prototype controls.'; });
-  return { title: 'Sign in', tick: (t, dt, mo) => { app.stage.weights.tube = mo ? flicker(t) : 1; app.soundTick(t); }, leave: () => scrim(0) };
+  return { title: 'Sign in', tick: (t, dt, mo) => { app.lamp('tube', mo ? flicker(t) : 1); app.soundTick(t); }, leave: () => scrim(0) };
 }
