@@ -25,7 +25,7 @@ let tries = 0, holdUntil = 0;
 export async function entry(app) {
   const ok = app.live(), view = app.view;
   app.amb('city');
-  await app.scene({ layout: 'full', theme: 'outside', frame: 'wide', view: frontView(app), dur: 1.6, setup: (S) => { alleyLight(S); S.expo = 0.5; S.vig = 0.9; S.rain = 0.7; } });
+  await app.scene({ layout: 'full', theme: 'outside', frame: 'wide', tiles: ['medL_shen', 'medR_ouroboros'], view: frontView(app), dur: 1.6, setup: (S) => { alleyLight(S); S.expo = 0.5; S.vig = 0.9; S.rain = 0.7; } });
   if (!ok()) return null;
   scrim(1);
   const inv = store.invitation();
@@ -408,7 +408,7 @@ export async function signIn(app) {
   const ok = app.live(), view = app.view;
   if (store.member()) { app.go('#/atrium'); return null; }
   app.amb('city');
-  await app.scene({ layout: 'full', theme: 'outside', frame: 'wide', view: frontView(app), dur: 1.2, setup: (S) => { alleyLight(S); S.expo = 0.5; S.vig = 0.9; S.rain = 0.7; } });
+  await app.scene({ layout: 'full', theme: 'outside', frame: 'wide', tiles: ['medL_shen', 'medR_ouroboros'], view: frontView(app), dur: 1.2, setup: (S) => { alleyLight(S); S.expo = 0.5; S.vig = 0.9; S.rain = 0.7; } });
   if (!ok()) return null;
   scrim(1);
   view.innerHTML = `<section class="front">

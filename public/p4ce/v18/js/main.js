@@ -62,7 +62,7 @@ function setLayout(layout, theme) {
   b.classList.add('stage-' + layout, theme);
   state.layout = layout; state.theme = theme;
   stage.bg = theme === 'inside' ? CHALK : NIGHT;
-  $('meta[name=theme-color]').content = theme === 'inside' ? '#F2F3EF' : '#0B0E10';
+  const tc = $('meta[name=theme-color]'); if (tc) tc.content = theme === 'inside' ? '#F2F3EF' : '#0B0E10';
 }
 function defaults() {
   const inside = state.theme === 'inside';

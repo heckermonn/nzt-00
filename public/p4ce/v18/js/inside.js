@@ -133,7 +133,14 @@ export async function formulary(app, args) {
   const series = SERIES.find((s) => s.c === args[0]);
   app.amb('inside');
   let F = null;
-  const vf = (S, Fr) => { const r = series && nicheRect(Fr, +series.c); return r ? app.fit(S, r, 0.62) : { cx: 0.5, cy: 0.5, zoom: 1 }; };
+  // the whole wall: all nine niches in view, pushed in until the frame fills the pane where it can
+  const wall = (S, Fr) => {
+    const rs = SERIES.map((x) => nicheRect(Fr, +x.c)); if (rs.some((r) => !r)) return { cx: 0.5, cy: 0.5, zoom: 1 };
+    const xs = rs.flatMap((r) => [r[0][0], r[1][0]]), ys = rs.flatMap((r) => [r[0][1], r[1][1]]);
+    const v = app.fit(S, [[Math.min(...xs), Math.min(...ys)], [Math.max(...xs), Math.max(...ys)]], 0.9);
+    return { cx: 0.5, cy: 0.5, zoom: Math.max(1, Math.min(v.zoom, Math.max(S.span[0], S.span[1]))) };
+  };
+  const vf = (S, Fr) => { const r = series && nicheRect(Fr, +series.c); return r ? app.fit(S, r, 0.62) : wall(S, Fr); };
   F = await pane(app, 'formulary', vf, { need: 1 }); if (!ok()) return null;
   if (series) {
     view.innerHTML = `<div class="page"><a class="back" href="#/formulary">The Formulary</a>
@@ -284,7 +291,7 @@ const KEEPER_LINES = ['There you are.', 'I wondered when you would arrive.', 'Yo
 export async function archive(app) {
   const m = store.member(), ok = app.live(), view = app.view, I = INSIGNIA[m.lineage];
   app.amb('inside');
-  await pane(app, 'archive_' + m.lineage, () => ({ cx: 0.5, cy: 0.5, zoom: 1 })); if (!ok()) return null;
+  await pane(app, 'archive_' + m.lineage, () => ({ cx: 0.5, cy: 0.5, zoom: 1 }), { need: 0.6 }); if (!ok()) return null;
   const inv = Object.values(store.exportAll().invitations).find((i) => i.member === m.id) || {};
   const answer = { discover: 'To discover', create: 'To create', become: 'To become', unknown: 'I do not know yet' }[inv.pursuit];
   view.innerHTML = `<div class="page"><header><h1 class="title">A record of where you began.</h1></header>
