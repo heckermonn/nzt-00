@@ -225,6 +225,10 @@ export function createWorld(canvas, base = 'assets/world/') {
   const mirrorCam = new THREE.PerspectiveCamera(); mirrorCam.matrixAutoUpdate = false; mirrorCam.matrixWorldAutoUpdate = false;
   const rt = new THREE.WebGLRenderTarget(256, 256, { generateMipmaps: true, minFilter: THREE.LinearMipmapLinearFilter, magFilter: THREE.LinearFilter, depthBuffer: true });
   const texLoader = new THREE.TextureLoader(), gltf = new GLTFLoader();
+  // a host that cannot serve .glb carries the same bytes as base64 in <zone>.glb.json (window.PR6_GLB = 'json')
+  const model = (name) => (window.PR6_GLB === 'json'
+    ? fetch(base + name + '.glb.json').then((r) => r.json()).then((j) => { const b = atob(j.b64), u = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return gltf.parseAsync(u.buffer, base); })
+    : gltf.loadAsync(base + name + '.glb'));
   const blank = new THREE.DataTexture(new Uint8Array([0, 0, 0, 255]), 1, 1); blank.needsUpdate = true;
   const maxAniso = Math.min(8, renderer.capabilities.getMaxAnisotropy());
   // uniforms shared by every material in the world
@@ -281,7 +285,7 @@ export function createWorld(canvas, base = 'assets/world/') {
   W.load = (name) => {
     if (loading[name]) return loading[name];
     loading[name] = (async () => {
-      const [man, g] = await Promise.all([fetch(base + name + '.json').then((r) => { if (!r.ok) throw new Error('zone ' + name); return r.json(); }), gltf.loadAsync(base + name + '.glb')]);
+      const [man, g] = await Promise.all([fetch(base + name + '.json').then((r) => { if (!r.ok) throw new Error('zone ' + name); return r.json(); }), model(name)]);
       const group = groups[name];
       const Z = { name, man, group, mats: {}, emits: [], meshes: {}, floorY: 0 };
       const jobs = [];
