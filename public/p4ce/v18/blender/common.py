@@ -13,6 +13,10 @@ from PIL import Image, ImageDraw, ImageFilter
 HERE = os.path.dirname(os.path.abspath(__file__))
 INSIGNIA = json.load(open(os.path.join(HERE, "insignia.json")))
 SYMS = ["ouroboros", "djed", "scarab", "shen"]
+ERAS = ["tools", "fire", "agriculture", "mathematics", "medicine", "engineering", "flight", "computation", "space"]
+_ep = os.path.join(HERE, "eras.json")
+if os.path.exists(_ep):
+    INSIGNIA.update(json.load(open(_ep)))          # the era emblems are cut the same way as the insignias
 
 
 def lin(hexs):
@@ -234,6 +238,26 @@ def height_mesh(name, H, sx, sz, depth, mat, keep=None):
     if mat:
         me.materials.append(mat)
     return o
+
+
+def numeral_mask(n, h_px, bar=0.16):
+    """A Roman numeral (1 to 10) as cut strokes, h_px tall. Returns a float image (rows down)."""
+    R = [None, "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"][n]
+    wd = dict(I=0.34, V=0.74, X=0.74); gap = 0.20
+    W = int(h_px * (sum(wd[c] for c in R) + gap * (len(R) - 1))) + 4
+    im = Image.new("L", (W * 2, h_px * 2), 0); dr = ImageDraw.Draw(im); t = max(2, int(h_px * 2 * bar)); x = 2.0
+    H = h_px * 2
+    for c in R:
+        w = wd[c] * H
+        if c == "I":
+            dr.line([(x + w / 2, 0), (x + w / 2, H)], fill=255, width=t)
+        elif c == "V":
+            dr.line([(x + t * 0.4, 0), (x + w / 2, H - t * 0.3)], fill=255, width=t); dr.line([(x + w - t * 0.4, 0), (x + w / 2, H - t * 0.3)], fill=255, width=t)
+        else:
+            dr.line([(x + t * 0.4, 0), (x + w - t * 0.4, H)], fill=255, width=t); dr.line([(x + w - t * 0.4, 0), (x + t * 0.4, H)], fill=255, width=t)
+        x += w + gap * H
+    im = im.resize((W, h_px), Image.LANCZOS).filter(ImageFilter.GaussianBlur(max(0.6, h_px / 40)))
+    return np.asarray(im, np.float32) / 255.0
 
 
 def gauss(a, r):

@@ -23,6 +23,8 @@ const SEED = () => ({
   'H6PZ3W5L': { symbol: 'shen' },
 });
 export const DEMO_CODES = Object.keys(SEED());
+/** The seal on each sample invitation's card (for the prototype panel only: there are no real cards for them). */
+export const DEMO_SEALS = Object.fromEntries(Object.entries(SEED()).map(([c, o]) => [c, o.symbol]));
 
 const fresh = () => ({
   v: 3,

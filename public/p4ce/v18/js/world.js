@@ -19,7 +19,7 @@ const ALLEY = { DX: 1.08, DOOR_Y: 6.6, T: 0.7 }, A_BACK = -17;
 export const INSIDE_Y = ALLEY.DOOR_Y + ALLEY.T + (-(A_BACK - 1)) + BAYS.L;      // Blender y of the Atrium's origin, in the alley's frame
 const ZONES = ['alley', 'passage', 'atrium', 'compass', 'formulary', 'archive'];
 // where each room stands, in the Atrium's frame (Blender coordinates); the alley is the world's own frame
-const ORIGIN = { passage: [0, A_BACK - 1 - BAYS.L, 0], atrium: [0, 0, 0], compass: [0, 107.2, 7], formulary: [-21.5, 112, 0], archive: [21.5, 107, 1] };
+const ORIGIN = { passage: [0, A_BACK - 1 - BAYS.L, 0], atrium: [0, 0, 0], compass: [0, 107.2, 7], formulary: [-20.2, 96, 0.02], archive: [20.5, 91, 1.45] };
 const SYMS = ['ouroboros', 'djed', 'scarab', 'shen'];
 
 const COMMON = /* glsl */`
@@ -86,7 +86,7 @@ void main(){
   col = alb * L;
 #endif
   col *= uGain * uTint * uDim;
-  // live light: the pen of the film, the Keeper's glow
+  // live light (the Keeper's glow)
   for (int i = 0; i < 2; i++){
     vec3 d = uPL[i].xyz - vW; float r2 = dot(d, d), a = uPL[i].w / (uPL[i].w + r2);
     col += alb * uPLc[i] * a * a * (.25 + .75 * max(dot(n, d * inversesqrt(r2 + 1e-4)), 0.));
@@ -151,37 +151,6 @@ void main(){
 const RAIN_FS = /* glsl */`
 varying float vA; uniform float uExpo, uPass;
 void main(){ if (uPass > .5) discard; gl_FragColor = vec4(vec3(.62, .76, .95) * vA * uExpo * .5, 1.); }`;
-
-// a line of light: a polyline drawn as a ribbon that always faces the camera. It is drawn up to uDraw (metres along
-// it). Each point has a tone: 0 is light in the dark, 1 is ink in the light, and the part between is both.
-const LINE_VS = /* glsl */`
-attribute vec3 prev, next; attribute float side, len, tone, wide;
-uniform vec2 uRes; uniform float uWidth, uMinPx, uMaxPx;
-varying float vLen, vSide, vTone, vPx;
-void main(){
-  vec4 c = projectionMatrix * viewMatrix * vec4(position, 1.), a = projectionMatrix * viewMatrix * vec4(prev, 1.), b = projectionMatrix * viewMatrix * vec4(next, 1.);
-  vec2 s = uRes, pa = a.xy / max(a.w, 1e-3) * s, pb = b.xy / max(b.w, 1e-3) * s;
-  vec2 dir = pb - pa; float l = length(dir); dir = l > 1e-4 ? dir / l : vec2(1., 0.);
-  float px = clamp(uWidth * wide * projectionMatrix[1][1] * s.y / max(c.w, 1e-3) * .5, uMinPx, uMaxPx);
-  vPx = px; vLen = len; vSide = side; vTone = tone;
-  c.xy += vec2(-dir.y, dir.x) * side * px * 2.2 / s * c.w;
-  gl_Position = c;
-}`;
-const LINE_FS = /* glsl */`
-uniform float uDraw, uFrom, uExpo, uPass, uFade; uniform vec3 uLight, uInk;
-varying float vLen, vSide, vTone, vPx;
-void main(){
-  if (uPass > .5 || vLen > uDraw || vLen < uFrom) discard;
-  float d = abs(vSide) * 2.2;                       // 0 at the centre, 1 at the edge of the core, 2.2 at the edge of the glow
-  float core = smoothstep(1., 1. - 1.5 / max(vPx, 1.), d);
-  float glow = exp(-d * d * 1.1) * .55;
-  float head = exp(-(uDraw - vLen) * 1.6);          // the newest part burns brighter
-  float lit = (1. - smoothstep(.25, .8, vTone)), ink = smoothstep(.2, .75, vTone);
-  vec3 light = uLight * (core * (1.1 + 1.6 * head) + glow * (.42 + head)) * lit * clamp(uExpo, .25, 1.4);
-  // light needs dark round it to be seen: a soft shade under the glow keeps the line legible where it crosses daylight
-  float a = max(core * ink, exp(-d * d * .7) * .5 * lit * (1. - core));
-  gl_FragColor = vec4((light + uInk * a) * uFade, a * uFade);
-}`;
 
 const BLADE_VS = /* glsl */`
 varying vec3 vW; varying vec3 vN; varying vec3 vO;
@@ -346,7 +315,7 @@ export function createWorld(canvas, base = 'assets/world/') {
     const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: W._glow || (W._glow = glowTex()), color, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
     s.position.copy(pos); s.scale.setScalar(size); s.userData = { lamp, k }; sprites.push(s); return s;
   };
-  let rain = null, keeperPlane = null, keeperTex = null, card = null;
+  let rain = null, keeperPlane = null, keeperTex = null;
   function buildAlley(Z) {
     const A = Z.man.anchors, d = A.dims;
     for (const k of ['L', 'R']) {
@@ -385,21 +354,6 @@ export function createWorld(canvas, base = 'assets/world/') {
   };
   W.keeperDirty = () => { if (keeperTex) keeperTex.needsUpdate = true; };
 
-  /** The invitation card, held in front of the camera. sym or null. */
-  W.setCard = async (sym) => {
-    if (!sym) { if (card) card.userData.goal = 0; return; }
-    if (!card) {
-      card = new THREE.Group(); const w = 0.105, h = 0.148;
-      const edge = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.0016), new THREE.MeshBasicMaterial({ color: 0xb8622f }));
-      const face = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ transparent: true })); face.position.z = 0.0009;
-      const back = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: 0x14181b })); back.position.z = -0.0009; back.rotation.y = Math.PI;
-      card.add(edge, face, back); card.userData = { goal: 0, k: 0, face, maps: {} }; card.visible = false; camera.add(card);
-    }
-    const U = card.userData;
-    if (!U.maps[sym]) { U.maps[sym] = await new Promise((res) => texLoader.load(`${base}card_${sym}.webp`, (t) => { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = maxAniso; res(t); }, undefined, () => res(null))); }
-    if (U.maps[sym]) { U.face.material.map = U.maps[sym]; U.face.material.needsUpdate = true; }
-    U.goal = 1;
-  };
 
   // ---------------------------------------------------------------- the Compass: thirty glass blades
   let blades = null; const bladeData = [];
@@ -446,35 +400,8 @@ export function createWorld(canvas, base = 'assets/world/') {
   function setLineage(sym) { W.lineage = sym; const Z = W.zones.archive; if (!Z) return; for (const s of SYMS) { const m = Z.meshes['face_' + s]; if (m) m.visible = s === sym; } }
   W.setLineage = setLineage;
 
-  // ---------------------------------------------------------------- lines of light
-  /** A line through pts (Vector3, world). opts: tone(i) 0..1, wide(i), width in metres. Returns the mesh, with .draw(metres) and .length. */
-  W.line = (pts, opts = {}) => {
-    const n = pts.length, pos = new Float32Array(n * 6), prev = new Float32Array(n * 6), next = new Float32Array(n * 6), side = new Float32Array(n * 2), len = new Float32Array(n * 2), tone = new Float32Array(n * 2), wide = new Float32Array(n * 2), idx = [];
-    let L = 0; const cum = [0];
-    for (let i = 1; i < n; i++) { L += pts[i].distanceTo(pts[i - 1]); cum.push(L); }
-    for (let i = 0; i < n; i++) {
-      const p = pts[i], a = pts[Math.max(0, i - 1)], b = pts[Math.min(n - 1, i + 1)];
-      for (let e = 0; e < 2; e++) { const o = (i * 2 + e) * 3; pos.set([p.x, p.y, p.z], o); prev.set([a.x, a.y, a.z], o); next.set([b.x, b.y, b.z], o); side[i * 2 + e] = e ? 1 : -1; len[i * 2 + e] = cum[i]; tone[i * 2 + e] = opts.tone ? opts.tone(i, cum[i]) : 0; wide[i * 2 + e] = opts.wide ? opts.wide(i, cum[i]) : 1; }
-      if (i < n - 1) idx.push(i * 2, i * 2 + 1, i * 2 + 2, i * 2 + 1, i * 2 + 3, i * 2 + 2);
-    }
-    const g = new THREE.BufferGeometry();
-    for (const [k, a, s] of [['position', pos, 3], ['prev', prev, 3], ['next', next, 3], ['side', side, 1], ['len', len, 1], ['tone', tone, 1], ['wide', wide, 1]]) g.setAttribute(k, new THREE.BufferAttribute(a, s));
-    g.setIndex(idx);
-    const m = new THREE.Mesh(g, new THREE.ShaderMaterial({ vertexShader: LINE_VS, fragmentShader: LINE_FS, transparent: true, depthWrite: false, side: THREE.DoubleSide, blending: THREE.CustomBlending, blendSrc: THREE.OneFactor, blendDst: THREE.OneMinusSrcAlphaFactor,
-      uniforms: { uRes: G.uRes, uExpo: G.uExpo, uPass: G.uPass, uDraw: { value: 0 }, uFrom: { value: -1 }, uFade: { value: 1 }, uWidth: { value: opts.width || 0.02 }, uMinPx: { value: opts.minPx || 1.1 }, uMaxPx: { value: opts.maxPx || 9 }, uLight: { value: new V3(0.72, 0.9, 1.15) }, uInk: { value: new V3(0.09, 0.11, 0.122).multiplyScalar(1) } } }));
-    m.frustumCulled = false; m.renderOrder = 8; m.length = L; m.cum = cum; m.pts = pts;
-    m.draw = (d, from = -1) => { m.material.uniforms.uDraw.value = d; m.material.uniforms.uFrom.value = from; };
-    m.remove = () => { scene.remove(m); g.dispose(); m.material.dispose(); };
-    /** The point at d metres along the line. */
-    m.at = (d, out = new V3()) => { d = clamp(d, 0, L); let k = 1; while (k < n - 1 && cum[k] < d) k++; const f = (d - cum[k - 1]) / Math.max(1e-6, cum[k] - cum[k - 1]); return out.lerpVectors(pts[k - 1], pts[k], f); };
-    scene.add(m); return m;
-  };
-  /** The point of the pen: one small orange light at the head of a line. pos (world) or null; size in metres. */
-  let pen = null;
-  W.pen = (pos, size = 0.1, k = 1) => {
-    if (!pen) { pen = new THREE.Sprite(new THREE.SpriteMaterial({ map: W._glow || (W._glow = glowTex()), color: new THREE.Color(0.914, 0.522, 0.275), depthWrite: false, depthTest: true, transparent: true })); pen.renderOrder = 9; pen.visible = false; scene.add(pen); }
-    pen.visible = !!pos; if (pos) { pen.position.copy(pos); pen.scale.setScalar(size); pen.material.opacity = k; }
-  };
+  /** How brightly a baked group shows (1 as baked): the film lets each stele's light find it. */
+  W.gain = (zone, group, v) => { const Z = W.zones[zone], m = Z && Z.mats[group]; if (m) m.uniforms.uGain.value = v; };
   /** A live point light on the baked surfaces (slot 0 or 1). */
   W.light = (i, pos, color, radius2) => { if (pos) G.uPL.value[i].set(pos.x, pos.y, pos.z, radius2 || 1); else G.uPL.value[i].set(0, -999, 0, 1); G.uPLc.value[i].setRGB(color ? color[0] : 0, color ? color[1] : 0, color ? color[2] : 0); };
 
@@ -500,6 +427,8 @@ export function createWorld(canvas, base = 'assets/world/') {
     fly = { a, b, curve, dur, t0: null, ease: opts.ease || io, back: !!opts.back, look: opts.look ?? (via.length ? 0.7 : 0), res };
   });
   W.flying = () => !!fly;
+  /** The eye's path for the move in progress, as n points (tests check it against the walls). */
+  W.flightPath = (n = 200) => { if (!fly) return []; const out = []; for (let i = 0; i <= n; i++) { const k = i / n, v = new V3(); if (fly.curve) fly.curve.getPointAt(k, v); else v.lerpVectors(fly.a.p, fly.b.p, k); out.push(v); } return out; };
   const _tan = new V3(), _ahead = new V3(), _lt = new V3();
   const stepFly = (time) => {
     if (!fly) return;
@@ -575,13 +504,10 @@ export function createWorld(canvas, base = 'assets/world/') {
     G.uPass.value = 1; G.tRefl.value = blank;                       // a floor must not read the mirror while it is being drawn
     bg.setRGB(Math.sqrt(clamp(W.fog[0] / 16)), Math.sqrt(clamp(W.fog[1] / 16)), Math.sqrt(clamp(W.fog[2] / 16)));
     renderer.setRenderTarget(rt); renderer.setClearColor(bg, 1); renderer.clear();
-    const cv = card ? card.visible : false; if (card) card.visible = false;
     const kv = keeperPlane ? keeperPlane.visible : false; if (keeperPlane) keeperPlane.visible = false;
     for (const s of sprites) s.visible = false;
-    const pv = pen ? pen.visible : false; if (pen) pen.visible = false;
     renderer.render(scene, mirrorCam);
-    if (pen) pen.visible = pv;
-    if (card) card.visible = cv; if (keeperPlane) keeperPlane.visible = kv; for (const s of sprites) s.visible = true;
+    if (keeperPlane) keeperPlane.visible = kv; for (const s of sprites) s.visible = true;
     renderer.setRenderTarget(null); G.uPass.value = 0; G.tRefl.value = rt.texture;
   };
   const tonemap = (v) => { const x = Math.max(0, v * W.expo); return Math.pow(clamp((x * (2.51 * x + 0.03)) / (x * (2.43 * x + 0.59) + 0.14)), (1 + W.con) / 2.2); };
@@ -599,7 +525,11 @@ export function createWorld(canvas, base = 'assets/world/') {
     // lamps, emitters, glows
     for (const zn in W.zones) {
       const Z = W.zones[zn];
-      for (const k in Z.mats) { const m = Z.mats[k], ln = m.userData.lamps; if (ln && ln.length) m.uniforms.wLamp.value.set(W.lamps[ln[0]] ?? 1, W.lamps[ln[1]] ?? 1, W.lamps[ln[2]] ?? 1); }
+      for (const k in Z.mats) {
+        const m = Z.mats[k], ln = m.userData.lamps; if (ln && ln.length) m.uniforms.wLamp.value.set(W.lamps[ln[0]] ?? 1, W.lamps[ln[1]] ?? 1, W.lamps[ln[2]] ?? 1);
+        // each door, its shutter and its seal were baked whole under the lamp above them, so they follow that lamp
+        if (zn === 'alley') { const d = /^(?:door|shut|med)([LR])/.exec(k); if (d) m.uniforms.uGain.value = 0.07 + 0.93 * (W.lamps['lamp' + d[1]] ?? 1); }
+      }
       for (const e of Z.emits) e.mesh.material.uniforms.uW.value = e.lamp ? (W.lamps[e.lamp] ?? 1) : 1;
       if (Z.backs) for (const i in Z.backs) { const u = Z.backs[i].mesh.material.uniforms.uW, goal = W._niche ? (+i === W._niche ? 1.5 : 0.6) : 1; u.value += (goal - u.value) * (W.motion ? 1 - Math.pow(0.002, dt) : 1); }
     }
@@ -609,15 +539,6 @@ export function createWorld(canvas, base = 'assets/world/') {
     // doors
     for (const k of ['L', 'R']) { const D = W.doors[k]; if (!D) continue; D.pivot.rotation.y = (k === 'L' ? -1 : 1) * D.open * 1.78; if (D.shut) D.shut.position.x = D.shut0 + (k === 'L' ? 1 : -1) * D.slit * 0.56; }
     if (keeperPlane && keeperPlane.visible) keeperPlane.material.opacity = 1;
-    // the card rises into the hand
-    if (card) {
-      const U = card.userData; U.k += (U.goal - U.k) * (W.motion ? 1 - Math.pow(0.012, dt) : 1); card.visible = U.k > 0.004;
-      const e = U.k, vf = camera.fov * DEG, dist = 0.46, hh = Math.tan(vf / 2) * dist, hw = hh * camera.aspect, t = W.motion ? time : 0;
-      const cx = W.cardAt ? W.cardAt[0] : 0.3, cy = W.cardAt ? W.cardAt[1] : 0;
-      card.position.set(cx * hw, cy * hh - (1 - e) * hh * 1.6 + Math.sin(t * 0.7) * 0.003, -dist);
-      card.rotation.set(-0.16 + (1 - e) * 0.9 + Math.sin(t * 0.5) * 0.02 - W.par[1] * 0.06, -0.3 * Math.sign(cx || 1) * 0.6 + (1 - e) * -0.7 + Math.sin(t * 0.37 + 1) * 0.04 + W.par[0] * 0.12, 0.05 + (1 - e) * 0.25);
-      const sc = Math.min(1, (hw * 0.62) / 0.105, (hh * 1.25) / 0.148) * (W.cardScale || 1); card.scale.setScalar(sc * 1.45);
-    }
     // blades settle towards the goal
     W.compassT += (W.compassGoal - W.compassT) * (W.motion ? 1 - Math.pow(0.08, dt) : 1); updateBlades(W.compassT, time);
     // vials face the camera
@@ -626,6 +547,10 @@ export function createWorld(canvas, base = 'assets/world/') {
     if (dt > 0 && W.motion) { slow = slow * 0.95 + (dt > 0.034 ? 1 : 0) * 0.05; if (slow > 0.6 && time - last > 2) { last = time; slow = 0; if ((W.dpr || Math.min(devicePixelRatio || 1, 2)) > 1) { W.dpr = Math.max(1, (W.dpr || Math.min(devicePixelRatio || 1, 2)) - 0.5); W.resize(); } else if ((W.reflScale ?? 0.5) > 0.26) { W.reflScale = 0.25; W.resize(); } } }
     // the rooms beyond the Atrium stand in the haze of the court and come out of it as the camera nears them
     for (const n of ['compass', 'formulary', 'archive']) { groups[n].getWorldPosition(_v); const d = Math.hypot(camera.position.x - _v.x, camera.position.z - _v.z); haze[n].value = clamp((d - 34) / 62) ** 0.8 * 0.985; }
+    // The Formulary and the Archive stand against the far wall and are only ever seen through their own openings.
+    // From the court behind the wall (the way to the Compass) their outsides would show, so there they stay in the haze.
+    groups.atrium.worldToLocal(_v.copy(camera.position)); const cx = _v.x, cy = -_v.z, court = clamp((cy - 65) / 6);
+    for (const n of ['formulary', 'archive']) { const o = ORIGIN[n], within = clamp(1.5 - Math.abs(cx - o[0]) / 6.4); const h = court * (1 - within); haze[n].value = Math.max(haze[n].value, h); groups[n].visible = h < 0.999 && (!W._shown || W._shown.includes(n)); }
     const my = mirrorY(); G.uMirrorY.value = my;
     if (W.mirror !== false) renderMirror(my);
     bg.setRGB(tonemap(W.fog[0]), tonemap(W.fog[1]), tonemap(W.fog[2])); renderer.setClearColor(bg, 1);

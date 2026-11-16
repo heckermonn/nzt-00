@@ -11,6 +11,7 @@ import argparse, json, math, os, random, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import bpy  # noqa
 import numpy as np  # noqa
+from PIL import Image  # noqa
 from mathutils import Vector, Euler  # noqa
 import common as C  # noqa
 import mats as M  # noqa
@@ -75,6 +76,7 @@ def cut(o, cutter):
 
 
 FLAGS = {}        # group name -> extra facts for the page (joints, reflect, ...)
+LAMPGAIN = {}     # combined group -> the lamp that lights it: the page is told how dark the group is without it
 
 
 def flag(g, **k):
@@ -268,14 +270,55 @@ def passage():
             quad("sl", [(-x2, y1, 0), (-x2, y1, h2), (-x, y1, h2), (-x, y1, 0)], ST2)
             quad("sr", [(x, y1, 0), (x, y1, h2), (x2, y1, h2), (x2, y1, 0)], ST2)
             quad("st", [(-x, y1, h), (-x, y1, h2), (x, y1, h2), (x, y1, h)], ST2)
+    # ---- the nine records: one stele in each bay, its era cut into the face in sunk relief (as on the Archive stele).
+    # Stone, then metal, then glass; each grows with its bay until the last is the size of the member's own. Each has
+    # its own lamp, baked alone so that the page can let the light find a stele as the walker reaches it.
+    steles, split = [], {}
+    for i, (y0, w, h, l) in enumerate(B_):
+        s = i / (len(B_) - 1); u = s ** 1.15
+        sw, sh = 0.56 + 2.84 * u, 1.9 + 3.7 * u; st = max(0.16, 0.2 * sw); bh = 0.035 * sw
+        sd = 1 if i % 2 == 0 else -1
+        sx, sy = sd * (0.31 - 0.09 * s) * w, y0 + 0.6 * l
+        if i < 3:
+            base = [(0.15, 0.155, 0.165), (0.25, 0.245, 0.24), (0.46, 0.45, 0.43)][i]
+            MAT = C.mineral("era%d" % i, base, 0.08, (0.8, 0.8, 6.0), (0.55, 0.78), 0.07)
+        elif i < 6:
+            rgb, rough = [((0.23, 0.27, 0.31), 0.56), ((0.47, 0.52, 0.56), 0.50), ((0.80, 0.82, 0.83), 0.46)][i - 3]
+            MAT = plain("era%d" % i, rgb, rough, 1.0); C.noise_bump(MAT, 260, 0.05, 0.002, 2)
+        else:
+            MAT = C.glass("era%d" % i, (0.50, 0.64, 0.74), [0.42, 0.34, 0.26][i - 6], 1.45)
+        yf = sy - st / 2; z0 = bh; depth = 0.025 * sw; gap = depth + 0.0045 * sw
+        px = 300 if i < 3 else 420 if i < 6 else 520
+        into("era%d" % i, "relief", r2(512 if i < 3 else 768 if i < 6 else 1024))
+        m = C.symbol_mask(C.ERAS[i], px, fit=0.84, blur=px / 260)
+        Hh = np.zeros((int(px * sh / sw), px), np.float32)
+        r0 = int(Hh.shape[0] * 0.40 - px / 2); Hh[r0:r0 + px, :] = -m
+        nm = C.numeral_mask(i + 1, int(px * 0.1), 0.2); r1 = int(Hh.shape[0] * 0.40 + px * 0.56); c1 = (px - nm.shape[1]) // 2
+        Hh[r1:r1 + nm.shape[0], c1:c1 + nm.shape[1]] = np.minimum(Hh[r1:r1 + nm.shape[0], c1:c1 + nm.shape[1]], -0.6 * nm)
+        face = C.height_mesh("face", Hh, sw, sh, depth, MAT); face.location = (sx, yf, z0 + sh / 2); _add(face)
+        into("body%d" % i, "combined", r2(256 if i < 4 else 512))
+        box("stele", (sx, yf + (gap + st) / 2, z0 + sh / 2), (sw, st - gap, sh), MAT)
+        for q in (-1, 1):
+            box("rim", (sx + q * (sw / 2 - 0.006), yf + 0.001 + gap / 2, z0 + sh / 2), (0.012, gap, sh), MAT)
+        box("rim", (sx, yf + 0.001 + gap / 2, z0 + sh - 0.006), (sw, gap, 0.012), MAT)
+        box("base", (sx, sy, bh / 2), (sw * 1.12, st + sw * 0.12, bh), plain("base%d" % i, (INK[0] * 3, INK[1] * 3, INK[2] * 3), 0.4, 1.0))
+        # the lamp: from above and in front, on the side of the walker
+        d = 1.45 * sh; tgt = (sx, yf, z0 + sh * 0.58)
+        Lt = [0.8, 0.8, 0.55, 1.4, 1.8, 2.2, 2.0, 2.5, 3.0][i]
+        rgbl = (1.0, 0.60, 0.34) if i == 1 else DAY                      # Fire is the one warm light in the building
+        lp = spot("s%d" % i, "", (sx - sd * 0.22 * sw, yf - 0.95 * sh, z0 + sh * 1.55), tgt, Lt * 52.0 * d * d, rgbl, angle=36, blend=0.55, radius=0.04 * sw)
+        lamp("s%d" % i, lp)
+        split.setdefault("p%d" % (i // 3), []).append("s%d" % i); split.setdefault("pf%d" % (i // 3), []).append("s%d" % i)
+        LAMPGAIN["era%d" % i] = LAMPGAIN["body%d" % i] = "s%d" % i
+        steles.append(dict(x=round(sx, 3), y=round(sy, 3), yf=round(yf, 3), z0=round(z0, 3), sw=round(sw, 3), sh=round(sh, 3), st=round(st, 3), side=sd, lamp="s%d" % i))
     # the Atrium beyond the mouth, stood in for by its light: a bright room and a sunlit floor
     e1 = C.box("room", (0, L + 34, 24), (110, 0.2, 48), emit("room", DAY, 1.9)); glow(e1, DAY, 1.9, show=False)
     bpy.ops.mesh.primitive_plane_add(size=1, location=(0, L + 18, 0.0)); e2 = bpy.context.object
     e2.scale = (70, 32, 1); bpy.ops.object.transform_apply(scale=True); e2.data.materials.append(emit("sunfloor", (1.0, 0.98, 0.95), 1.3)); glow(e2, DAY, 1.3, show=False)
     area("sky", "", (0, L + 16, 46), (0, L - 8, 0), 30, 30000, DAY, sy=30)
     C.camera((0, 0.5, 1.6), (0, L, 6.0), lens=24)
-    ANCH.update(bays=[list(b) for b in B_], L=L)
-    return dict(expo=1.0)
+    ANCH.update(bays=[list(b) for b in B_], L=L, steles=steles)
+    return dict(expo=1.0, split_lamps=split)
 
 
 # =============================================================================================== ATRIUM
@@ -416,7 +459,7 @@ def formulary():
     C.camera((0, -13.6, 4.6), (0, YW, 4.72), lens=49)
     ANCH.update(niches)
     ANCH.update(cam=dict(p=[0, -13.6, 4.6], t=[0, YW, 4.72]), dims=dict(NW=NW, NH=NH, HX=HX, HD=HD, vial_h=1.23, vial_r=0.29),
-                origin=[-21.5, A_FAR + 4 + 16 + HD, 0.0])
+                origin=[-20.2, A_FAR + 4 + HD, 0.02])
     return dict(expo=0.45)
 
 
@@ -434,7 +477,7 @@ def archive():
     box("wall_b", (0, 9.2, RH / 2), (RW + 4, 0.4, RH), WALL)
     for s in (-1, 1):
         box("wall_s", (s * (RW / 2 + 0.2), 2, RH / 2), (0.4, RD + 8, RH), WALL)
-    box("roof_a", (0, -6.6, RH + 0.3), (RW + 4, 15.0, 0.6), WALL)
+    box("roof_a", (0, -6.05, RH + 0.3), (RW + 4, 13.9, 0.6), WALL)      # its front is flush with the floor and the walls: the room stands against the far wall
     box("roof_b", (0, 6.0, RH + 0.3), (RW + 4, 7.0, 0.6), WALL)
     box("roof_l", (-5.6, 1.7, RH + 0.3), (6.8, 1.6, 0.6), WALL)
     box("roof_r", (5.6, 1.7, RH + 0.3), (6.8, 1.6, 0.6), WALL)
@@ -448,6 +491,8 @@ def archive():
         Hh = np.zeros((int(px * SH / SW), px), np.float32)
         y0 = int(Hh.shape[0] * 0.42 - px / 2)
         Hh[y0:y0 + px, :] = -m                       # sunk relief
+        nm = C.numeral_mask(10, int(px * 0.1), 0.2); r1 = int(Hh.shape[0] * 0.42 + px * 0.56); c1 = (px - nm.shape[1]) // 2
+        Hh[r1:r1 + nm.shape[0], c1:c1 + nm.shape[1]] = -0.6 * nm         # the tenth record, after the nine in the passage
         face = C.height_mesh("face", Hh, SW, SH, 0.085, STELE)
         face.location = (0, 2.6 - ST / 2, SH / 2 + 0.12); _add(face)
     into("fit", "split", r2(512), r2(128))
@@ -461,7 +506,7 @@ def archive():
     box("base", (0, 2.6, 0.06), (SW + 0.5, ST + 0.5, 0.12), plain("base", (INK[0] * 3, INK[1] * 3, INK[2] * 3), 0.4, 1.0))
     C.camera((0, -8.4, 1.7), (0, 2.6, 3.05), lens=27)
     ANCH.update(stele=dict(p=[0, 2.25, SH * 0.60 + 0.12], rect=[[-SW / 2, 2.25, SH + 0.12], [SW / 2, 2.25, 0.12]]), cam=dict(p=[0, -8.4, 1.7], t=[0, 2.6, 3.05]),
-                dims=dict(RW=RW, RD=RD, RH=RH), origin=[21.5, A_FAR + 4 + 16 + 13.0, 1.0])
+                dims=dict(RW=RW, RD=RD, RH=RH), origin=[20.5, A_FAR + 4 + 13.0, 1.45])
     return dict(expo=0.34)
 
 
@@ -554,6 +599,19 @@ for g, o in joined.items():
             restore(st); info["lamps"][ln] = li["scale"]
     else:
         info = B.bake(o, name, a.out, mode, res, cres, a.samples)
+    if g in LAMPGAIN:
+        # the same surface without its lamp, small: how much of its light is not the lamp's
+        st = lights_only(None)
+        if mode == "relief":
+            for n in slots[g.split("_")[0]]:
+                joined[n].hide_render = n != g
+        lo = B.bake(o, name + "_lo", a.out, "combined", 64, samples=max(8, a.samples // 3), denoise=False)
+        restore(st)
+        def _mean(nm, sc_):
+            im = np.asarray(Image.open(os.path.join(a.out, nm + "_b.webp")).convert("RGB"), np.float32) / 255.0
+            return float((np.where(im <= 0.04045, im / 12.92, ((im + 0.055) / 1.055) ** 2.4)).mean() * sc_)
+        info["lamp"] = LAMPGAIN[g]; info["floor"] = round(min(1.0, _mean(name + "_lo", lo["scale"]) / max(1e-6, _mean(name, info["scale"]))), 4)
+        os.remove(os.path.join(a.out, name + "_lo_b.webp"))
     info.update(FLAGS.get(g, {}))
     man["groups"][g] = info
     json.dump(man, open(mp, "w"), separators=(",", ":"))

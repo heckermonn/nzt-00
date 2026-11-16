@@ -10,15 +10,15 @@ Live path (once on Pages): `/p4ce/v18/`. No build step: plain ES modules, open `
 
 | Blueprint screen | Route | Notes |
 | --- | --- | --- |
-| A01 Invitation Entry | `#/` | Code form, QR only brings you to this page. Five unknown codes pause the form. |
-| A02 Rain Alley, two doors | `#/alley` | Doors are real buttons, named with the insignia in words. Positions vary per visit. |
+| A01 Invitation Entry | `#/` | Code form, QR only brings you to this page. Five unknown codes pause the form. The invitation is a physical card, so the page never draws one or names its seal: when the code is accepted the two doors, dark until then, come on under their lamps. |
+| A02 Rain Alley, two doors | `#/alley` | Doors are real buttons, named with the insignia in words (on a phone there are also plain Left door and Right door buttons). The visitor matches the seal on the card in their hand. "My seal is hard to make out" names the recorded seal in words and links to a person. Positions vary per visit. |
 | A03 Confirmation | `#/alley` | Nothing is recorded until "Open this door". |
 | A04 Access Denied | `#/alley` | 24 hour rest, states when it lifts, links to a person. Doors may trade places after. |
 | A05 The Keeper | `#/keeper` | Captions for every line, Continue, optional answer, Skip to the application. |
 | A06 Application | `#/apply` | Age and Canada eligibility, password, optional passkey offer. |
 | A07 Review Status | `#/status` | Received, in review, question, decision. Approval is separate from the door. |
 | A08 Member Acceptance | `#/offer` | Offer, generation, founding rights (marked proposed), two explicit acceptances. |
-| A09 Film & Passage | `#/passage` | One take: the door opens and the camera walks the passage into the Atrium while one line of light draws the nine chapters on its walls. Space pauses, arrows step a chapter, Skip or Esc hurries the same walk. Direct mode shows the chapters as a page. |
+| A09 Film & Passage | `#/passage` | One take, nine records: the door opens and the camera walks the passage into the Atrium, weaving past nine steles. Each has one era cut into it in sunk relief (tools, fire, agriculture, mathematics, medicine, engineering, flight, computation, space): three of stone, three of metal, three of glass, each larger than the last, and a light finds each as the walker reaches it. The member's own stele in the Archive is the tenth (its numeral is X). Captions give the era, a line and an approximate date. Space pauses, arrows step a chapter, Skip or Esc hurries the same walk. Direct mode shows the nine as a page. |
 | A10 Atrium | `#/atrium` | "What are we pursuing today?" Three destinations plus routine links. |
 | A11 Compass | `#/compass` | Five optional questions, editable. Never maps a goal to a product; fails closed. |
 | A12 Formulary | `#/formulary`, `#/formulary/NN`, `#/record/ID` | Search, status, structured records, checks before any order. |
@@ -35,13 +35,16 @@ Two ways through the same site, as the blueprint asks:
 - **Direct**: still pictures and instant pages. Chosen automatically when the device asks for reduced motion, or from
   the Index (top right, or press `/`), which also lists and searches every room.
 
+On a phone the bottom bar always holds the same five places (Atrium, Compass, Formulary, Archive, More), the top
+bar shows the section and, inside it, a link back up to it, and More opens the Index.
+
 A device without WebGL 2 gets the earlier Cycles stills of the same rooms, with the same controls (`?still` forces it).
 
 ## Palette (kit in place of the blueprint's)
 
 | Blueprint | Used here |
 | --- | --- |
-| Oxblood invitation | Ink `#171C1F` card, Deep Blue `#3F668F` wax seal, a Safety Orange edge |
+| Oxblood invitation | Not drawn on the site: the card is physical. The kit's reading for print is an Ink `#171C1F` card, a Deep Blue `#3F668F` wax seal and a Safety Orange edge |
 | Violet Keeper | Sky `#A5C7DB` hologram that warms slightly when speaking |
 | Stone, titanium, bone | Chalk `#F2F3EF`, Mist `#CAD5DA`, Steel `#718B9A` |
 | Night alley | `#0B0E10` with the kit's cool grade |
@@ -55,8 +58,9 @@ reading (for example a warmer Keeper) is a small change plus a re-render of the 
 There is no server. Everything a server would hold lives in the browser's localStorage under `pr6.v18`
 (`js/store.js`), so nothing here is a security boundary and nothing is sent anywhere. Simulated: invitation records
 and assigned symbols, door order, the 24 hour rest, applications and review, acceptance and member numbers,
-sign-in, orders, nominations, the audit log. The **Prototype** panel (bottom left; top left on a phone) stands in
-for staff: approve or decline an application, lift the rest, move an order along, sign out, reset.
+sign-in, orders, nominations, the audit log. The **Prototype** panel (bottom left; on a phone top left outside, and under More inside) stands in
+for staff: approve or decline an application, lift the rest, move an order along, sign out, reset. Because there
+are no printed cards for the sample invitations, it also names the seal each one's card would carry.
 
 Demo invitations: `0047RSRV` Ouroboros, `7K2MQ9DX` Djed, `R4VN81TC` Scarab, `H6PZ3W5L` Shen Ring.
 
@@ -101,18 +105,22 @@ the page draws it with no lights of its own and it still reads as the Cycles pic
 
 - `js/world.js`: loads each zone (`assets/world/<zone>.glb`, `<zone>.json`, `<zone>_<group>_*.webp`), the shaders
   (baked colour times baked light, per-lamp light for the alley's flicker, fog, exposure, tone curve, grain), wet
-  floor and pool reflections from a mirror pass, rain, the doors, the Keeper in the slit, the invitation card, the
-  Compass blades, the Formulary vials, the Archive stele, the light line, and the camera director (`W.fly`).
+  floor and pool reflections from a mirror pass, rain, the doors, the Keeper in the slit, the
+  Compass blades, the Formulary vials, the Archive stele, and the camera director (`W.fly`).
 - `js/shots.js`: where the camera stands for each screen and the way it travels between rooms.
-- `js/film.js`: A09. Everything is a function of one clock, so it can be paused and stepped.
+- `js/film.js`: A09. Everything is a function of one clock, so it can be paused and stepped. The steles, their
+  emblems (`blender/eras.py`, also `js/eras.js` for the page) and their lamps are part of the passage bake: each
+  lamp is baked alone on the walls and floor, and each stele's manifest entry says how dark it is without its lamp.
 - `js/still.js`: the route without WebGL 2 (stills in `assets/scenes/`).
 
-Zones: alley, passage (nine bays that widen from 1.7 m to 13 m), atrium, compass, formulary, archive.
+Zones: alley, passage (nine bays that widen from 1.7 m to 13 m, a stele in each), atrium, compass, formulary and
+archive (these two stand directly behind their openings in the Atrium's far wall, and are hidden from the court
+behind it, so a move never shows the outside of a room).
 
     cd blender
     PY world.py -- --zone alley --out ../assets/world --q 1 --samples 96     # one zone; about 15 to 40 minutes on 4 cores
     PY world.py -- --zone archive --out /tmp/try --q 0.25 --samples 8        # a two-minute look at a change
-    PY card.py -- --out ../assets/world                                      # the four invitation cards
+    PY eras.py                                                               # redraw the nine era emblems (before the passage)
 
 `PY` is a Python with `bpy`, `numpy` and `pillow`. `world.py` builds a zone with the materials in `common.py`, sorts
 its objects into groups, and `bake.py` turns each group into one mesh with one UV layout: `split` (colour and

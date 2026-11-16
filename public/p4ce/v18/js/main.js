@@ -6,10 +6,10 @@ import { createShots } from './shots.js';
 import { createStill } from './still.js';
 import { createKeeper } from './keeper.js';
 import { createSound } from './sound.js';
-import { store, fmtCode, DEMO_CODES } from './store.js';
+import { store, fmtCode, DEMO_CODES, DEMO_SEALS } from './store.js';
 import { $, $$, esc, ease, lerpView } from './ui.js';
 import { ALL, SERIES, DISPATCHES, statusOf } from './catalog.js';
-import { ORDER_STATE } from './institution.js';
+import { ORDER_STATE, DESC } from './institution.js';
 import * as OUT from './outside.js';
 import * as IN from './inside.js';
 import { passage } from './film.js';
@@ -122,11 +122,12 @@ app.scene = async ({ layout, theme, shot, arg, frame, view: vf, need = 0, tiles,
     const D = W.doors[doorSide()]; app.sfx('lock');
     app.tween(1.5, (k) => { if (D) D.open = k; }, ease.io).then(() => {});
     o = { via: shots.through(doorSide()), look: 0.55 }; d = 5.4;
-  } else if (was.zone !== zone) { o = shots.via(was.zone, zone); d = Math.min(4.6, Math.max(1.6, 0.9 + shots.length(W.cam.p, o.via, pose.p) / 46)); }
+  } else if (was.zone !== zone) { o = shots.via(was.zone, zone); d = Math.min(5.0, Math.max(1.6, 0.9 + shots.length(W.cam.p, o.via, pose.p) / 44)); }
   const flight = W.fly(pose, { dur: d, ...o });
   if (through) flight.then(() => { const D = W.doors[doorSide()]; if (D) D.open = 0; if (state.zone !== 'alley') W.show(INSIDE); });
   // the page may arrive while the camera is still settling
-  await Promise.race([flight, app.wait(through ? d - 0.7 : Math.min(d * 0.62, 2.6))]);
+  // (on a phone the page is most of the screen, so it does not wait as long for the picture above it)
+  await Promise.race([flight, app.wait(through ? d - 0.7 : app.narrow() ? Math.min(d * 0.45, 1.3) : Math.min(d * 0.62, 2.6))]);
   return ok() ? {} : null;
 };
 /** View that fits a rectangle [[x0,y0],[x1,y1]] of the frame into a share of the window (stills only). */
@@ -180,8 +181,11 @@ async function route() {
   if (my !== epoch) return;
   cur = res || {};
   document.title = (cur.title ? cur.title + ' · ' : '') + 'PR6';
-  $('#crumb').textContent = cur.crumb || '';
-  $$('#thumb [data-k]').forEach((a) => { if (a.dataset.k === name) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+  // the name of the section, and from a page inside it the way back up to it
+  const cr = $('#crumb'), up = cur.crumb && (args.length || name === 'record') ? '#/' + ({ record: 'formulary' }[name] || name) : null;
+  cr.textContent = (up ? '← ' : '') + (cur.crumb || ''); if (up) cr.href = up; else cr.removeAttribute('href');
+  const tab = { atrium: 'atrium', compass: 'compass', formulary: 'formulary', record: 'formulary', archive: 'archive' }[name] || 'more';
+  $$('#thumb [data-k]').forEach((a) => { if (a.dataset.k === tab) a.setAttribute('aria-current', a.dataset.k === 'more' ? 'true' : 'page'); else a.removeAttribute('aria-current'); });
   chrome(); renderProto();
   view.style.transition = app.motion() ? 'opacity .45s' : 'none'; view.style.opacity = 1; view.classList.remove('leaving');
   document.body.classList.remove('booting');
@@ -247,6 +251,7 @@ $('#q').addEventListener('input', (e) => {
 $('#q').addEventListener('keydown', (e) => { if (e.key === 'Enter') { const a = $('#q-out a'); if (a) { e.preventDefault(); a.click(); } } });
 $('#index').addEventListener('change', (e) => { if (e.target.name === 'motion') { store.setPref('motion', e.target.value); chrome(); if (cur && cur.mode) cur.mode(); } });
 $('#index-out').addEventListener('click', () => { store.signOut(); $('#index').close(); app.go('#/'); });
+$('#index-proto').addEventListener('click', () => { $('#index').close(); $('#proto').open = true; });
 $('#snd').addEventListener('click', () => app.setSound(!store.prefs.sound));
 addEventListener('keydown', (e) => {
   if (e.key === '/' && !/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName) && store.member()) { e.preventDefault(); openIndex(); $('#q').focus(); }
@@ -257,12 +262,12 @@ function renderProto() {
   const el = $('#proto-in'); const m = store.member(), inv = store.invitation(), a = store.application();
   const h = ['<p>Everything behind this page is simulated in this browser. Nothing is sent anywhere.</p>'];
   if (inv) {
-    h.push(`<p>Invitation <b>${fmtCode(inv.code)}</b> · state <b>${inv.state}</b></p>`);
+    h.push(`<p>Invitation <b>${fmtCode(inv.code)}</b> · state <b>${inv.state}</b></p><p>The site no longer shows the invitation: the card is in the visitor's hand. The seal on this one's card is <b>${DESC[inv.symbol]}</b>.</p>`);
     if (store.lock()) h.push('<button data-p="unlock">Clear the 24 hour door restriction</button>');
     if (a && a.status === 'review') h.push('<button data-p="approve">Review: approve this application</button><button data-p="decline">Review: decline this application</button>');
     h.push('<button data-p="leave">Put this invitation down</button>');
   } else if (!m) {
-    h.push('<p>Sample invitations. Each carries a different seal:</p>' + DEMO_CODES.map((c) => `<button data-p="code" data-c="${c}">${fmtCode(c)}</button>`).join(''));
+    h.push('<p>Sample invitations. There are no cards for these, so the seal each card would carry is named here:</p>' + DEMO_CODES.map((c) => `<button data-p="code" data-c="${c}">${fmtCode(c)} · ${DESC[DEMO_SEALS[c]]}</button>`).join(''));
   }
   if (m) {
     const o = m.orders.find((x) => x.state < 4);

@@ -2,7 +2,7 @@
 // confirmation (A03), access denied (A04), the Keeper (A05), application (A06), review status (A07), acceptance (A08),
 // and the returning member's sign-in. The door is a ritual, not a lock: the choice is checked by the invitation
 // service (store.js), and neither it nor the member number is ever a credential.
-import { INSIGNIA, glyph } from './insignia.js';
+import { glyph } from './insignia.js';
 import { store, fmtCode, fmtId } from './store.js';
 import { DESC, RIGHTS } from './institution.js';
 import { $, $$, esc, ease, lerpView, fmtDate, fmtTime, field, setErr } from './ui.js';
@@ -11,7 +11,6 @@ export function resume(inv) {
   if (!inv) return '#/';
   return { issued: '#/alley', validated: '#/alley', door: '#/keeper', keeper: '#/apply', applied: '#/status', approved: '#/offer' }[inv.state] || '#/';
 }
-const seal = (sym, cls = '') => `<span class="seal ${cls}" role="img" aria-label="Your seal: ${DESC[sym]}">${glyph(sym)}</span>`;
 const alleyLight = (S) => { S.rain = 0.9; S.vig = 0.7; S.grain = 0.04; S.expo = 0.82; S.weights.holo = 0; };
 const frontView = (app) => (S) => (app.narrow() ? { cx: 0.5, cy: 0.8, zoom: 1 } : { cx: 0.36, cy: 0.56, zoom: 1.05 });
 const farView = (app) => (S) => (app.narrow() ? { cx: 0.5, cy: 0.66, zoom: 1 } : { cx: 0.5, cy: 0.585, zoom: 1.2 });
@@ -26,7 +25,10 @@ export async function entry(app) {
   const ok = app.live(), view = app.view;
   app.amb('city');
   const W3 = app.world, inv = store.invitation();
-  if (W3) { W3.setCard(null); W3.setDoors(inv && store.doors() ? store.doors() : { L: 'shen', R: 'ouroboros' }); }
+  if (W3) W3.setDoors(inv && store.doors() ? store.doors() : { L: 'shen', R: 'ouroboros' });
+  // The invitation is a card in the visitor's hand, so the page never shows one. What answers a recognised code is
+  // the place itself: the lamps over the two doors come on.
+  let lit = inv ? 1 : 0.03, lamps = lit;
   await app.scene({ layout: 'full', theme: 'outside', shot: 'front', frame: 'wide', tiles: ['medL_shen', 'medR_ouroboros'], view: frontView(app), dur: 1.8, setup: (S) => { alleyLight(S); S.expo = 0.5; S.vig = 0.9; S.rain = 0.7; } });
   if (!ok()) return null;
   scrim(1);
@@ -74,26 +76,29 @@ export async function entry(app) {
       recognised(r.inv, true);
     });
   };
-  const recognised = async (inv, fresh) => {
-    const has = W3 ? true : app.has('invite_' + inv.symbol);
-    view.innerHTML = `<section class="front${W3 ? ' with-card' : ''}">
-      ${has ? '' : seal(inv.symbol)}
+  const recognised = (inv, fresh) => {
+    view.innerHTML = `<section class="front">
       <h1 tabindex="-1">${fresh ? 'Invitation recognised.' : 'Your invitation is open.'}</h1>
-      <p class="lead">This is your seal. One of two doors carries it.</p>
-      <p class="riddle" style="margin-top:18px">“${esc(INSIGNIA[inv.symbol].clue)}”</p>
-      <p class="sr">Your seal shows ${DESC[inv.symbol]}.</p>
+      <p class="lead">Keep it in your hand. One of the two doors ahead carries the seal pressed into its wax.</p>
       <div class="actions"><a class="btn" href="#/alley">Go to the doors</a><button class="link" type="button" id="other">Use a different invitation</button></div>
     </section>`;
     $('#other', view).addEventListener('click', () => { store.leaveInvitation(); app.proto(); app.go('#/'); });
-    if (fresh) $('h1', view).focus();
-    // the card comes up into the hand, in the alley, in front of the doors
-    if (W3) { W3.cardAt = app.narrow() ? [0, 0.4] : [0.22, 0.02]; W3.cardScale = app.narrow() ? 0.8 : 1; W3.setCard(inv.symbol); if (fresh) app.sfx('key'); }
-    else if (has) await app.scene({ layout: 'full', theme: 'outside', frame: 'invite_' + inv.symbol, view: (S) => (app.narrow() ? { cx: 0.5, cy: 0.68, zoom: 0.92 } : { cx: 0.3, cy: 0.5, zoom: 0.9 }), setup: (S) => { S.vig = 0.5; S.grain = 0.03; } });
+    if (fresh) { $('h1', view).focus(); app.announce('Invitation recognised. The lamps over the two doors come on.'); }
+    lit = 1;
   };
-  if (inv && ['issued', 'validated'].includes(inv.state) && !store.lock()) await recognised(inv, false);
+  if (inv && ['issued', 'validated'].includes(inv.state) && !store.lock()) recognised(inv, false);
   else if (inv) { view.innerHTML = `<section class="front"><h1>Your invitation is open.</h1><div class="actions"><a class="btn" href="${resume(inv)}">Continue</a><button class="link" type="button" id="other">Use a different invitation</button></div></section>`; $('#other', view).addEventListener('click', () => { store.leaveInvitation(); app.proto(); app.go('#/'); }); }
   else ask();
-  return { title: 'Invitation', tick: (t, dt, mo) => { app.lamp('tube', mo ? flicker(t) : 1); app.soundTick(t); }, leave: () => { scrim(0); if (W3) W3.setCard(null); } };
+  return {
+    title: 'Invitation',
+    tick: (t, dt, mo) => {
+      lamps = mo ? lamps + (lit - lamps) * (1 - Math.pow(0.06, dt)) : lit;
+      const strike = mo && lit === 1 && lamps < 0.9 ? 0.72 + 0.28 * Math.sign(Math.sin(t * 41)) : 1;        // the tubes catch as they strike
+      app.lamp('lampL', lamps * strike); app.lamp('lampR', lamps * strike * (mo && lit === 1 && lamps < 0.7 ? 0.5 : 1));
+      app.lamp('tube', mo ? flicker(t) : 1); app.soundTick(t);
+    },
+    leave: () => { scrim(0); },
+  };
 }
 
 // ---------------------------------------------------------------------------------------------- A02 to A04 the alley
@@ -115,10 +120,12 @@ export async function alley(app) {
   const paint = (focus) => {
     $$('.door, .door-plate', marks).forEach((b) => { b.hidden = mode !== 'choose'; });
     if (mode === 'choose') {
-      sheet.className = 'sheet';
-      sheet.innerHTML = `${seal(inv.symbol, 'sm')}<div><h2>One of these doors carries your seal.</h2><p class="note riddle" style="font-size:var(--s3)">“${esc(INSIGNIA[inv.symbol].clue)}”</p></div>
-        <div class="actions"><button class="link small" type="button" id="look">Look at the invitation again</button><a class="link small" href="#/support">My seal is hard to make out</a></div>`;
-      $('#look', sheet).addEventListener('click', () => app.go('#/'));
+      sheet.className = 'sheet wide';
+      sheet.innerHTML = `<div><h2>One of these doors carries the seal on your invitation.</h2><p class="note">Hold the card up to them, then choose.</p></div>
+        <div class="actions door-pick"><button class="btn ghost" type="button" data-pick="L">Left door</button><button class="btn ghost" type="button" data-pick="R">Right door</button></div>
+        <details class="seal-help"><summary>My seal is hard to make out</summary>
+          <p class="note">The seal recorded for this invitation shows ${DESC[inv.symbol]}. If the card is damaged, a person will replace it: <a href="#/support">contact support</a>.</p></details>`;
+      $$('[data-pick]', sheet).forEach((b) => b.addEventListener('click', () => pick(b.dataset.pick)));
     } else if (mode === 'confirm') {
       sheet.className = 'sheet wide';
       sheet.innerHTML = `<div><h2 tabindex="-1">The ${name[chosen]} door.</h2><p class="note">Its insignia: ${DESC[doors[chosen]]}. Opening a door is final for this visit. A door that is not yours stays shut, and the invitation rests for 24 hours.</p></div>
@@ -292,10 +299,10 @@ export async function keeper(app) {
 }
 
 // ---------------------------------------------------------------------------------------------- A06 application
-const doorPane = async (app, inv, frame) => app.scene({
-  layout: 'pane', theme: 'outside', shot: 'doorpane', arg: inv.doorSide || 'L', dur: 1.6, frame: frame || 'close' + (inv.doorSide || 'L'), need: 0.8,
-  tiles: frame ? undefined : ['med' + (inv.doorSide || 'L') + '_' + inv.symbol], slit: frame ? null : 0,
-  view: frame ? (S) => ({ cx: 0.5, cy: 0.5, zoom: 0.95 }) : doorView(app), setup: (S) => { S.rain = frame ? 0 : 0.5; S.vig = 0.5; S.expo = frame ? 1 : 0.8; S.weights.holo = 0; },
+const doorPane = async (app, inv) => app.scene({
+  layout: 'pane', theme: 'outside', shot: 'doorpane', arg: inv.doorSide || 'L', dur: 1.6, frame: 'close' + (inv.doorSide || 'L'), need: 0.8,
+  tiles: ['med' + (inv.doorSide || 'L') + '_' + inv.symbol], slit: 0,
+  view: doorView(app), setup: (S) => { S.rain = 0.5; S.vig = 0.5; S.expo = 0.8; S.weights.holo = 0; },
 });
 export async function apply(app) {
   const inv = store.invitation(), ok = app.live(), view = app.view;
@@ -386,9 +393,7 @@ export async function offer(app) {
   app.amb('none');
   const W3 = app.world;
   if (W3) W3.setDoors(store.doors());
-  await doorPane(app, inv, app.has('invite_' + inv.symbol) ? 'invite_' + inv.symbol : null); if (!ok()) return null;
-  // the invitation again, in the hand, at the door it opened
-  if (W3) { W3.cardAt = [0, app.narrow() ? 0 : 0.08]; W3.cardScale = app.narrow() ? 0.62 : 0.9; W3.setCard(inv.symbol); }
+  await doorPane(app, inv); if (!ok()) return null;         // the door the invitation opened; the card itself stays in the hand
   view.innerHTML = `<div class="page">
     <header><h1 class="title">You have been offered a place.</h1>
       <p class="lead">Generation I, The First Record. Two hundred places, never refilled. This offer is open until ${fmtDate(a.offerUntil)}.</p></header>
@@ -419,7 +424,7 @@ export async function offer(app) {
       <div class="actions"><a class="btn" href="#/passage">Enter</a></div></div>`;
     $('h1', view).focus(); app.announce('Membership accepted.');
   });
-  return { title: 'Offer of membership', leave: () => { if (W3) W3.setCard(null); } };
+  return { title: 'Offer of membership' };
 }
 
 // ---------------------------------------------------------------------------------------------- returning member
@@ -427,7 +432,7 @@ export async function signIn(app) {
   const ok = app.live(), view = app.view;
   if (store.member()) { app.go('#/atrium'); return null; }
   app.amb('city');
-  if (app.world) { app.world.setCard(null); app.world.setDoors({ L: 'shen', R: 'ouroboros' }); }
+  if (app.world) app.world.setDoors({ L: 'shen', R: 'ouroboros' });
   await app.scene({ layout: 'full', theme: 'outside', shot: 'front', frame: 'wide', tiles: ['medL_shen', 'medR_ouroboros'], view: frontView(app), dur: 1.4, setup: (S) => { alleyLight(S); S.expo = 0.5; S.vig = 0.9; S.rain = 0.7; } });
   if (!ok()) return null;
   scrim(1);

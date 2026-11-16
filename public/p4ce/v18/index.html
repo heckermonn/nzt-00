@@ -22,7 +22,7 @@
 <header id="bar">
   <div class="bar-l">
     <a class="mark" id="home" href="#/">PR6</a>
-    <span class="crumb" id="crumb"></span>
+    <a class="crumb" id="crumb"></a>
   </div>
   <div class="bar-r">
     <a class="bar-link" id="bar-order" href="#/order" hidden></a>
@@ -41,9 +41,10 @@
 
 <nav id="thumb" aria-label="Sections" hidden>
   <a href="#/atrium" data-k="atrium">Atrium</a>
+  <a href="#/compass" data-k="compass">Compass</a>
   <a href="#/formulary" data-k="formulary">Formulary</a>
-  <a href="#/orders" data-k="orders">Orders</a>
-  <button type="button" id="idx2" aria-haspopup="dialog">Index</button>
+  <a href="#/archive" data-k="archive">Archive</a>
+  <button type="button" id="idx2" data-k="more" aria-haspopup="dialog">More</button>
 </nav>
 
 <dialog id="index" aria-labelledby="index-h">
@@ -63,7 +64,7 @@
         <label><input type="radio" name="motion" value="explore"> Explore: rooms move</label>
         <label><input type="radio" name="motion" value="direct"> Direct: still and instant</label>
       </fieldset>
-      <p class="index-foot"><button class="link" type="button" id="index-out">Sign out</button></p>
+      <p class="index-foot"><button class="link" type="button" id="index-out">Sign out</button> <button class="link" type="button" id="index-proto">Prototype controls</button></p>
     </div>
   </div>
 </dialog>

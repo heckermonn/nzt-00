@@ -296,7 +296,8 @@ export async function archive(app) {
   await pane(app, 'archive', null, 'archive_' + m.lineage, () => ({ cx: 0.5, cy: 0.5, zoom: 1 }), { need: 0.6 }); if (!ok()) return null;
   const inv = Object.values(store.exportAll().invitations).find((i) => i.member === m.id) || {};
   const answer = { discover: 'To discover', create: 'To create', become: 'To become', unknown: 'I do not know yet' }[inv.pursuit];
-  view.innerHTML = `<div class="page"><header><h1 class="title">A record of where you began.</h1></header>
+  view.innerHTML = `<div class="page"><header><h1 class="title">A record of where you began.</h1>
+      <p class="lead">Nine records stand in the passage you came in by. This stele is the tenth, and it is cut with your insignia.</p></header>
     <dl class="kv">
       <dt>Institution</dt><dd>PR6</dd>
       <dt>Member number</dt><dd class="mono">${fmtId(m.id)}<span class="note" style="font-family:var(--sans)">Identifies you. Not a credential.</span></dd>
