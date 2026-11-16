@@ -20,7 +20,7 @@ Live path (once on Pages): `/p4ce/v18/`. No build step: plain ES modules, open `
 | A08 Member Acceptance | `#/offer` | Offer, generation, founding rights (marked proposed), two explicit acceptances. The door answers (below). |
 | A09 Film & Passage | `#/passage` | One take, nine records: the door opens and the camera walks the passage into the Atrium, weaving past nine steles. Each has one era cut into it in sunk relief (tools, fire, agriculture, mathematics, medicine, engineering, flight, computation, space): three of stone, three of metal, three of glass, each larger than the last, and a light finds each as the walker reaches it. The member's own stele in the Archive is the tenth (its numeral is X). Captions give the era, a line and an approximate date. Space pauses, arrows step a chapter, Skip or Esc hurries the same walk. Direct mode shows the nine as a page. |
 | A10 Atrium | `#/atrium` | "What are we pursuing today?" Three destinations plus routine links. |
-| A11 Compass | `#/compass` | Five optional questions, editable. Never maps a goal to a product; fails closed. |
+| A11 Compass | `#/compass`, `#/compass/index`, `#/compass/edit` | The wayfinder: the member at the centre of a compass card, every place on a bearing around them (below). The five optional questions are now the reading index. Never maps a goal to a product; fails closed. |
 | A12 Formulary | `#/formulary`, `#/formulary/NN`, `#/record/ID` | Search, status, structured records, checks before any order. |
 | A13 Member Archive | `#/archive` | Record, insignia (history kept apart from PR6 meaning), card, tokens, standing, rights. |
 | A14 Nominations | `#/nominations` | Five lifetime, single use, withdraw returns unused ones, no promise of admission. |
@@ -139,6 +139,33 @@ and the film begins by opening that door. From then on a member's own door alway
 (`app.scene` keeps it so); every other door stays bolted with a blank plate. The bolts and plates are not in the
 baked stills, so without WebGL the offer is the plain page beside the door's picture; in Direct mode nothing
 animates and the number is simply there. The figures are also in the page, and each bolt is announced.
+
+### A11: the Compass, with the member at the centre
+
+The Compass is how a member gets to where they want or need to be. The camera stands above and behind them; their
+insignia is at the centre of the plinth, and the eight places of the institution (Formulary, Order list, Orders,
+Support, Archive, Nominations, Reading index, Dispatches) lie on bearings around them.
+
+- **Need.** `wayState` reads the member's record: items waiting in the order list, an order on its way, an open
+  support request. The card comes to rest with the strongest call ahead, and a count sits beside that place.
+- **Want.** "Say where": typing finds places (by name and plain words like refund, invoice, invite), records by
+  name or number, cases, Dispatches by title and orders by number. The first match swings ahead; Enter goes.
+  A goal word such as "focus" or "sleep" finds only the reading index, never a record.
+- **Turning.** Drag or swipe the card, or use the arrow keys; it settles on the nearest place and the caption names
+  it, says what it holds and offers one button. Every place is also a link in the picture, so one press goes.
+- The ring of glass blades is the card (`W.compassHead` turns it, `W.compassPoint` raises the blades that stand
+  ahead). Shot `wayfind`. Without the world the same thing is a page: the question, the field, and the places in
+  order of what is waiting.
+- The five questions moved to `#/compass/index` ("Reading index"). Their answers now also set the order of a
+  record page.
+
+### Records: the essentials first
+
+A record page opens with its name, then size, quantity and "Add to order" beside its product picture. Everything
+else (checks, identity, evidence, safety, quality, regulatory, commerce, field) folds below in the member's own
+order: the reading index sets it (`REC_ORDER` by what a useful result looks like; safety first if they asked for a
+safety overview; "detailed" opens every section, "concise" only the first), and "Show first" on the page overrides
+it for every record (`recordFirst` on the member).
 
 ### The Formulary's cases and vials
 

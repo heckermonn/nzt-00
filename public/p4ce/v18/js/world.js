@@ -232,7 +232,7 @@ export function createWorld(canvas, base = 'assets/world/') {
     renderer, scene, camera, G, canvas, zones: {}, anchors: {}, lamps: { lampL: 1, lampR: 1, tube: 1 },
     cam: { p: new V3(0, 1.5, 8), t: new V3(0, 2, -6), fov: 60, roll: 0 }, rect: { x: 0, y: 0, w: 1, h: 1 }, shift: [0, 0],
     expo: 0.8, fog: [0.02, 0.03, 0.05, 0.01], vig: 0.5, grain: 0.03, con: 0, rain: 0, sway: 1, pointer: [0, 0], motion: true,
-    side: 'L', doors: {}, compassT: 0, compassGoal: 0, holo: 0, ready: false, lineage: 'ouroboros',
+    side: 'L', doors: {}, compassT: 0, compassGoal: 0, compassHead: 0, compassHeadT: 0, compassPoint: 0, compassPointT: 0, holo: 0, ready: false, lineage: 'ouroboros',
   };
   const tex = (url, mips) => new Promise((res, rej) => texLoader.load(url, (t) => {
     t.flipY = false; t.colorSpace = THREE.NoColorSpace; t.generateMipmaps = !!mips; t.minFilter = mips ? THREE.LinearMipmapLinearFilter : THREE.LinearFilter; t.anisotropy = mips ? maxAniso : 1; res(t);
@@ -434,17 +434,25 @@ export function createWorld(canvas, base = 'assets/world/') {
       const p1 = b2t([1.75 * Math.cos(ang), 1.75 * Math.sin(ang), 0.36 + h1 / 2 + 0.02]), q1 = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, ang + Math.PI / 2, 0));
       const rr = 0.5 + 2.0 * rnd(), ra = rnd() * 2 * Math.PI;
       const p0 = b2t([rr * Math.cos(ra), rr * Math.sin(ra), 0.9 + 2.8 * rnd()]), q0 = new THREE.Quaternion().setFromEuler(new THREE.Euler((rnd() - 0.5) * 1.8, rnd() * 6.28, (rnd() - 0.5) * 1.8));
-      bladeData.push({ p0, p1, q0, q1, h1, o: (i * 7 % NB) / NB, ph: rnd() * 6.28 });
+      bladeData.push({ p0, p1, q0, q1, h1, ang, o: (i * 7 % NB) / NB, ph: rnd() * 6.28 });
     }
     blades.frustumCulled = false; blades.renderOrder = 5; Z.group.add(blades);
   }
   const _m = new THREE.Matrix4(), _p = new V3(), _q = new THREE.Quaternion(), _s = new V3();
+  const _p1 = new V3(), _q1 = new THREE.Quaternion(), _e1 = new THREE.Euler();
   const updateBlades = (t, time) => {
     if (!blades) return;
     bladeData.forEach((b, i) => {
       const ti = clamp(t * 1.45 - b.o * 0.45), e = ti * ti * (3 - 2 * ti), f = (1 - e) * (W.motion ? 1 : 0);
-      _p.lerpVectors(b.p0, b.p1, e); _p.y += Math.sin(time * 0.35 + b.ph) * 0.06 * f;
-      _q.slerpQuaternions(b.q0, b.q1, e); _s.set(1, b.h1, 1);
+      // the ring is a compass card: it turns with the heading, and the blades that stand ahead rise and step outward
+      let h = b.h1, p1 = b.p1, q1 = b.q1;
+      if (W.compassHeadT || W.compassPointT) {
+        const aw = b.ang + W.compassHeadT; let d = (aw - Math.PI / 2) % (2 * Math.PI); if (d > Math.PI) d -= 2 * Math.PI; if (d < -Math.PI) d += 2 * Math.PI;
+        const k = Math.exp(-(d * d) / 0.2) * W.compassPointT, r = 1.75 + 0.5 * k; h = b.h1 * (1 + 0.45 * k);
+        p1 = b2t([r * Math.cos(aw), r * Math.sin(aw), 0.36 + h / 2 + 0.02], _p1); q1 = _q1.setFromEuler(_e1.set(0, aw + Math.PI / 2, 0));
+      }
+      _p.lerpVectors(b.p0, p1, e); _p.y += Math.sin(time * 0.35 + b.ph) * 0.06 * f;
+      _q.slerpQuaternions(b.q0, q1, e); _s.set(1, h, 1);
       blades.setMatrixAt(i, _m.compose(_p, _q, _s));
     });
     blades.instanceMatrix.needsUpdate = true;
@@ -617,7 +625,9 @@ export function createWorld(canvas, base = 'assets/world/') {
     for (const k of ['L', 'R']) { const D = W.doors[k]; if (!D) continue; D.pivot.rotation.y = (k === 'L' ? -1 : 1) * D.open * 1.78; if (D.shut) D.shut.position.x = D.shut0 + (k === 'L' ? 1 : -1) * D.slit * 0.56; }
     if (keeperPlane && keeperPlane.visible) keeperPlane.material.opacity = 1;
     // blades settle towards the goal
-    W.compassT += (W.compassGoal - W.compassT) * (W.motion ? 1 - Math.pow(0.08, dt) : 1); updateBlades(W.compassT, time);
+    W.compassT += (W.compassGoal - W.compassT) * (W.motion ? 1 - Math.pow(0.08, dt) : 1);
+    W.compassHeadT += (W.compassHead - W.compassHeadT) * (W.motion ? 1 - Math.pow(0.0015, dt) : 1); W.compassPointT += (W.compassPoint - W.compassPointT) * (W.motion ? 1 - Math.pow(0.02, dt) : 1);
+    updateBlades(W.compassT, time);
     if (vials) vials.update(dt, W.motion);
     // adapt: if frames are slow, lower the resolution, then the mirror
     if (dt > 0 && W.motion) { slow = slow * 0.95 + (dt > 0.034 ? 1 : 0) * 0.05; if (slow > 0.6 && time - last > 2) { last = time; slow = 0; if ((W.dpr || Math.min(devicePixelRatio || 1, 2)) > 1) { W.dpr = Math.max(1, (W.dpr || Math.min(devicePixelRatio || 1, 2)) - 0.5); W.resize(); } else if ((W.reflScale ?? 0.5) > 0.26) { W.reflScale = 0.25; W.resize(); } } }

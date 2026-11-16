@@ -35,6 +35,8 @@ export function createShots(W, app) {
     doorpane: (k) => ({ ...out, p: [X(k) * 0.86, 3.2, 1.6], t: [X(k), 6.8, 1.66], lens: 27, expo: 0.8, vig: 0.5, rain: 0.5 }),
     atrium: () => ({ ...ins, zone: 'atrium', p: [0, -4, 1.7], t: [0, 74, 13], lens: 21, expo: 0.44, con: 0.7, shift: n() ? [0, -0.06] : [0, 0] }),
     compass: () => ({ ...ins, zone: 'compass', p: [0, -8.3, 1.75], t: [0, 0, 2.45], lens: 23, expo: 0.42, fog: [1.1, 1.25, 1.4, 0.002] }),
+    // the Compass as a wayfinder: from above and behind the member, who stands at the centre of the card
+    wayfind: () => ({ ...ins, zone: 'compass', p: [0, -5.6, 9.2], t: [0, 0.5, 0.5], lens: n() ? 21 : 26, shift: n() ? [0, -0.04] : [0.14, 0], expo: 0.42, fog: [1.1, 1.25, 1.4, 0.002] }),
     formulary: () => ({ ...ins, zone: 'formulary', p: [0, -13.6, 4.6], t: [0, 0, 4.72], lens: n() ? 44 : 47, expo: 0.6, fog: [1.1, 1.25, 1.4, 0.001] }),
     niche: (i) => { const [x, z] = nichePos(i); return { ...ins, zone: 'formulary', p: [x * 0.82, -4.5, z * 0.92 + 0.3], t: [x, 0.4, z - 0.22], lens: 38, expo: 0.6, fog: [1.1, 1.25, 1.4, 0.001] }; },
     // close on the stand: the vial at the front fills most of the height of the picture

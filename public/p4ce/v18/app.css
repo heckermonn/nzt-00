@@ -356,6 +356,50 @@ body.film.film-day { --film-fg: #171C1F; --film-sh: rgba(242, 243, 239, .6); }
 .buy #added:empty { display: none; }
 .buy .note + .note, .buy .buy-row + .note, .buy #added + .note { margin-top: 12px; }
 @media (max-width: 520px) { .buy { padding: 16px; } .buy-row .btn { margin-left: 0; flex: 1 0 100%; } }
+/* the Compass as a wayfinder: the member at the centre of the card, every place on a bearing around them */
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.wayfind { position: absolute; inset: 0; pointer-events: none; }
+.wayfind > * { pointer-events: auto; }
+.wf-ask { position: absolute; left: clamp(24px, 6vw, 110px); top: calc(var(--bar) + clamp(24px, 9vh, 96px)); width: min(360px, 30vw); }
+.wf-ask h1 { font-family: var(--serif); font-size: clamp(34px, 4.2vw, 62px); line-height: 1.02; letter-spacing: -.01em; text-wrap: balance; }
+.wf-q { margin-top: 26px; position: relative; }
+.wf-q input { background: rgba(242, 243, 239, .72); }
+.wf-hits { list-style: none; margin-top: 2px; background: var(--bg); border: 1px solid var(--fg); border-top: 0; max-height: 46vh; overflow: auto; }
+.wf-hits li + li { border-top: 1px solid var(--line); }
+.wf-hits a { display: block; padding: 10px 12px; text-decoration: none; }
+.wf-hits a:hover, .wf-hits a:focus-visible { background: var(--fg); color: var(--bg); outline: none; }
+.wf-hits .t { display: block; font-size: var(--s3); }
+.wf-hits .d { display: block; font-size: var(--s2); opacity: .7; margin-top: 1px; }
+.wf-hits .none { padding: 12px; font-size: var(--s2); color: var(--dim); }
+.wf-cap { position: absolute; left: clamp(24px, 6vw, 110px); bottom: clamp(28px, 8vh, 84px); width: min(360px, 30vw); }
+.wf-cap h2 { font-size: var(--s5); line-height: 1.1; letter-spacing: -.01em; }
+.wf-cap p { margin-top: 8px; font-size: var(--s2); color: var(--dim); max-width: 34ch; font-variant-numeric: tabular-nums; min-height: 2.8em; }
+.wf-cap .btn { margin-top: 16px; }
+.wf-needle { pointer-events: none !important; overflow: visible; }
+.wf-needle line { stroke: var(--orange); stroke-width: 1; }
+.wf-turn { cursor: grab; touch-action: pan-y; -webkit-user-select: none; user-select: none; }
+.wf-turn.on { cursor: grabbing; }
+.wf-you { width: 0; height: 0; pointer-events: none !important; }
+.wf-you .glyph { position: absolute; left: -17px; top: -17px; width: 34px; height: 34px; color: var(--fg); }
+.wf-way { width: max-content; margin: -15px 0 0 0; translate: -50% 0; text-decoration: none; text-align: center; padding: 6px 10px; white-space: nowrap; font-size: var(--s3); line-height: 1.15; color: var(--fg); transition: opacity .25s; }
+.wf-way .t { border-bottom: 1px solid transparent; padding-bottom: 2px; }
+.wf-way .m { display: inline-block; margin-left: 7px; min-width: 18px; padding: 2px 5px; font: 400 var(--s1)/1.2 var(--mono); color: var(--bg); background: var(--fg); border-radius: 999px; vertical-align: 2px; }
+.wf-way:hover .t, .wf-way:focus-visible .t { border-bottom-color: var(--fg); }
+.wf-way.ahead .t { font-weight: 600; }
+.wf-way.off { opacity: 0; pointer-events: none; }
+@media (max-width: 900px) {
+  .wayfind { position: relative; inset: auto; min-height: 100svh; }
+  .wf-ask { left: 20px; right: 20px; top: calc(var(--bar) + 14px); width: auto; }
+  .wf-ask h1 { font-size: 30px; }
+  .wf-q { margin-top: 12px; }
+  .wf-q label { display: none; }
+  .wf-cap { left: 20px; right: 20px; bottom: 76px; width: auto; }
+  .wf-cap h2 { font-size: var(--s4); }
+  .wf-cap p { margin-top: 3px; min-height: 0; max-width: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .wf-cap .btn { margin-top: 10px; width: 100%; }
+  .wf-way { font-size: var(--s2); padding: 8px 6px; }
+}
+@media (prefers-reduced-motion: reduce) { .wf-way { transition: none; } }
 /* below the essentials: the member's own order */
 .arrange { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 28px; margin-top: 44px; padding-bottom: 14px; border-bottom: 1px solid var(--fg); }
 .arrange .note { max-width: 46ch; font-size: var(--s2); }

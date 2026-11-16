@@ -50,7 +50,135 @@ export async function atrium(app) {
 
 // ---------------------------------------------------------------------------------------------- A11 the Compass
 let session = null;   // answers kept for this visit only, when the member has not asked for them to be stored
+// The Compass is the member's wayfinder. They stand at the centre of the card and every place in the institution lies
+// on a bearing around them. The card comes to rest with whatever is waiting for them ahead (what they need); turning
+// it, or saying where they want to be, brings another place ahead (what they want). It finds places, records by name
+// and notes by title. It never matches a goal to a product: a word like "focus" leads to reading, and nowhere else.
+// The five questions live on as the reading index, one of the places on the card.
+const WAYS = [
+  { k: 'formulary', href: '#/formulary', t: 'The Formulary', go: 'Enter the Formulary', kw: 'store shop buy browse records vials catalogue series cases compounds' },
+  { k: 'order', href: '#/order', t: 'Order list', go: 'Open your order list', kw: 'cart basket checkout pay payment' },
+  { k: 'orders', href: '#/orders', t: 'Orders', go: 'See your orders', kw: 'past tracking shipped shipping delivery invoice receipt history parcel' },
+  { k: 'support', href: '#/support', t: 'Support', go: 'Ask support', kw: 'help contact question problem refund return professional person human' },
+  { k: 'archive', href: '#/archive', t: 'Your Archive', go: 'Open your Archive', kw: 'stele record member number lineage insignia tokens card rights standing account' },
+  { k: 'nominations', href: '#/nominations', t: 'Nominations', go: 'Open Nominations', kw: 'invite invitation refer friend nominate sponsor' },
+  { k: 'index', href: '#/compass/index', t: 'Reading index', go: 'Open your reading index', kw: 'read learn questions preferences focus recovery energy rest sleep calm self-care skin ageing longevity strength knowledge' },
+  { k: 'dispatches', href: '#/dispatches', t: 'Dispatches', go: 'Read the Dispatches', kw: 'articles notes news evidence certificate analysis grades film talk' },
+];
+const STEP = (2 * Math.PI) / WAYS.length;
+// what each place holds for this member now, and how strongly it calls (the strongest call is ahead on arrival)
+function wayState(m, cp) {
+  const n = m.cart.reduce((s, l) => s + l.qty, 0), open = m.orders.filter((o) => o.state < 4), asks = m.tickets.filter((t) => t.state === 'open').length;
+  return {
+    formulary: { d: `Nine cases, ${ALL.length} records.`, call: 1 },
+    order: { d: n ? `${n} ${n === 1 ? 'item' : 'items'} waiting to be ordered.` : 'Nothing in it yet.', call: n ? 5 : 0, mark: n ? String(n) : '' },
+    orders: { d: open.length ? `Order ${open[0].id} is ${ORDER_STATE[open[0].state].toLowerCase()}.` : m.orders.length ? `${m.orders.length} placed, all delivered.` : 'No orders yet.', call: open.length ? 4 : 0, mark: open.length ? String(open.length) : '' },
+    support: { d: asks ? `${asks} ${asks === 1 ? 'request' : 'requests'} open. A person answers.` : 'A person answers.', call: asks ? 3 : 0, mark: asks ? String(asks) : '' },
+    archive: { d: `Member ${fmtId(m.id)}. Your stele, your tokens, your rights.`, call: 0 },
+    nominations: { d: m.nominationsOpen ? `${left(m)} of 5 places left to give.` : 'They open after a first order.', call: 0 },
+    index: { d: cp && cp.done ? 'Reading arranged from your answers.' : 'Five optional questions set what you read first.', call: 0 },
+    dispatches: { d: `${DISPATCHES.length} notes. Latest: ${DISPATCHES[0].title}.`, call: 0 },
+  };
+}
+function wayFind(q, m, st) {
+  q = q.trim().toLowerCase(); if (q.length < 2) return null;
+  const hits = [], at = (k) => WAYS.findIndex((w) => w.k === k), has = (s) => s.toLowerCase().includes(q);
+  WAYS.forEach((w, i) => { if (has(w.t) || w.kw.split(' ').some((x) => x.startsWith(q))) hits.push({ href: w.href, t: w.t, d: st[w.k].d, i }); });
+  for (const r of ALL) if (has(r.id) || has(r.name) || r.id.slice(-4).includes(q)) hits.push({ href: '#/record/' + r.id, t: r.name, d: `${r.id} · a record in the Formulary`, i: at('formulary') });
+  for (const s of SERIES) if (has(s.n) || has(s.f)) hits.push({ href: '#/formulary/' + s.c, t: `${s.n} · ${s.f}`, d: 'A case in the Formulary', i: at('formulary') });
+  for (const d of DISPATCHES) if (has(d.title)) hits.push({ href: '#/dispatches/' + d.id, t: d.title, d: `${d.kind} · a Dispatch`, i: at('dispatches') });
+  for (const o of m.orders) if (has(o.id)) hits.push({ href: '#/orders/' + o.id, t: 'Order ' + o.id, d: ORDER_STATE[o.state], i: at('orders') });
+  return hits.slice(0, 6);
+}
+const hitsHtml = (hits) => (hits.length ? hits.map((h) => `<li><a href="${h.href}" data-i="${h.i}"><span class="t">${esc(h.t)}</span><span class="d">${esc(h.d)}</span></a></li>`).join('')
+  : '<li class="none">Nothing by that name. <a href="#/support?topic=other">Ask support to point you there</a>.</li>');
+
 export async function compass(app, args) {
+  if (args[0]) return compassIndex(app, args);
+  const m = store.member(), ok = app.live(), view = app.view, marks = app.marks, W3 = app.world;
+  const cp = (m.compassConsent && m.compass) || session, st = wayState(m, cp);
+  const need = WAYS.reduce((b, w, i) => (st[w.k].call > st[WAYS[b].k].call ? i : b), 0);
+  app.amb('inside');
+  const ask = `<label for="wq">Say where, or turn the Compass</label>
+      <input id="wq" type="search" autocomplete="off" spellcheck="false" placeholder="A record, an order, a question" aria-controls="wh">
+      <ul class="wf-hits" id="wh" hidden></ul>`;
+  const bindAsk = (onHit) => {
+    const q = $('#wq', view), list = $('#wh', view);
+    q.addEventListener('input', () => { const hits = wayFind(q.value, m, st); list.hidden = !hits; if (hits) { list.innerHTML = hitsHtml(hits); if (hits.length && onHit) onHit(hits[0].i); } });
+    q.addEventListener('keydown', (e) => { if (e.key !== 'Enter') return; const a = $('a', list); if (a && !list.hidden) { e.preventDefault(); app.go(a.getAttribute('href')); } });
+  };
+  if (!W3) {
+    // no live world: the same wayfinder as a page, with what is waiting first
+    await pane(app, 'compass', null, app.has('compass6') ? 'compass6' : 'compass0', () => ({ cx: 0.5, cy: 0.5, zoom: 1 })); if (!ok()) return null;
+    const order = WAYS.map((w, i) => i).sort((a, b) => st[WAYS[b].k].call - st[WAYS[a].k].call || a - b);
+    view.innerHTML = `<div class="page"><header><h1 class="title">Where do you need to be?</h1>
+      <p class="lead">You are at the centre. Everything in the institution is one step from here${st[WAYS[need].k].call > 1 ? `, and ${WAYS[need].t.toLowerCase()} is first because something there is waiting for you` : ''}.</p></header>
+      <div class="field wf-q">${ask}</div>
+      <ul class="rows" style="margin-top:26px">${order.map((i) => { const w = WAYS[i]; return `<li><a class="row plain" href="${w.href}"><span><span class="t">${w.t}</span><span class="d">${st[w.k].d}</span></span>${st[w.k].mark ? `<span class="m">${st[w.k].mark} waiting</span>` : ''}</a></li>`; }).join('')}</ul></div>`;
+    bindAsk(null);
+    return { title: 'Compass', crumb: 'Compass' };
+  }
+  // ---- the member at the centre of the card
+  let cur = need, head = need * STEP, drag = null;
+  W3.compassGoal = 1; W3.compassPoint = 1; W3.compassHead = head;
+  if (!app.motion() || W3.compassT < 0.5) { W3.compassT = 1; W3.compassHeadT = head; }
+  await app.scene({ layout: 'full', theme: 'inside', shot: 'wayfind', dur: 2.0 }); if (!ok()) return null;
+  view.innerHTML = `<section class="wayfind">
+    <div class="wf-ask"><h1>Where do you need to be?</h1><div class="field wf-q">${ask}</div></div>
+    <div class="wf-cap" aria-live="polite"><h2 id="wn"></h2><p id="wd"></p><a class="btn" id="wgo" href="#"></a></div>
+  </section>`;
+  marks.innerHTML = `<svg class="wf-needle" aria-hidden="true"><line id="wl"></line></svg><div class="wf-turn" aria-hidden="true"></div>
+    <span class="wf-you" aria-hidden="true">${glyph(m.lineage)}</span>
+    ${WAYS.map((w, i) => `<a class="wf-way" href="${w.href}" data-i="${i}"><span class="t">${w.t}</span>${st[w.k].mark ? `<span class="m" aria-hidden="true">${st[w.k].mark}</span>` : ''}<span class="vh">. ${st[w.k].d}</span></a>`).join('')}`;
+  const ways = $$('.wf-way', marks), you = $('.wf-you', marks), line = $('#wl', marks), svg = $('.wf-needle', marks), surf = $('.wf-turn', marks);
+  const cap = () => { const w = WAYS[cur]; $('#wn', view).textContent = w.t; $('#wd', view).textContent = st[w.k].d; const go = $('#wgo', view); go.textContent = w.k === 'index' && !(cp && cp.done) ? 'Set your reading index' : w.go; go.href = w.href; ways.forEach((el, i) => el.classList.toggle('ahead', i === cur)); };
+  // bring a place ahead by the shorter way round
+  const face = (i, quiet) => {
+    i = ((i % WAYS.length) + WAYS.length) % WAYS.length;
+    let d = (i * STEP - head) % (2 * Math.PI); if (d > Math.PI) d -= 2 * Math.PI; if (d < -Math.PI) d += 2 * Math.PI;
+    head += d; W3.compassHead = head; if (!app.motion()) W3.compassHeadT = head;
+    if (i !== cur) { cur = i; if (!quiet) app.sfx('tap', 520 + i * 40); cap(); }
+  };
+  cap();
+  const pt = (x, y, z) => W3.project(W3.pt('compass', [x, y, z]));
+  let R = 3.5, rpx = 200;
+  const place = () => {
+    const narrow = app.narrow(), vw = innerWidth, h = W3.compassHeadT; R = narrow ? 3.05 : 3.5;
+    const c = pt(0, 0, 0.42), top = pt(0, R - 0.75, 0.05), side = pt(R, 0, 0.05); rpx = Math.max(60, side[0] - c[0]);
+    you.style.transform = `translate(${c[0].toFixed(1)}px, ${c[1].toFixed(1)}px)`;
+    svg.setAttribute('width', vw); svg.setAttribute('height', innerHeight);
+    line.setAttribute('x1', c[0]); line.setAttribute('y1', c[1] - 20); line.setAttribute('x2', top[0]); line.setAttribute('y2', top[1]);
+    ways.forEach((el, i) => {
+      const th = i * STEP - h, q = pt(R * Math.sin(th), R * Math.cos(th), 0.05), half = el.offsetWidth / 2;
+      el.style.transform = `translate(${q[0].toFixed(1)}px, ${q[1].toFixed(1)}px)`;
+      el.classList.toggle('off', q[0] - half < 6 || q[0] + half > vw - 6);
+    });
+    const back = pt(0, -R, 0.05);
+    surf.style.transform = `translate(${(c[0] - rpx).toFixed(0)}px, ${(top[1] - 10).toFixed(0)}px)`; surf.style.width = (2 * rpx).toFixed(0) + 'px'; surf.style.height = Math.max(40, back[1] - top[1] + 20).toFixed(0) + 'px';
+  };
+  place();
+  // turning by hand: the far side of the card follows the finger, and it settles on the nearest place
+  surf.addEventListener('pointerdown', (e) => { drag = { x: e.clientX, h: head, id: e.pointerId, t: performance.now(), moved: 0 }; surf.setPointerCapture(e.pointerId); surf.classList.add('on'); });
+  surf.addEventListener('pointermove', (e) => { if (!drag) return; const dx = e.clientX - drag.x; drag.moved = Math.max(drag.moved, Math.abs(dx)); head = drag.h - dx / rpx; W3.compassHead = head; if (!app.motion()) W3.compassHeadT = head; const i = Math.round(head / STEP); const j = ((i % WAYS.length) + WAYS.length) % WAYS.length; if (j !== cur) { cur = j; cap(); } });
+  const drop = (e) => { if (!drag) return; const dx = e.clientX - drag.x, fast = Math.abs(dx) > 24 && performance.now() - drag.t < 260; let i = Math.round(head / STEP); if (fast && i === Math.round(drag.h / STEP)) i -= Math.sign(dx); drag = null; surf.classList.remove('on'); cur = -1; face(i); };
+  surf.addEventListener('pointerup', drop); surf.addEventListener('pointercancel', drop);
+  marks.addEventListener('focusin', (e) => { const a = e.target.closest('.wf-way'); if (a) face(+a.dataset.i, true); });
+  const keys = (e) => {
+    if (e.target.matches && e.target.matches('input, textarea, select')) return;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { e.preventDefault(); face(cur + (e.key === 'ArrowRight' ? 1 : -1)); }
+    if (e.key === 'Enter' && !e.target.closest('a, button')) { e.preventDefault(); app.go(WAYS[cur].href); }
+  };
+  document.addEventListener('keydown', keys);
+  bindAsk((i) => face(i, true));
+  $('#wh', view).addEventListener('focusin', (e) => { const a = e.target.closest('a[data-i]'); if (a) face(+a.dataset.i, true); });
+  return {
+    title: 'Compass', crumb: 'Compass', tick: place, after: place, resize: place,
+    leave: () => { document.removeEventListener('keydown', keys); W3.compassPoint = 0; },
+  };
+}
+
+// the reading index: five optional questions, then reading arranged from the answers (#/compass/index, #/compass/edit)
+async function compassIndex(app, args) {
   const m = store.member(), ok = app.live(), view = app.view, W3 = app.world;
   const c = (m.compassConsent && m.compass) || session || { a: {}, done: false };
   let step = args[0] === 'edit' ? 0 : c.done ? 5 : -1;
@@ -67,7 +195,7 @@ export async function compass(app, args) {
     if (W3) settle(); else pane(app, 'compass', null, frameFor(step), vf);
     if (step === -1) {
       view.innerHTML = `<div class="page"><header><h1 class="title">Choose the direction that deserves your attention.</h1>
-        <p class="lead">Five short questions, each one optional. The Compass arranges reading for you. It does not diagnose, and it never matches a product to a goal.</p></header>
+        <p class="lead">Five short questions, each one optional. They arrange your reading. They do not diagnose, and they never match a product to a goal.</p></header>
         <label class="check"><input type="checkbox" id="keep" ${m.compassConsent ? 'checked' : ''}><span>Keep my choices on my record, so my index is here next time.<span class="note">Optional. Without it, your choices last for this visit only.</span></span></label>
         <div class="actions"><button class="btn" type="button" id="start">Begin</button><a class="link" href="#/formulary">Go straight to the Formulary</a></div></div>`;
       $('#keep', view).addEventListener('change', (e) => { m.compassConsent = e.target.checked; if (!m.compassConsent) m.compass = null; store.save(); });
@@ -97,7 +225,7 @@ export async function compass(app, args) {
         evidence: `<section><h2>Explore the evidence</h2><p class="note">${detailed ? 'You asked for detail, so references are shown in full where a note has them.' : 'You asked for a concise overview. The full references stay one press away.'} What counts as evidence is the same either way.</p>
           <ul class="rows">${['evidence-grades', 'coa'].map((id) => { const d = dispatch(id); return `<li><a class="row plain" href="#/dispatches/${d.id}"><span><span class="t">${d.title}</span><span class="d">${d.dek}</span></span><span class="m">${d.kind}</span></a></li>`; }).join('')}</ul></section>`,
         compare: `<section><h2>Compare eligible options</h2>
-          <p class="notice"><strong>No product is matched to a goal.</strong> To do that, a record would need an authorised use for that purpose, approved labelling and evidence for it. None of those is on file for any record, so the Compass shows nothing here rather than guess.</p>
+          <p class="notice"><strong>No product is matched to a goal.</strong> To do that, a record would need an authorised use for that purpose, approved labelling and evidence for it. None of those is on file for any record, so nothing is shown here rather than a guess.</p>
           ${fields.length ? `<p style="margin-top:16px">You can browse the Formulary by field of study. These fields touch what you chose as subjects of research. They are not suggestions.</p><ul class="rows" style="margin-top:12px">${fields.map((s) => `<li><a class="row" href="#/formulary/${s.c}"><span class="n">${s.c}</span><span><span class="t">${s.f}</span><span class="d">${s.d}</span></span></a></li>`).join('')}</ul>` : '<p style="margin-top:16px"><a href="#/formulary">Browse the Formulary by field of study</a>.</p>'}</section>`,
         expert: `<section><h2>Speak to a professional</h2><p>If a question is about your own health, the right person is a qualified professional who can know your circumstances. PR6 does not give dosing, treatment or regimen guidance.</p><div class="actions" style="margin-top:14px"><a class="btn ghost" href="#/support?topic=referral">Ask support to point you to the right kind</a></div></section>`,
       };
@@ -108,14 +236,14 @@ export async function compass(app, args) {
         <section><h2>Safety</h2><ul class="rows">${SAFETY_OVERVIEW.map((t) => `<li><div class="row plain"><span class="t" style="font-size:var(--s3)">${t}</span></div></li>`).join('')}</ul></section>
         <section><h2>Why you are seeing this</h2><dl class="kv">${COMPASS_ORDER.map((k) => `<dt>${COMPASS[k].q}</dt><dd>${c.a[k] ? (Array.isArray(c.a[k]) ? c.a[k].map((v) => label(k, v)).join(', ') || 'Skipped' : label(k, c.a[k])) : 'Skipped'}</dd>`).join('')}
           <dt>Stored</dt><dd>${m.compassConsent ? 'On your record, at your request.' : 'For this visit only.'}</dd></dl>
-          <div class="actions"><button class="btn ghost" type="button" id="edit">Change my answers</button><button class="link" type="button" id="clear">Clear my Compass</button></div></section></div>`;
+          <div class="actions"><button class="btn ghost" type="button" id="edit">Change my answers</button><button class="link" type="button" id="clear">Clear my answers</button></div></section></div>`;
       $('#edit', view).addEventListener('click', () => { step = 0; render(); });
       $('#clear', view).addEventListener('click', () => { m.compass = null; session = null; c.a = {}; c.done = false; store.save(); step = -1; render(); });
     }
     if (focus) { const h = $('h1', view); if (h) { h.tabIndex = -1; h.focus({ preventScroll: true }); } window.scrollTo(0, 0); }
   };
   render(false);
-  return { title: 'Compass', crumb: 'Compass' };
+  return { title: 'Reading index', crumb: 'Compass' };
 }
 
 // ---------------------------------------------------------------------------------------------- A12 the Formulary
@@ -257,10 +385,10 @@ export async function record(app, args) {
   };
   const openCount = ans.depth === 'detailed' ? 99 : ans.depth === 'overview' ? 1 : 2;
   const why = () => (m.recordFirst && SECT[m.recordFirst] ? `${SECT[m.recordFirst][0]} first, as you chose here. `
-    : ans.objective || ans.depth || ans.safety ? `In the order your Compass set${ans.objective ? ': you asked to ' + REC_WHY[ans.objective] : ''}${ans.depth ? (ans.objective ? ', ' : ': ') + (ans.depth === 'detailed' ? 'in detail' : 'as a concise overview') : ''}${ans.safety === 'overview' || ans.safety === 'professional' ? (ans.objective || ans.depth ? ', with safety first' : ': safety first') : ''}. `
+    : ans.objective || ans.depth || ans.safety ? `In the order your reading index set${ans.objective ? ': you asked to ' + REC_WHY[ans.objective] : ''}${ans.depth ? (ans.objective ? ', ' : ': ') + (ans.depth === 'detailed' ? 'in detail' : 'as a concise overview') : ''}${ans.safety === 'overview' || ans.safety === 'professional' ? (ans.objective || ans.depth ? ', with safety first' : ': safety first') : ''}. `
     : 'In the standard order. ');
-  const below = () => `<div class="arrange"><p class="note">${why()}<a href="#/compass${cp && cp.done ? '/edit' : ''}">${cp && cp.done ? 'Change my Compass' : 'Let the Compass arrange it'}</a></p>
-      <label class="firstpick"><span>Show first</span><select id="first"><option value="">${cp && cp.done ? 'What my Compass says' : 'The standard order'}</option>${Object.keys(SECT).map((key) => `<option value="${key}"${m.recordFirst === key ? ' selected' : ''}>${SECT[key][0]}</option>`).join('')}</select></label></div>
+  const below = () => `<div class="arrange"><p class="note">${why()}<a href="#/compass/${cp && cp.done ? 'edit' : 'index'}">${cp && cp.done ? 'Change my answers' : 'Let your reading index arrange it'}</a></p>
+      <label class="firstpick"><span>Show first</span><select id="first"><option value="">${cp && cp.done ? 'What my reading index says' : 'The standard order'}</option>${Object.keys(SECT).map((key) => `<option value="${key}"${m.recordFirst === key ? ' selected' : ''}>${SECT[key][0]}</option>`).join('')}</select></label></div>
     ${arrange().map((key, i) => `<details class="fold" data-k="${key}"${i < openCount ? ' open' : ''}><summary><h2>${SECT[key][0]}</h2></summary>${SECT[key][1]}</details>`).join('')}`;
   const z0 = able ? r.sizes[0] : null;
   view.innerHTML = `<div class="page"><a class="back" href="#/formulary/${s.c}">${s.n} · ${s.f}</a>
@@ -283,7 +411,7 @@ export async function record(app, args) {
     if (e.target.id !== 'first') return;
     m.recordFirst = e.target.value || null; store.save();
     $('#below', view).innerHTML = below(); $('#first', view).focus();
-    app.announce(m.recordFirst ? `${SECT[m.recordFirst][0]} now comes first on every record.` : 'Back to the order your Compass set.');
+    app.announce(m.recordFirst ? `${SECT[m.recordFirst][0]} now comes first on every record.` : 'Back to the order your reading index set.');
   });
   if (able) {
     let si = 0, qty = 1; const f = $('#buy', view);
@@ -507,7 +635,7 @@ export async function account(app) {
     <section><h2>Movement and sound</h2><fieldset style="margin-top:0"><legend>Movement</legend>
       ${[['auto', 'Follow my device setting'], ['explore', 'Explore: rooms move, with authored transitions'], ['direct', 'Direct: still pictures, instant pages']].map(([v, t]) => `<label class="check"><input type="radio" name="amotion" value="${v}" ${(store.prefs.motion || 'auto') === v ? 'checked' : ''}><span>${t}</span></label>`).join('')}</fieldset>
       <p class="note" style="margin-top:14px">Sound is off until you turn it on with the control at the top of the page. Nothing that matters is carried by sound alone.</p></section>
-    <section><h2>Privacy</h2><label class="check"><input type="checkbox" id="cc" ${m.compassConsent ? 'checked' : ''}><span>Keep my Compass choices on my record.<span class="note">Turning this off deletes the stored choices now.</span></span></label>
+    <section><h2>Privacy</h2><label class="check"><input type="checkbox" id="cc" ${m.compassConsent ? 'checked' : ''}><span>Keep my reading index answers on my record.<span class="note">Turning this off deletes the stored choices now.</span></span></label>
       <div class="actions"><button class="btn ghost" type="button" id="dl">Download my data</button><a class="link" href="#/support?topic=privacy">Ask for my data to be deleted</a></div></section>
     <section><h2>Card</h2><p>${CARD[m.card]}. Losing the card never locks you out. <a href="#/support?topic=card">Report a lost card or ask for a replacement</a>.</p></section>
     <div class="actions" style="margin-top:52px"><button class="btn ghost" type="button" id="out">Sign out</button></div></div>`;
@@ -528,7 +656,7 @@ export async function library(app) {
   view.innerHTML = `<div class="page"><header><h1 class="title">Library</h1><p class="lead">What you have saved: records and reading, nothing more.</p></header>
     <section><h2>Records</h2>${recs.length ? `<ul class="rows">${recs.map((r) => `<li><a class="row" href="#/record/${r.id}"><span class="n">${r.id.slice(-4)}</span><span><span class="t">${r.name}</span><span class="d">${seriesOf(r).n} · ${r.cls}</span></span><span class="m">${tag(r)}</span></a></li>`).join('')}</ul>` : '<p class="note">No saved records. Any record in the <a href="#/formulary">Formulary</a> can be saved from its page.</p>'}</section>
     <section><h2>Reading</h2>${dis.length ? `<ul class="rows">${dis.map((d) => `<li><a class="row plain" href="#/dispatches/${d.id}"><span><span class="t">${d.title}</span><span class="d">${d.dek}</span></span><span class="m">${d.kind}</span></a></li>`).join('')}</ul>` : '<p class="note">No saved reading. Save any <a href="#/dispatches">Dispatch</a> from its page.</p>'}</section>
-    <section><h2>Your index</h2><p>${(m.compass && m.compass.done) ? '<a href="#/compass">Open your personal index</a>.' : 'The <a href="#/compass">Compass</a> arranges reading around what you want to explore. It is optional.'}</p></section>
+    <section><h2>Your index</h2><p>${(m.compass && m.compass.done) ? '<a href="#/compass/index">Open your reading index</a>.' : 'Your <a href="#/compass/index">reading index</a> arranges reading around what you want to explore. It is optional.'}</p></section>
     <p class="note" style="margin-top:52px;max-width:62ch">An earlier plan called this place “Your Protocol”. PR6 does not plan regimens or doses for anyone, so it is a library: your saved interests, reading and preferences.</p></div>`;
   return { title: 'Library', crumb: 'Library' };
 }
