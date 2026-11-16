@@ -202,6 +202,14 @@ export async function alley(app) {
 }
 
 // ---------------------------------------------------------------------------------------------- A05 the Keeper
+// her recorded lines (assets/voice/keeper-NN.mp3), by the caption they belong to. Captions always show; the voice
+// only plays while sound is on.
+const VOICE = {
+  'There you are.': '01', 'I wondered when you would arrive.': '02', 'You have brought something with you.': '03',
+  'Tell me, dear. If nothing stood in your way, what would you pursue?': '04', 'Then you have come at an interesting time.': '05',
+  'Most people spend their lives asking what is possible. Very few ask what they would do if it were.': '06',
+  'Very well. Nothing you become will erase everything you have been.': '07',
+};
 const STOP = Symbol('stop');
 export async function keeper(app) {
   const inv = store.invitation(), ok = app.live(), S = app.stage, W3 = app.world, K = app.keeper, view = app.view, marks = app.marks;
@@ -227,6 +235,7 @@ export async function keeper(app) {
     return { cx: (open[0][0] + open[1][0]) / 2, cy: (open[0][1] + open[1][1]) / 2 + 0.1 * S.span[1] / zoom, zoom };
   };
   const lvl = { open: 0, warm: 0, roots: 0 };
+  app.sfx('preload', Object.values(VOICE).map((id) => `assets/voice/keeper-${id}.mp3`));
   let fb = null;
   if (!K) { marks.innerHTML = '<div class="keeper-fallback"></div>'; fb = marks.firstChild; }
   let adv = null, done = false;
@@ -237,11 +246,12 @@ export async function keeper(app) {
     cap.classList.add('off'); await step(app.wait(0.3));
     cap.textContent = text; cap.classList.remove('off');
     app.sfx('holo', 0.5); app.tween(0.6, (k) => { lvl.warm = Math.max(lvl.warm, k); });
-    if (wait) { await step(hold(Math.max(2.4, text.length * 0.075))); app.sfx('holo', 0.12); app.tween(0.9, (k) => { lvl.warm = 1 - k * 0.85; }); }
+    let spoken = 0; await step(app.voice(VOICE[text]).then((sec) => { spoken = sec; }));   // her voice, when sound is on
+    if (wait) { await step(hold(Math.max(2.4, text.length * 0.075, spoken + 0.5))); app.sfx('holo', 0.12); app.tween(0.9, (k) => { lvl.warm = 1 - k * 0.85; }); }
   };
   const finish = async (fast) => {
     if (done) return; done = true; if (adv) adv();
-    cap.classList.add('off'); choices.hidden = true; app.sfx('holo', 0);
+    cap.classList.add('off'); choices.hidden = true; app.sfx('holo', 0); app.hush();
     if (!fast) {
       await app.tween(0.8, (k) => { lvl.open = 1 - k; });
       app.sfx('slide'); await app.tween(0.7, (k) => setSlit(1 - k), ease.lin);
@@ -294,7 +304,7 @@ export async function keeper(app) {
       view.style.setProperty('--cap-top', Math.round(Math.min(innerHeight - 250, y + h + Math.max(34, h * 0.5))) + 'px');
       app.soundTick(t);
     },
-    leave: () => { done = true; if (adv) adv(); app.sfx('holo', 0); document.body.classList.remove('keeper-on'); if (K) K.gazeT = [0, 0]; if (W3) { W3.setKeeper(null); W3.light(1, null); if (D) D.slit = 0; } },
+    leave: () => { done = true; if (adv) adv(); app.sfx('holo', 0); app.hush(); document.body.classList.remove('keeper-on'); if (K) K.gazeT = [0, 0]; if (W3) { W3.setKeeper(null); W3.light(1, null); if (D) D.slit = 0; } },
   };
 }
 

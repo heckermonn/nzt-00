@@ -171,6 +171,13 @@ export function createSound() {
       o.connect(g); g.connect(roomIn); o.start(t + d); o.stop(t + d + 5.2);
     }
   }
+  // the Keeper's recorded lines: each decoded once, played nearly dry with a little of the alley behind it
+  const voiceBuf = new Map(); let speaking = null;
+  const loadVoice = (url) => {
+    if (!voiceBuf.has(url)) voiceBuf.set(url, fetch(url).then((r) => (r.ok ? r.arrayBuffer() : null)).then((b) => (b ? ac.decodeAudioData(b) : null)).catch(() => null));
+    return voiceBuf.get(url);
+  };
+  const hush = () => { if (speaking) { try { speaking.stop(); } catch (e) { /* already over */ } speaking = null; } };
   let rafT = 0;
   const ramp = (g, v, sec) => { const t = ac.currentTime; g.gain.cancelScheduledValues(t); g.gain.setValueAtTime(g.gain.value, t); g.gain.linearRampToValueAtTime(v, t + Math.max(0.01, sec)); };
   return {
@@ -182,6 +189,17 @@ export function createSound() {
     inside(v, sec = 3) { ramp(inside, v, sec); },
     step(outside = true, weight = 1, delay = 0) { const t = ac.currentTime + 0.01 + delay; outside ? stepOutside(t, weight) : stepInside(t); },
     holo(v) { holo.gain.setTargetAtTime(v, ac.currentTime, 0.08); },
+    preload(urls) { urls.forEach(loadVoice); },
+    /** Speak one recorded line. Resolves with its length in seconds, or 0 if there is no recording. */
+    async voice(url) {
+      const b = await loadVoice(url); hush(); if (!b) return 0;
+      const src = ac.createBufferSource(), g = ac.createGain(), wet = ac.createGain();
+      src.buffer = b; g.gain.value = 1; wet.gain.value = 0.16; src.connect(g); g.connect(master); g.connect(wet); wet.connect(verbIn);
+      src.onended = () => { if (speaking === src) speaking = null; };
+      src.start(ac.currentTime + 0.02); speaking = src;
+      return b.duration;
+    },
+    hush,
     buzz(v) { buzz.gain.setTargetAtTime(v * 0.05, ac.currentTime, 0.008); },
     relay(pan) { relay(ac.currentTime + 0.01, pan); },
     hiss() { hiss(ac.currentTime + 0.02); },

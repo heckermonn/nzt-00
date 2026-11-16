@@ -46,6 +46,9 @@ const app = {
   pointer: [0, 0],
   // sound: created on the first "on" (a gesture), silent otherwise
   sfx: (name, ...a) => { if (snd && store.prefs.sound && snd[name]) snd[name](...a); },
+  // the Keeper's recorded voice, only while sound is on: resolves with the line's length in seconds (0 when silent)
+  voice: (id) => (id && snd && store.prefs.sound ? snd.voice(`assets/voice/keeper-${id}.mp3`) : Promise.resolve(0)),
+  hush: () => { if (snd) snd.hush(); },
   amb: (kind) => { state.amb = kind; if (snd) { snd.city(kind === 'city' ? 1 : 0, 2.5); snd.inside(kind === 'inside' ? 1 : 0, 2.5); } },
   setSound: (on) => {
     store.setPref('sound', !!on);
