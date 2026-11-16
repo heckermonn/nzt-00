@@ -32,9 +32,10 @@ export function createShots(W, app) {
     doorpane: (k) => ({ ...out, p: [X(k) * 0.86, 3.2, 1.6], t: [X(k), 6.8, 1.66], lens: 27, expo: 0.8, vig: 0.5, rain: 0.5 }),
     atrium: () => ({ ...ins, zone: 'atrium', p: [0, -4, 1.7], t: [0, 74, 13], lens: 21, expo: 0.44, con: 0.7, shift: n() ? [0, -0.06] : [0, 0] }),
     compass: () => ({ ...ins, zone: 'compass', p: [0, -8.3, 1.75], t: [0, 0, 2.45], lens: 23, expo: 0.42, fog: [1.1, 1.25, 1.4, 0.002] }),
-    formulary: () => ({ ...ins, zone: 'formulary', p: [0, -13.6, 4.6], t: [0, 0, 4.72], lens: n() ? 44 : 47, expo: 0.45, fog: [1.1, 1.25, 1.4, 0.002] }),
-    niche: (i) => { const [x, z] = nichePos(i); return { ...ins, zone: 'formulary', p: [x * 0.55, -6.4, z * 0.8 + 0.9], t: [x, 0.4, z - 0.1], lens: 38, expo: 0.45, fog: [1.1, 1.25, 1.4, 0.002] }; },
-    record: (i) => { const [x, z] = nichePos(i); return { ...ins, zone: 'formulary', p: [x + 0.2, -3.5, z + 0.05], t: [x, 0.62, z - 0.3], lens: 42, expo: 0.45, fog: [1.1, 1.25, 1.4, 0.002] }; },
+    formulary: () => ({ ...ins, zone: 'formulary', p: [0, -13.6, 4.6], t: [0, 0, 4.72], lens: n() ? 44 : 47, expo: 0.6, fog: [1.1, 1.25, 1.4, 0.001] }),
+    niche: (i) => { const [x, z] = nichePos(i); return { ...ins, zone: 'formulary', p: [x * 0.82, -4.5, z * 0.92 + 0.3], t: [x, 0.4, z - 0.22], lens: 38, expo: 0.6, fog: [1.1, 1.25, 1.4, 0.001] }; },
+    // close on the stand: the vial at the front fills most of the height of the picture
+    record: (i) => { const [x, z] = nichePos(i), pz = z - 1.05; return { ...ins, zone: 'formulary', p: [x + 0.2, -2.35, pz + 0.72], t: [x, 0.36, pz + 0.5], lens: 50, expo: 0.6, fog: [1.1, 1.25, 1.4, 0.001] }; },
     archive: () => ({ ...ins, zone: 'archive', p: [0, -8.4, 1.7], t: [0, 2.6, 3.05], lens: 27, expo: 0.34, fog: [1.1, 1.25, 1.4, 0.002] }),
   };
   const S = { INSIDE };

@@ -178,54 +178,55 @@ elif kind == "compass":
 
 # =============================================================================================== FORMULARY
 elif kind == "formulary":
+    # frames: formulary (the wall), formulary_n<case> (one case), formulary_r<id> (one record: its vial at the front),
+    #         formulary_env (what a vial sees, as a panorama for the page's glass), formulary_p<id> (a product picture)
+    import formulary as FM
     sc = C.setup(a.res, a.samples, bounces=12)
-    C.world(sc, DAY, 0.25)
-    WALL = C.mineral("wall", CHALK, 0.05, (0.7, 0.7, 5.0), (0.5, 0.7), 0.04)
-    FLOOR = C.mineral("floor", (MIST[0] * 0.86, MIST[1] * 0.88, MIST[2] * 0.9), 0.06, (1, 1, 1), (0.06, 0.2), 0.012)
-    NW, NH, GX, GZ, Z0, DEPTH = 1.8, 2.3, 2.5, 2.95, 2.0, 1.3
-    YW = 0.0
-    # the wall around nine recesses
-    wall = box("wall", (0, YW + 1.0, 6.0), (40, 2.0, 12.0), WALL)
-    GLASS = C.glass("vial", (0.95, 0.975, 0.985), 0.0, 1.47)
-    ALU = plain("alu", (0.78, 0.80, 0.82), 0.28, 1.0)
-    CAKE = plain("cake", (0.93, 0.94, 0.93), 0.9)
-    LABEL = plain("label", (0.93, 0.94, 0.93), 0.55)
-    CAPS = [CHALK, STEEL_BLUE, INK, STEEL_BLUE, MIST, INK, STEEL_BLUE, CHALK, MIST]
-    PLIN = C.mineral("plin", CHALK, 0.04, (1, 1, 1), (0.3, 0.45), 0.02)
-    for r in range(3):
-        for c in range(3):
-            i = r * 3 + c
-            x = (c - 1) * GX; z = Z0 + (2 - r) * GZ
-            cutter = box("cut", (x, YW + DEPTH / 2 - 0.05, z), (NW, DEPTH + 0.1, NH), None)
-            md = wall.modifiers.new("cut", "BOOLEAN"); md.object = cutter; md.operation = "DIFFERENCE"; md.solver = "EXACT"
-            cutter.hide_render = True
-            # back-lit rear panel and a soft top light in each recess
-            box("back", (x, YW + DEPTH - 0.02, z), (NW - 0.02, 0.02, NH - 0.02), emit("back%d" % i, DAY, 1.5))
-            area("top%d" % i, "", (x, YW + 0.55, z + NH / 2 - 0.04), (x, YW + 0.55, z - 1), NW * 0.8, 9, DAY, sy=0.5)
-            # plinth + vial (a sealed, crimped vial, three times life size as a display object)
-            pz = z - NH / 2
-            box("plinth", (x, YW + 0.62, pz + 0.09), (0.9, 0.9, 0.18), PLIN, 0.006)
-            s = 25.0
-            body = [(0.0, 0.0), (0.0105, 0.0), (0.0115, 0.0012), (0.0115, 0.030), (0.0108, 0.0335), (0.0072, 0.037), (0.0066, 0.0395), (0.0066, 0.0425), (0.0085, 0.0432), (0.0085, 0.0462), (0.0, 0.0462)]
-            v = lathe("vial", [(rr * s, zz * s) for rr, zz in body], GLASS, 72, (x, YW + 0.62, pz + 0.18))
-            sol = v.modifiers.new("s", "SOLIDIFY"); sol.thickness = 0.0011 * s; sol.offset = -1
-            lathe("cake", [(0.0, 0.0018 * s), (0.0098 * s, 0.0018 * s), (0.0098 * s, 0.0075 * s), (0.0, 0.0082 * s)], CAKE, 48, (x, YW + 0.62, pz + 0.18))
-            lathe("crimp", [(0.0, 0.0470 * s), (0.0091 * s, 0.0470 * s), (0.0093 * s, 0.0463 * s), (0.0093 * s, 0.0418 * s), (0.0087 * s, 0.0412 * s)], ALU, 64, (x, YW + 0.62, pz + 0.18))
-            lathe("cap", [(0.0, 0.0492 * s), (0.0078 * s, 0.0492 * s), (0.0081 * s, 0.0486 * s), (0.0081 * s, 0.0471 * s), (0.0, 0.0471 * s)],
-                  plain("cap%d" % i, CAPS[i], 0.42), 64, (x, YW + 0.62, pz + 0.18))
-            lathe("label", [(0.01158 * s, 0.006 * s), (0.01158 * s, 0.0265 * s)], LABEL, 72, (x, YW + 0.62, pz + 0.18))
-            marks["n%d" % (i + 1)] = (x, YW, z)
-            rects["n%d" % (i + 1)] = ((x - NW / 2, YW, z + NH / 2), (x + NW / 2, YW, z - NH / 2))
-    # floor, ceiling slot, side returns
-    box("floor", (0, -8, -0.1), (40, 20, 0.2), FLOOR)
-    box("ceil", (0, -8, 12.1), (40, 20, 0.2), WALL)
-    area("wash", "", (0, -2.2, 11.6), (0, YW, 5.5), 22, 900, DAY, sy=0.8)
-    area("fill", "", (0, -12, 5), (0, 0, 5), 16, 260, DAY, sy=8)
-    for s in (-1, 1):
-        box("return", (s * 13.5, -8, 6), (0.6, 20, 12), WALL)
-        box("return_glow", (s * 12.6, YW - 0.6, 6), (0.08, 1.0, 12), emit("rg", DAY, 1.6))
-    cam = C.camera((0, -13.6, 4.6), (0, YW, 4.72), lens=49)
-    extra = dict(expo=0.45, fog=[0.84, 0.89, 0.92], fog_d=0.0)
+
+    class K:
+        box = staticmethod(box); add = staticmethod(lambda o: o); into = staticmethod(lambda *p, **k: None); flag = staticmethod(lambda *p, **k: None)
+        glow = staticmethod(lambda o, *p, **k: o); r2 = staticmethod(lambda x: x)
+
+        @staticmethod
+        def cut(o, cutter):
+            md = o.modifiers.new("cut", "BOOLEAN"); md.object = cutter; md.operation = "DIFFERENCE"; md.solver = "EXACT"; cutter.hide_render = True
+
+        @staticmethod
+        def quad(name, pts, mat):
+            me = bpy.data.meshes.new(name); me.from_pydata([tuple(q) for q in pts], [], [tuple(range(len(pts)))]); me.update()
+            o = bpy.data.objects.new(name, me); bpy.context.scene.collection.objects.link(o); me.materials.append(mat); return o
+
+    view = sym if "_" in a.frame else ""
+    case = int(view[1:3]) - 1 if view[:1] in "rp" and view else int(view[1:]) - 1 if view[:1] == "n" else 4
+    which = int(view[3:5]) - 1 if view[:1] in "rp" and view else 0
+    turn = {case: -which * 2 * math.pi / 3} if which else None
+    anch, vials, extra0 = FM.build(K, labels=os.environ.get("PR6_LABELS"), turn=turn, wall_half=20 if not view else None)
+    x, z = FM.niche(case); px, py, pz = FM.stand(case)
+    if view == "env":
+        for o in vials:
+            o.hide_render = True
+        cam = C.camera((px, py - FM.RING, pz + 0.5), (px, py - FM.RING - 1, pz + 0.5), lens=20)
+        cam.data.type = "PANO"; cam.data.panorama_type = "EQUIRECTANGULAR"
+        sc.render.resolution_x, sc.render.resolution_y = a.res, a.res // 2
+    elif view[:1] == "n":
+        cam = C.camera((x * 0.55, -6.4, z * 0.8 + 0.9), (x, 0.4, z - 0.1), lens=38)
+    elif view[:1] == "r":
+        cam = C.camera((x + 0.25, -3.3, pz + 0.75), (x, py - FM.RING, pz + 0.47), lens=50)
+    elif view[:1] == "p":
+        # a product picture: the record's vial alone, tall frame
+        keep = "v%d_%d_" % (case + 1, which + 1)
+        for o in vials:
+            o.hide_render = not o.name.startswith(keep)
+        cam = C.camera((x + 0.12, -2.6, pz + 0.62), (x, py - FM.RING, pz + 0.50), lens=78)
+        sc.render.resolution_x, sc.render.resolution_y = int(a.res * 0.6), a.res
+        cam.data.sensor_fit = "VERTICAL"; cam.data.sensor_height = 36
+    else:
+        cam = C.camera((0, -13.6, 4.6), (0, FM.YW, 4.72), lens=49)
+        for i in range(9):
+            nx, nz = FM.niche(i)
+            marks["n%d" % (i + 1)] = (nx, FM.YW, nz)
+            rects["n%d" % (i + 1)] = ((nx - FM.NW / 2, FM.YW, nz + FM.NH / 2), (nx + FM.NW / 2, FM.YW, nz - FM.NH / 2))
+    extra = dict(expo=extra0["expo"], fog=[0.84, 0.89, 0.92], fog_d=0.0)
 
 # =============================================================================================== ARCHIVE
 elif kind == "archive":

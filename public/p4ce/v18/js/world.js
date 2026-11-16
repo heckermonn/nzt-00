@@ -4,6 +4,7 @@
 // rooms look like the Cycles pictures from any position. Moving between screens is always a camera move.
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { createVials } from './vials.js';
 
 const V3 = THREE.Vector3, DEG = Math.PI / 180;
 const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
@@ -382,19 +383,20 @@ export function createWorld(canvas, base = 'assets/world/') {
     blades.instanceMatrix.needsUpdate = true;
   };
 
-  // ---------------------------------------------------------------- the Formulary: nine vials in nine niches
-  const vials = [];
+  // ---------------------------------------------------------------- the Formulary: nine cases, three vials to a stand
+  let vials = null;
   function buildFormulary(Z) {
-    const A = Z.man.anchors, d = A.dims;
-    for (let i = 1; i <= 9; i++) {
-      const n = A['n' + i]; if (!n) continue;
-      const h = d.vial_h * 1.12, w = h * 459 / 820;
-      const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ transparent: true, alphaTest: 0.03, color: 0xe4e8ea, toneMapped: false }));
-      b2t(n.vial, m.position); m.position.y += h / 2 - 0.03; m.visible = false; Z.group.add(m); vials.push(m);
-      texLoader.load(`assets/vials/PR6-C-0${i}01.webp`, (t) => { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = maxAniso; m.material.map = t; m.material.needsUpdate = true; m.visible = true; });
-    }
+    vials = createVials({ Z, COMMON, common, haze: haze.formulary, base, tex, BAKED_VS, maxAniso });
     Z.backs = {}; for (const e of Z.emits) { const mm = /^back(\d+)/.exec(e.name); if (mm) Z.backs[+mm[1]] = e; }
+    if (W._turns) for (const n in W._turns) vials.set(+n, W._turns[n], true);
   }
+  /** The stands of the Formulary: bring vial k (0 to 2) of case n (1 to 9) to the front; turn one by hand; let it go. */
+  W.turn = {
+    set: (n, k, now) => { (W._turns || (W._turns = {}))[n] = k; if (vials) vials.set(n, k, now || !W.motion); },
+    by: (n, da) => { if (vials) vials.by(n, da); },
+    drop: (n, push) => { const k = vials ? vials.drop(n, push) : 0; (W._turns || (W._turns = {}))[n] = k; return k; },
+    at: (n) => (vials ? vials.at(n) : (W._turns && W._turns[n]) || 0),
+  };
   /** Brighten one niche (1 to 9), or none. */
   W.setNiche = (n) => { W._niche = n || 0; };
   function setLineage(sym) { W.lineage = sym; const Z = W.zones.archive; if (!Z) return; for (const s of SYMS) { const m = Z.meshes['face_' + s]; if (m) m.visible = s === sym; } }
@@ -541,8 +543,7 @@ export function createWorld(canvas, base = 'assets/world/') {
     if (keeperPlane && keeperPlane.visible) keeperPlane.material.opacity = 1;
     // blades settle towards the goal
     W.compassT += (W.compassGoal - W.compassT) * (W.motion ? 1 - Math.pow(0.08, dt) : 1); updateBlades(W.compassT, time);
-    // vials face the camera
-    for (const v of vials) { v.getWorldPosition(_v); v.rotation.y = Math.atan2(camera.position.x - _v.x, camera.position.z - _v.z); }
+    if (vials) vials.update(dt, W.motion);
     // adapt: if frames are slow, lower the resolution, then the mirror
     if (dt > 0 && W.motion) { slow = slow * 0.95 + (dt > 0.034 ? 1 : 0) * 0.05; if (slow > 0.6 && time - last > 2) { last = time; slow = 0; if ((W.dpr || Math.min(devicePixelRatio || 1, 2)) > 1) { W.dpr = Math.max(1, (W.dpr || Math.min(devicePixelRatio || 1, 2)) - 0.5); W.resize(); } else if ((W.reflScale ?? 0.5) > 0.26) { W.reflScale = 0.25; W.resize(); } } }
     // the rooms beyond the Atrium stand in the haze of the court and come out of it as the camera nears them

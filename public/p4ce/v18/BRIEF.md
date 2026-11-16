@@ -128,6 +128,31 @@ light as two textures), `combined` (metal and small parts, gloss as seen from th
 insignia: baked from the sculpted relief, drawn as a flat sheet). The manifest is rewritten after every group, so a
 half-finished bake leaves a partial `<zone>.json`; let a zone finish before loading it.
 
+### The Formulary's cases and vials
+
+Nine lit cases in a dark stone wall, one per Series. Each case holds its Series' three records as sealed glass
+vials on a round stand; the stand turns so that the record being read stands at the front. Opening a record moves
+the camera in on its case while its vial comes round. On a Series page the rows turn the stand (hover or focus);
+on a record page the three records of the case are links, and the stand can also be turned by hand in the picture
+(drag or swipe sideways; letting go settles on the nearest vial and opens its record). In Direct mode the stand is
+simply in place. The links are always there, so the drag is never the only way.
+
+- `blender/formulary.py`: the one builder of the wall, cases, stands and vials, used by the light bake (`world.py`)
+  and by the path-traced pictures (`rooms.py`), so the two cannot drift apart. Vial profiles are life size and
+  scaled by `S`; they travel to the page in the zone's manifest (`anchors.dims`).
+- `blender/labels.py` + `blender/catalog.json` (dumped from `js/catalog.js`): each record's printed label, as PNGs
+  for Cycles and as one atlas for the page (`assets/vials/labels.webp`, 3 columns by 9 rows).
+- `js/vials.js`: the 27 vials as real geometry, lit by a path-traced panorama of what a vial sees from its stand
+  (`formulary_env.webp` for reflection and refraction, `formulary_envd.webp` for matt surfaces; `blender/envmap.py`).
+  The stands' tops are baked twice, with the vials and without (`formulary_pads_l` / `_pads_nov_l`), so their
+  shadows can travel with the stand.
+- `blender/vialpics.py`: the 27 path-traced product pictures (`assets/vials/<id>.webp`), shown on each record.
+
+      PR6_LABELS=/tmp/labels PY rooms.py -- --out RAW --frame formulary_env --res 512 --samples 160
+      PY envmap.py RAW/formulary_env ../assets/world
+      PR6_LABELS=/tmp/labels PY rooms.py -- --out RAW --frame formulary_p0502 --res 760 --samples 96   # one product picture
+      PY vialpics.py RAW ../assets/vials
+
 Lessons kept in the code: a relief's flat sheet must sit in front of whatever stands behind it and the body behind
 a sunk relief must start behind its deepest cut (the Archive stele was black until both were true); bind an empty
 texture as the reflection while drawing the mirror pass (a feedback loop otherwise); keep meshes hidden until their

@@ -123,6 +123,37 @@ const nicheRect = (F, i) => {
   if (!F) return null; const r = F.info.rects && F.info.rects['n' + i]; if (r) return r;
   const p = F.info.marks['n' + i]; return p ? [[p[0] - 0.11, p[1] - 0.12], [p[0] + 0.11, p[1] + 0.12]] : null;
 };
+// The stand in a case turns by hand: drag sideways on the picture and it follows; let go and it settles on the
+// nearest vial. The same choice is always there as links in the page, so this is an extra way and never the only one.
+function turner(app, c, onPick) {
+  const W3 = app.world, marks = app.marks; if (!W3) return () => {};
+  const el = document.createElement('div'); el.className = 'turner'; el.setAttribute('aria-hidden', 'true'); marks.appendChild(el);
+  const d = (W3.zones.formulary && W3.zones.formulary.man.anchors.dims) || { ring: 0.305, NW: 1.8 };
+  let id = null, x = 0, t = 0, v = 0, moved = 0, tot = 0, on = false;
+  const perPx = () => { const b = app.box('n' + c); return 1 / Math.max(36, (b ? b.w : 300) * d.ring / d.NW); };
+  el.addEventListener('pointerdown', (e) => { if (e.button) return; id = e.pointerId; x = e.clientX; t = e.timeStamp; v = 0; moved = 0; tot = 0; on = false; try { el.setPointerCapture(id); } catch (er) { /* gone */ } });
+  el.addEventListener('pointermove', (e) => {
+    if (e.pointerId !== id) return; const dx = e.clientX - x, dt = Math.max(1, e.timeStamp - t); moved += Math.abs(dx);
+    if (!on && moved < 6) return;
+    if (!on) { on = true; el.classList.add('on'); }
+    const da = dx * perPx(); W3.turn.by(c, da); tot += da; v = v * 0.6 + (da / dt) * 400; x = e.clientX; t = e.timeStamp; e.preventDefault();
+  });
+  const end = (e) => {
+    if (e.pointerId !== id) return; id = null; el.classList.remove('on'); if (!on) return; on = false;
+    // a short pull is enough to ask for the next vial; a flick carries on the way it was going
+    const flick = e.timeStamp - t > 120 ? 0 : v * 0.22, pull = Math.abs(tot) > 0.38 ? Math.sign(tot) * 0.7 : 0;
+    const k = W3.turn.drop(c, Math.max(-1.3, Math.min(1.3, flick + pull))); app.sfx('tap'); onPick(k);
+  };
+  el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
+  // the drag surface is the case as far as the picture shows it, and never reaches over the page
+  return () => {
+    const b = app.box('n' + c), r = W3.rect; if (!b) { el.style.visibility = 'hidden'; return; }
+    const x0 = Math.max(b.x, r.x), y0 = Math.max(b.y, r.y), x1 = Math.min(b.x + b.w, r.x + r.w), y1 = Math.min(b.y + b.h, r.y + r.h);
+    el.style.visibility = x1 > x0 + 8 && y1 > y0 + 8 ? '' : 'hidden';
+    el.style.transform = `translate(${x0.toFixed(1)}px, ${y0.toFixed(1)}px)`; el.style.width = Math.max(0, x1 - x0).toFixed(1) + 'px'; el.style.height = Math.max(0, y1 - y0).toFixed(1) + 'px';
+  };
+}
+
 export async function formulary(app, args) {
   const m = store.member(), ok = app.live(), view = app.view, marks = app.marks, W3 = app.world;
   const series = SERIES.find((s) => s.c === args[0]);
@@ -144,7 +175,13 @@ export async function formulary(app, args) {
       <p class="sample">SAMPLE DATA. Names, lots, prices and statuses are placeholders that show the shape of a verified record.</p>
       <ul class="rows" style="margin-top:24px">${series.items.map((r) => `<li><a class="row" href="#/record/${r.id}"><span class="n">${r.id.slice(-4)}</span><span><span class="t">${r.name}</span><span class="d">${r.cls} · ${r.sizes.map((z) => `${z.q} ${z.u}`).join(', ')}${canOrder(r) ? ' · from ' + cad(r.sizes[0].price) : ''}</span></span><span class="m">${tag(r)}</span></a></li>`).join('')}</ul>
       <p class="note" style="margin-top:18px">${LABEL_LINE}</p></div>`;
-    return { title: series.n, crumb: 'Formulary', leave: () => { if (W3) W3.setNiche(0); } };
+    // reading down the list turns the stand, so the vial in front is always the one the row names
+    const rows = $$('.row', view), mark = (k) => rows.forEach((a, i) => a.classList.toggle('at-front', i === k));
+    const front = (k) => { if (W3) W3.turn.set(+series.c, k); mark(k); };
+    rows.forEach((a, i) => { a.addEventListener('pointerenter', () => front(i)); a.addEventListener('focus', () => front(i)); });
+    mark(W3 ? W3.turn.at(+series.c) : 0);
+    const placeT = turner(app, +series.c, mark);
+    return { title: series.n, crumb: 'Formulary', after: placeT, leave: () => { if (W3) W3.setNiche(0); } };
   }
   let filter = 'all', q = '';
   view.innerHTML = `<div class="page"><header><h1 class="title">The Formulary</h1><p class="lead">Information first. Action with clarity.</p></header>
@@ -189,12 +226,15 @@ export async function record(app, args) {
   if (!r) { app.go('#/formulary'); return null; }
   const s = seriesOf(r);
   app.amb('inside');
-  await pane(app, 'record', +s.c, 'formulary', (S, F) => { const rc = nicheRect(F, +s.c); return rc ? app.fit(S, rc, 0.9) : { cx: 0.5, cy: 0.5, zoom: 1 }; }, { need: 1 }); if (!ok()) return null;
-  if (app.world) app.world.setNiche(+s.c);
+  // its vial comes round to the front of its stand while the camera moves in
+  const W3 = app.world, k = s.items.indexOf(r);
+  if (W3) { W3.setNiche(+s.c); W3.turn.set(+s.c, k); }
+  await pane(app, 'record', +s.c, 'formulary', (S, F) => { const rc = nicheRect(F, +s.c); return rc ? app.fit(S, rc, 0.66) : { cx: 0.5, cy: 0.5, zoom: 1 }; }, { need: 1 }); if (!ok()) return null;
   const able = canOrder(r), missing = CHECKS.filter(([k]) => !r.checks[k]).map(([, t]) => t.toLowerCase());
   view.innerHTML = `<div class="page"><a class="back" href="#/formulary/${s.c}">${s.n} · ${s.f}</a>
     <div class="rec-head"><div><p class="label">${r.id}</p><h1 class="title" style="margin-top:8px">${r.name}</h1><p class="lead dim" style="margin-top:8px">${r.cls}, ${r.form.toLowerCase()}</p><p style="margin-top:16px">${tag(r)}</p></div>
-      <img src="assets/vials/${r.id}.webp" width="150" height="268" alt="A sealed glass vial with a printed label reading ${r.id}." loading="lazy"></div>
+      <img src="assets/vials/${r.id}.webp" width="180" height="300" alt="A sealed glass vial on its stand, with a printed label reading ${r.id}, ${esc(r.name)}." loading="lazy"></div>
+    <nav class="stand" aria-label="The three records in this case"><span class="label">In this case</span>${s.items.map((x, i) => `<a href="#/record/${x.id}"${i === k ? ' aria-current="page"' : ''}><span class="n">${x.id.slice(-4)}</span>${esc(x.name)}</a>`).join('')}${W3 ? '<span class="note hint">Or turn the stand in the picture by hand.</span>' : ''}</nav>
     <p class="sample">SAMPLE RECORD. Values in [brackets] are for PR6 to supply. Nothing here states a dose, a use in people or animals, or an effect.</p>
     <section><h2>Checks on file</h2><p class="note">${statusOf(r).long}</p>
       <ul class="checks">${CHECKS.map(([k, t]) => `<li class="${r.checks[k] ? '' : 'no'}"><span>${t}</span><b>${r.checks[k] ? 'On file' : 'Not on file'}</b></li>`).join('')}</ul></section>
@@ -216,7 +256,9 @@ export async function record(app, args) {
       $('#added', view).innerHTML = `Added. <a href="#/order">Open your order list</a>`;
     });
   }
-  return { title: r.name, crumb: 'Formulary', leave: () => { if (app.world) app.world.setNiche(0); } };
+  // turning the stand by hand opens the record that comes to the front
+  const placeT = turner(app, +s.c, (kk) => { if (kk !== k) app.go('#/record/' + s.items[kk].id); });
+  return { title: r.name, crumb: 'Formulary', after: placeT, leave: () => { if (W3) W3.setNiche(0); } };
 }
 
 // ---------------------------------------------------------------------------------------------- order list and orders (A15)

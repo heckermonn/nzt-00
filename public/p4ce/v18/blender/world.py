@@ -426,41 +426,20 @@ def compass():
 
 # =============================================================================================== FORMULARY
 def formulary():
+    """Built in formulary.py (shared with the still pictures). The vials stand in the light while it is baked, so the
+    cases carry their shadows; the tops of the stands are baked a second time without them, so the page can turn the
+    shadows with a stand."""
+    import formulary as FM
     sc = C.setup(512, a.samples, bounces=12)
-    C.world(sc, DAY, 0.3)
-    WALL = C.mineral("wall", CHALK, 0.05, (0.7, 0.7, 5.0), (0.5, 0.7), 0.04)
-    FLOOR = C.mineral("floor", (MIST[0] * 0.86, MIST[1] * 0.88, MIST[2] * 0.9), 0.06, (1, 1, 1), (0.06, 0.2), 0.012)
-    NW, NH, GX, GZ, Z0, DEPTH = 1.8, 2.3, 2.5, 2.95, 2.0, 1.3
-    YW, HX, HD = 0.0, 9.0, 18.0
-    into("wall", "split", r2(2048), r2(256))
-    wall = box("wall", (0, YW + 1.0, 6.0), (2 * HX + 1.2, 2.0, 12.0), WALL)
-    PLIN = C.mineral("plin", CHALK, 0.04, (1, 1, 1), (0.3, 0.45), 0.02)
-    niches = {}
-    for r in range(3):
-        for c in range(3):
-            i = r * 3 + c
-            x = (c - 1) * GX; z = Z0 + (2 - r) * GZ
-            cut(wall, C.box("cut", (x, YW + DEPTH / 2 - 0.05, z), (NW, DEPTH + 0.1, NH), None))
-            b = C.box("back%d" % (i + 1), (x, YW + DEPTH - 0.02, z), (NW - 0.02, 0.02, NH - 0.02), emit("back%d" % i, DAY, 1.5)); glow(b, DAY, 1.5)
-            area("top%d" % i, "", (x, YW + 0.55, z + NH / 2 - 0.04), (x, YW + 0.55, z - 1), NW * 0.8, 9, DAY, sy=0.5)
-            pz = z - NH / 2
-            into("fit", "split", r2(512), r2(128))
-            box("plinth", (x, YW + 0.62, pz + 0.09), (0.9, 0.9, 0.18), PLIN, 0.006)
-            niches["n%d" % (i + 1)] = dict(rect=[[x - NW / 2, YW, z + NH / 2], [x + NW / 2, YW, z - NH / 2]], vial=[x, YW + 0.62, pz + 0.18], p=[x, YW, z])
-    into("floor", "split", r2(1024), r2(256)); flag("floor", reflect=0.6)
-    quad("floor", [(-HX - 0.6, -HD - 2, 0), (HX + 0.6, -HD - 2, 0), (HX + 0.6, YW, 0), (-HX - 0.6, YW, 0)], FLOOR)
-    into("shell", "split", r2(512), r2(128))
-    box("ceil", (0, -HD / 2, 12.1), (2 * HX + 1.2, HD, 0.2), WALL)
-    area("wash", "", (0, -2.2, 11.6), (0, YW, 5.5), 16, 900, DAY, sy=0.8)
-    area("fill", "", (0, -12, 5), (0, 0, 5), 14, 260, DAY, sy=8)
-    for s in (-1, 1):
-        box("return", (s * (HX + 0.3), -HD / 2, 6), (0.6, HD, 12), WALL)
-        rg = C.box("return_glow", (s * (HX - 0.6), YW - 0.6, 6), (0.08, 1.0, 12), emit("rg", DAY, 1.6)); glow(rg, DAY, 1.6)
-    C.camera((0, -13.6, 4.6), (0, YW, 4.72), lens=49)
-    ANCH.update(niches)
-    ANCH.update(cam=dict(p=[0, -13.6, 4.6], t=[0, YW, 4.72]), dims=dict(NW=NW, NH=NH, HX=HX, HD=HD, vial_h=1.23, vial_r=0.29),
-                origin=[-20.2, A_FAR + 4 + HD, 0.02])
-    return dict(expo=0.45)
+
+    class K:
+        pass
+    K.box, K.add, K.into, K.flag, K.glow, K.r2, K.quad, K.cut = box, _add, into, flag, glow, r2, quad, cut
+    anch, vials, opts = FM.build(K)
+    C.camera((0, -13.6, 4.6), (0, FM.YW, 4.72), lens=49)
+    ANCH.update(anch); ANCH.update(origin=[-20.2, A_FAR + 4 + FM.HD, 0.02])
+    opts.update(keep_uv=["pads"], without=dict(pads=vials))
+    return opts
 
 
 # =============================================================================================== ARCHIVE
@@ -529,7 +508,10 @@ for g, objs in G.items():
     elif mode == "none":
         joined[g] = B.join(objs, g)
     else:
-        o = B.join(objs, g); B.unwrap(o); joined[g] = o
+        o = B.join(objs, g)
+        if g not in opts.get("keep_uv", ()):      # a group may bring its own layout (the Formulary's stands)
+            B.unwrap(o)
+        joined[g] = o
 emitters = list(EMIT)
 
 # reliefs that share a place are baked one at a time: hide the others
@@ -545,7 +527,7 @@ if a.blend:
     bpy.ops.wm.save_as_mainfile(filepath=os.path.join(a.out, a.zone + ".blend"))
 
 # ------------------------------------------------------------------ bake
-man = dict(zone=a.zone, groups={}, emit=[], anchors=ANCH, opts={k: v for k, v in opts.items() if k != "split_lamps"})
+man = dict(zone=a.zone, groups={}, emit=[], anchors=ANCH, opts={k: v for k, v in opts.items() if k not in ("split_lamps", "keep_uv", "without")})
 mp = os.path.join(a.out, a.zone + ".json")
 prev = json.load(open(mp)) if os.path.exists(mp) else None
 only = set(a.only.split(",")) if a.only else None
@@ -599,6 +581,14 @@ for g, o in joined.items():
             restore(st); info["lamps"][ln] = li["scale"]
     else:
         info = B.bake(o, name, a.out, mode, res, cres, a.samples)
+    if g in opts.get("without", {}):
+        # the same surface again without some objects (their shadows are then the difference between the two)
+        hid = [(x, x.hide_render) for x in opts["without"][g]]
+        for x, _ in hid:
+            x.hide_render = True
+        info["nov"] = B.bake(o, name + "_nov", a.out, "light", res, samples=a.samples)["scale"]
+        for x, h in hid:
+            x.hide_render = h
     if g in LAMPGAIN:
         # the same surface without its lamp, small: how much of its light is not the lamp's
         st = lights_only(None)
