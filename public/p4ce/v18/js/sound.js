@@ -1,4 +1,4 @@
-// PR6 / Institute: every sound is synthesised here (no recordings, no music). Two worlds on two buses:
+// PR6 / Institute: every sound is synthesised here except the Keeper's recorded lines (no music). Two worlds on two buses:
 // OUTSIDE (rain on surfaces, a low urban rumble, distant machinery, a failing tube, the Keeper's faint carrier)
 // INSIDE  (a controlled, almost silent room tone and small dry responses).
 // Sound is off until the visitor turns it on, and nothing that matters is carried by sound alone.
@@ -171,7 +171,29 @@ export function createSound() {
       o.connect(g); g.connect(roomIn); o.start(t + d); o.stop(t + d + 5.2);
     }
   }
-  // the Keeper's recorded lines: each decoded once, played nearly dry with a little of the alley behind it
+  // the Keeper's recorded lines: each decoded once, then projected. She is a hologram, so the voice is close and soft
+  // (the dry line), doubled a hair wide of itself (two slowly drifting delays, left and right), answered once by the
+  // street (a dark echo) and hung in a much bigger space than the alley (a long, dim tail).
+  const proj = ac.createGain(); proj.gain.value = 0.8;
+  {
+    const hp = ac.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 110;
+    const air = ac.createBiquadFilter(); air.type = 'highshelf'; air.frequency.value = 5200; air.gain.value = 3.5;
+    proj.connect(hp); hp.connect(air);
+    const dry = ac.createGain(); dry.gain.value = 0.92; air.connect(dry); dry.connect(master);
+    for (const [ms, depth, hz, pan] of [[17, 0.003, 0.31, -0.7], [26, 0.004, 0.23, 0.7]]) {
+      const d = ac.createDelay(0.1); d.delayTime.value = ms / 1000;
+      const o = ac.createOscillator(); o.frequency.value = hz; const og = ac.createGain(); og.gain.value = depth; o.connect(og); og.connect(d.delayTime); o.start();
+      const g = ac.createGain(); g.gain.value = 0.24; air.connect(d); d.connect(g);
+      if (ac.createStereoPanner) { const sp = ac.createStereoPanner(); sp.pan.value = pan; g.connect(sp); sp.connect(master); } else g.connect(master);
+    }
+    const echo = ac.createDelay(1); echo.delayTime.value = 0.31;
+    const dark = ac.createBiquadFilter(); dark.type = 'lowpass'; dark.frequency.value = 2400;
+    const fb = ac.createGain(); fb.gain.value = 0.32; const eg = ac.createGain(); eg.gain.value = 0.17;
+    air.connect(echo); echo.connect(dark); dark.connect(fb); fb.connect(echo); dark.connect(eg); eg.connect(master);
+    const sky = ac.createConvolver(); sky.buffer = ir(3.6, 2.4, [[0.047, 0.4], [0.093, 0.28], [0.171, 0.2]], 0.22);
+    const sg = ac.createGain(); sg.gain.value = 0.17; air.connect(sg); dark.connect(sg); sg.connect(sky); sky.connect(master);
+    const near = ac.createGain(); near.gain.value = 0.1; air.connect(near); near.connect(verbIn);
+  }
   const voiceBuf = new Map(); let speaking = null;
   const loadVoice = (url) => {
     if (!voiceBuf.has(url)) voiceBuf.set(url, fetch(url).then((r) => (r.ok ? r.arrayBuffer() : null)).then((b) => (b ? ac.decodeAudioData(b) : null)).catch(() => null));
@@ -193,8 +215,8 @@ export function createSound() {
     /** Speak one recorded line. Resolves with its length in seconds, or 0 if there is no recording. */
     async voice(url) {
       const b = await loadVoice(url); hush(); if (!b) return 0;
-      const src = ac.createBufferSource(), g = ac.createGain(), wet = ac.createGain();
-      src.buffer = b; g.gain.value = 1; wet.gain.value = 0.16; src.connect(g); g.connect(master); g.connect(wet); wet.connect(verbIn);
+      const src = ac.createBufferSource();
+      src.buffer = b; src.connect(proj);
       src.onended = () => { if (speaking === src) speaking = null; };
       src.start(ac.currentTime + 0.02); speaking = src;
       return b.duration;
