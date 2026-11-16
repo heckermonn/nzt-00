@@ -28,6 +28,9 @@ export function createShots(W, app) {
     front: () => ({ ...out, p: [0.35, -7.2, 1.5], t: [-0.15, 6.6, 2.5], lens: n() ? 24 : 27, shift: n() ? [0, -0.16] : [0.13, 0], expo: 0.5, vig: 0.9, rain: 0.7 }),
     alley: () => ({ ...out, p: [0, 1.0, 1.55], t: [0, 6.6, 2.2], lens: 25, shift: n() ? [0, -0.1] : [0, -0.03] }),
     door: (k) => ({ ...out, p: [X(k) * 0.9, 3.9, 1.62], t: [X(k), 6.8, 1.84], lens: n() ? 24 : 30, shift: [0, n() ? -0.1 : -0.06] }),
+    // A08, the offer: close on your own door, seal to bolts, with room beside it (or under it) for the words
+    offer: (k) => ({ ...out, p: [X(k) * 0.93, 4.25, 1.58], t: [X(k), 6.8, 1.66], lens: n() ? 22 : 31, shift: n() ? [0, -0.235] : [-0.17, 0], expo: 0.86, vig: 0.75, rain: 0.9 }),
+    plate: (k) => ({ ...out, p: [X(k) * 0.97, 5.72, 1.68], t: [X(k), 6.8, 1.72], lens: n() ? 30 : 36, shift: n() ? [0, -0.17] : [-0.17, 0], expo: 0.9, vig: 0.8, rain: 0.9 }),
     slit: (k) => ({ ...out, p: [X(k), 5.86, 1.62], t: [X(k), 6.8, 1.6], lens: n() ? 30 : 40, shift: [0, -0.1], vig: 0.8 }),
     doorpane: (k) => ({ ...out, p: [X(k) * 0.86, 3.2, 1.6], t: [X(k), 6.8, 1.66], lens: 27, expo: 0.8, vig: 0.5, rain: 0.5 }),
     atrium: () => ({ ...ins, zone: 'atrium', p: [0, -4, 1.7], t: [0, 74, 13], lens: 21, expo: 0.44, con: 0.7, shift: n() ? [0, -0.06] : [0, 0] }),

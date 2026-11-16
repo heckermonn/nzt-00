@@ -17,7 +17,7 @@ Live path (once on Pages): `/p4ce/v18/`. No build step: plain ES modules, open `
 | A05 The Keeper | `#/keeper` | Captions for every line, Continue, optional answer, Skip to the application. |
 | A06 Application | `#/apply` | Age and Canada eligibility, password, optional passkey offer. |
 | A07 Review Status | `#/status` | Received, in review, question, decision. Approval is separate from the door. |
-| A08 Member Acceptance | `#/offer` | Offer, generation, founding rights (marked proposed), two explicit acceptances. |
+| A08 Member Acceptance | `#/offer` | Offer, generation, founding rights (marked proposed), two explicit acceptances. The door answers (below). |
 | A09 Film & Passage | `#/passage` | One take, nine records: the door opens and the camera walks the passage into the Atrium, weaving past nine steles. Each has one era cut into it in sunk relief (tools, fire, agriculture, mathematics, medicine, engineering, flight, computation, space): three of stone, three of metal, three of glass, each larger than the last, and a light finds each as the walker reaches it. The member's own stele in the Archive is the tenth (its numeral is X). Captions give the era, a line and an approximate date. Space pauses, arrows step a chapter, Skip or Esc hurries the same walk. Direct mode shows the nine as a page. |
 | A10 Atrium | `#/atrium` | "What are we pursuing today?" Three destinations plus routine links. |
 | A11 Compass | `#/compass` | Five optional questions, editable. Never maps a goal to a product; fails closed. |
@@ -127,6 +127,18 @@ its objects into groups, and `bake.py` turns each group into one mesh with one U
 light as two textures), `combined` (metal and small parts, gloss as seen from the room's camera), `relief` (the
 insignia: baked from the sculpted relief, drawn as a flat sheet). The manifest is rewritten after every group, so a
 half-finished bake leaves a partial `<zone>.json`; let a zone finish before loading it.
+
+### A08: the door answers
+
+The offer is made at the door the invitation opened, full screen. While it is read the rain stands still in the air
+(`W.rainHold`: the weather has its own clock, `uWet`, so streaks, puddle rings and the tube's flicker all stop) and
+the alley goes quiet. Each of the two agreements is one of the door's two bolts (`W.bolt(side, i, v)`): ticked, it
+draws back; unticked, it shoots home. Accepting moves the camera to the steel plate under the seal and strikes the
+member's nine figures into it one at a time (`W.plate(side, text)`, a canvas texture). Enter lets the rain fall again
+and the film begins by opening that door. From then on a member's own door always shows drawn bolts and their number
+(`app.scene` keeps it so); every other door stays bolted with a blank plate. The bolts and plates are not in the
+baked stills, so without WebGL the offer is the plain page beside the door's picture; in Direct mode nothing
+animates and the number is simply there. The figures are also in the page, and each bolt is announced.
 
 ### The Formulary's cases and vials
 

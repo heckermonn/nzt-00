@@ -6,7 +6,7 @@ import { createShots } from './shots.js';
 import { createStill } from './still.js';
 import { createKeeper } from './keeper.js';
 import { createSound } from './sound.js';
-import { store, fmtCode, DEMO_CODES, DEMO_SEALS } from './store.js';
+import { store, fmtCode, fmtId, DEMO_CODES, DEMO_SEALS } from './store.js';
 import { $, $$, esc, ease, lerpView } from './ui.js';
 import { ALL, SERIES, DISPATCHES, statusOf } from './catalog.js';
 import { ORDER_STATE, DESC } from './institution.js';
@@ -110,6 +110,12 @@ app.scene = async ({ layout, theme, shot, arg, frame, view: vf, need = 0, tiles,
   const zone = shots.zoneOf(shot), isIn = zone !== 'alley';
   W.setSide(doorSide());
   await W.need(isIn ? ['atrium', ...(zone !== 'atrium' ? [zone] : [])] : ['alley']); if (!ok()) return null;
+  // a member's own door stands as their acceptance left it: both bolts drawn, their number in its plate.
+  // (The offer screen works the door itself, and says so with app.doorHeld.)
+  if (!app.doorHeld) {
+    const m = store.member(), k = doorSide();
+    for (const d of ['L', 'R']) { const mine = !!m && d === k; W.bolt(d, 0, mine ? 1 : 0, true); W.bolt(d, 1, mine ? 1 : 0, true); W.plate(d, mine ? fmtId(m.id) : ''); }
+  }
   const hidden = was.layout === 'off' || !was.shot || !was.zone;
   const through = !hidden && app.motion() && was.zone === 'alley' && isIn;
   if (through) { await W.need(['alley', 'passage', 'atrium']); if (!ok()) return null; }

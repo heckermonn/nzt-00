@@ -34,7 +34,7 @@ void main(){
   float ndv = max(dot(n, v), 0.), form = .62 + .38 * ndv;                                       // round things fall off towards their outline
   if (vPart < .5) col = vec3(.9, .91, .9) * E * .23 * form;                                          // the dried cake, in the shade of the glass and the label
   else if (vPart < 1.5) col = vec3(.2, .21, .22) * E * .55 * form + env(r, 3.) * .02 * fr;                                     // the stopper
-  else if (vPart < 2.5) { float s = 1. - ndv, band = smoothstep(.16, .62, s) * (1. - .45 * smoothstep(.8, 1., s)); col = vec3(.80, .82, .84) * (env(r, 7.) * (.2 + .62 * band) + E * .1); }              // the aluminium crimp, satin
+  else if (vPart < 2.5) { float s = 1. - max(dot(normalize(n.xz + 1e-4), normalize(v.xz)), 0.), band = mix(smoothstep(.16, .62, s) * (1. - .45 * smoothstep(.8, 1., s)), .5, smoothstep(.5, .8, abs(n.y))); col = vec3(.80, .82, .84) * (env(r, 7.) * (.17 + .6 * band) + E * .1); }              // the aluminium crimp, satin
   else if (vPart < 3.5) col = uCap * E + env(r, 3.6) * (.03 + .4 * fr);                       // the cap
   else {                                                                                       // the label: print outside, bare paper seen from behind through the glass
     vec3 a = back ? vec3(.8, .81, .79) * .75 : toLin(texture2D(tLabels, uCell.xy + vUv * uCell.zw).rgb) * vec3(.92, .93, .91);

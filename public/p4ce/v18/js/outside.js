@@ -397,44 +397,111 @@ export async function status(app) {
 }
 
 // ---------------------------------------------------------------------------------------------- A08 member acceptance
-export async function offer(app) {
-  const inv = store.invitation(), a = store.application(), ok = app.live(), view = app.view;
-  if (!a || inv.state !== 'approved') { app.go(resume(inv)); return null; }
-  app.amb('none');
-  const W3 = app.world;
-  if (W3) W3.setDoors(store.doors());
-  await doorPane(app, inv); if (!ok()) return null;         // the door the invitation opened; the card itself stays in the hand
-  view.innerHTML = `<div class="page">
-    <header><h1 class="title">You have been offered a place.</h1>
-      <p class="lead">Generation I, The First Record. Two hundred places, never refilled. This offer is open until ${fmtDate(a.offerUntil)}.</p></header>
-    <section><h2>What acceptance records</h2><dl class="kv">
+// The offer is made at the door the invitation opened. Where the world is live the door answers: the rain stops in
+// the air while the offer is read, each agreement draws one of the door's two bolts, and accepting strikes the
+// member's number into the plate under the seal. Enter then lets the rain fall again and the film opens the door.
+// Without the world (stills) the same offer is a plain page beside the door's picture.
+const offerFacts = (inv) => `<dl class="kv">
       <dt>Generation</dt><dd>I · The First Record</dd>
       <dt>Insignia</dt><dd><span style="font-size:28px">${glyph(inv.symbol)}</span> Permanent. It is the seal on your invitation; its name is kept in your Archive.</dd>
       <dt>Member number</dt><dd>Nine digits, issued when you accept.<span class="note">It identifies you. It is never a password.</span></dd>
       <dt>Metal card</dt><dd>Follows a first qualifying order.<span class="note">A record of admission, not a key. Your account never depends on it.</span></dd>
-      <dt>Status</dt><dd>Yours alone. It cannot be sold, exchanged or passed on.</dd></dl></section>
-    <section><h2>Founding rights</h2><p class="note">Proposed. Each one still needs financial and legal sign-off before it becomes a commitment.</p>
-      <div class="scrollx"><table class="t"><thead><tr><th>Right</th><th>Scope</th><th>Boundary</th></tr></thead><tbody>${RIGHTS.map((r) => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('')}</tbody></table></div></section>
-    <section><h2>Acceptance</h2>
-      <form id="f" novalidate>
+      <dt>Status</dt><dd>Yours alone. It cannot be sold, exchanged or passed on.</dd></dl>`;
+const offerRights = () => `<p class="note">Proposed. Each one still needs financial and legal sign-off before it becomes a commitment.</p>
+      <div class="scrollx"><table class="t"><thead><tr><th>Right</th><th>Scope</th><th>Boundary</th></tr></thead><tbody>${RIGHTS.map((r) => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('')}</tbody></table></div>`;
+const offerForm = () => `<form id="f" novalidate>
         <label class="check"><input type="checkbox" name="t1"><span>I accept the membership terms.<span class="note">[Membership terms, to be supplied by PR6.]</span></span></label>
         <label class="check"><input type="checkbox" name="t2"><span>I understand that membership promises a standard of service and information, not an outcome.</span></label>
         <p class="err" id="acc-e" role="alert"></p>
         <div class="actions"><button class="btn" type="submit">Accept membership</button></div>
         <p class="note" style="margin-top:14px">You can also let the offer lapse. Nothing is charged either way.</p>
-      </form></section></div>`;
-  $('#f', view).addEventListener('submit', (e) => {
-    e.preventDefault(); const f = e.target;
-    if (!f.elements.t1.checked || !f.elements.t2.checked) { $('#acc-e', view).textContent = 'Both statements need your agreement to accept.'; return; }
-    const m = store.acceptOffer(); if (!m) return;
-    app.proto(); app.sfx('key');
-    view.innerHTML = `<div class="page"><header><p class="label">Admitted ${fmtDate(m.admitted)}</p><h1 class="title" tabindex="-1">Welcome, ${esc(m.name.split(/\s+/)[0])}.</h1></header>
+      </form>`;
+const offerNote = 'It identifies you in correspondence and on your card. It is not a credential: you sign in with your email and your password, and you can recover your account without the card.';
+
+export async function offer(app) {
+  const inv = store.invitation(), a = store.application(), ok = app.live(), view = app.view;
+  if (!a || inv.state !== 'approved') { app.go(resume(inv)); return null; }
+  const W3 = app.world, side = inv.doorSide || 'L';
+  if (!W3) {
+    app.amb('none');
+    await doorPane(app, inv); if (!ok()) return null;         // the door the invitation opened; the card itself stays in the hand
+    view.innerHTML = `<div class="page">
+    <header><h1 class="title">You have been offered a place.</h1>
+      <p class="lead">Generation I, The First Record. Two hundred places, never refilled. This offer is open until ${fmtDate(a.offerUntil)}.</p></header>
+    <section><h2>What acceptance records</h2>${offerFacts(inv)}</section>
+    <section><h2>Founding rights</h2>${offerRights()}</section>
+    <section><h2>Acceptance</h2>${offerForm()}</section></div>`;
+    $('#f', view).addEventListener('submit', (e) => {
+      e.preventDefault(); const f = e.target;
+      if (!f.elements.t1.checked || !f.elements.t2.checked) { $('#acc-e', view).textContent = 'Both statements need your agreement to accept.'; return; }
+      const m = store.acceptOffer(); if (!m) return;
+      app.proto(); app.sfx('key');
+      view.innerHTML = `<div class="page"><header><h1 class="title" tabindex="-1">Welcome, ${esc(m.name.split(/\s+/)[0])}.</h1><p class="note">Admitted ${fmtDate(m.admitted)}.</p></header>
       <p class="lead">Your member number</p><p class="display mono" style="margin:10px 0 18px;font-size:clamp(34px,5vw,64px)">${fmtId(m.id)}</p>
-      <p class="note" style="max-width:52ch">It identifies you in correspondence and on your card. It is not a credential: you sign in with your email and your password, and you can recover your account without the card.</p>
+      <p class="note" style="max-width:52ch">${offerNote}</p>
       <div class="actions"><a class="btn" href="#/passage">Enter</a></div></div>`;
-    $('h1', view).focus(); app.announce('Membership accepted.');
+      $('h1', view).focus(); app.announce('Membership accepted.');
+    });
+    return { title: 'Offer of membership' };
+  }
+  // ---- the door answers
+  app.doorHeld = true;
+  W3.setDoors(store.doors());
+  for (const d of ['L', 'R']) { W3.bolt(d, 0, 0, true); W3.bolt(d, 1, 0, true); W3.plate(d, ''); }
+  app.amb('city');
+  let held = false, kick = 0, done = false;
+  await app.scene({ layout: 'full', theme: 'outside', shot: 'offer', arg: side, dur: 2.4 }); if (!ok()) return null;
+  // the rain stops where it is, and the alley goes quiet
+  held = true; W3.rainHold = 1; app.amb('none');
+  view.innerHTML = `<div class="sheet wide offer" id="offer">
+    <div><h1 tabindex="-1">You have been offered a place.</h1>
+      <p class="note">Generation I, The First Record. Two hundred places, never refilled. This offer is open until ${fmtDate(a.offerUntil)}.</p></div>
+    ${offerForm()}
+    <details class="seal-help"><summary>What acceptance records</summary>${offerFacts(inv)}</details>
+    <details class="seal-help"><summary>Founding rights</summary>${offerRights()}</details>
+  </div>`;
+  const sheet = $("#offer", view), f = $('#f', view);
+  $$('input[type=checkbox]', f).forEach((box, i) => box.addEventListener('change', () => {
+    // each agreement is a bolt: given, it draws back; taken back, it shoots home
+    W3.bolt(side, i, box.checked ? 1 : 0); app.sfx('slide'); setTimeout(() => { if (ok()) app.sfx('lock'); }, 300);
+    app.announce(box.checked ? `The ${i ? 'second' : 'first'} bolt draws back.` : `The ${i ? 'second' : 'first'} bolt shoots home.`);
+    $('#acc-e', view).textContent = '';
+  }));
+  f.addEventListener('submit', async (e) => {
+    e.preventDefault(); if (done) return;
+    if (!f.elements.t1.checked || !f.elements.t2.checked) { $('#acc-e', view).textContent = 'Both statements need your agreement to accept. The door has a bolt for each.'; return; }
+    const m = store.acceptOffer(); if (!m) return;
+    done = true; app.proto(); sheet.hidden = true;
+    // the camera goes to the plate, and the number is struck into it one figure at a time
+    const id = fmtId(m.id);
+    await app.scene({ layout: 'full', theme: 'outside', shot: 'plate', arg: side, dur: 1.5 }); if (!ok()) return;
+    if (app.motion()) {
+      await app.wait(0.25);
+      for (let i = 0; i < id.length; i++) {
+        if (!ok()) return; if (id[i] === ' ') { await app.wait(0.16); continue; }
+        W3.plate(side, id.slice(0, i + 1)); kick = 1; app.sfx('key'); await app.wait(0.15);
+      }
+      await app.wait(0.5); if (!ok()) return;
+    }
+    W3.plate(side, id);
+    sheet.innerHTML = `<div><h1 tabindex="-1">Welcome, ${esc(m.name.split(/\s+/)[0])}.</h1>
+      <p class="offer-id mono" aria-label="Your member number: ${id.split('').join(' ')}">${id}</p>
+      <p class="note">Your member number, struck into your door on ${fmtDate(m.admitted)}. ${offerNote}</p></div>
+      <div class="actions"><a class="btn" href="#/passage">Enter</a></div>`;
+    sheet.hidden = false; $('h1', sheet).focus(); app.announce(`Membership accepted. Your member number is ${id.split('').join(' ')}.`);
   });
-  return { title: 'Offer of membership' };
+  $('h1', sheet).focus({ preventScroll: true });
+  return {
+    title: 'Offer of membership',
+    tick: (t, dt, mo) => {
+      // while the rain is held nothing flickers; a strike on the plate shakes the lamp above the door
+      kick *= Math.pow(0.002, dt);
+      app.lamp('tube', mo && !held ? flicker(t) : 1); app.lamp('lamp' + side, 1 + kick * 0.6);
+      W3.cam.roll = mo ? kick * 0.0035 * Math.sin(t * 90) : 0;
+      app.soundTick(t);
+    },
+    leave: () => { app.doorHeld = false; held = false; W3.rainHold = 0; W3.cam.roll = 0; app.lamp('lamp' + side, 1); },
+  };
 }
 
 // ---------------------------------------------------------------------------------------------- returning member

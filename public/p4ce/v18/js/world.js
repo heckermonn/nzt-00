@@ -24,7 +24,7 @@ const ORIGIN = { passage: [0, A_BACK - 1 - BAYS.L, 0], atrium: [0, 0, 0], compas
 const SYMS = ['ouroboros', 'djed', 'scarab', 'shen'];
 
 const COMMON = /* glsl */`
-uniform float uExpo, uTime, uVig, uGrain, uFogD, uPass, uCon;
+uniform float uExpo, uTime, uWet, uVig, uGrain, uFogD, uPass, uCon;
 uniform vec2 uRes;
 uniform vec3 uFogC;
 vec3 toLin(vec3 c){ return mix(c / 12.92, pow((c + .055) / 1.055, vec3(2.4)), step(.04045, c)); }
@@ -100,7 +100,7 @@ void main(){
     #ifdef WET
       // wet tarmac: standing water in broad shallow puddles and along the gutter, stirred by the rain
       float pud = max(smoothstep(.43, .53, fbm(vW.xz * .5 + 3.)), smoothstep(.55, .15, abs(vW.x)));
-      vec2 rip = vec2(vnoise(vW.xz * 11. + uTime * vec2(1.3, .9)), vnoise(vW.xz * 11. - uTime * vec2(.8, 1.2) + 7.)) - .5;
+      vec2 rip = vec2(vnoise(vW.xz * 11. + uWet * vec2(1.3, .9)), vnoise(vW.xz * 11. - uWet * vec2(.8, 1.2) + 7.)) - .5;
       ruv += rip * (.006 + .016 * pud) * clamp(4. / dist, .15, 1.);
       k = mix(.22, 1., pud) * (.25 + .75 * fres) * 1.6; lod = mix(3.4, .6, pud);
     #else
@@ -138,20 +138,37 @@ ${COMMON}
 void main(){ gl_FragColor = vec4(finish(mix(uCol * uW, uFogC, uHaze), length(cameraPosition - vW)), 1.); }`;
 
 const RAIN_VS = /* glsl */`
-attribute vec3 seed; attribute float tip;
-uniform float uTime, uRain; uniform vec3 uLampA, uLampB;
+attribute vec3 seed; attribute float tip, more;
+uniform float uWet, uRain, uHold; uniform vec3 uLampA, uLampB;
 varying float vA;
 void main(){
   float sp = 8. + 4. * fract(seed.y * 7.31), H = 10.;
-  float y = H - mod(seed.y * H + uTime * sp, H);
-  vec3 p = vec3(seed.x + (H - y) * .035, y + tip * (.22 + .2 * fract(seed.y * 3.7)), seed.z);
+  float y = H - mod(seed.y * H + uWet * sp, H);
+  // falling, a drop is a streak; held still in the air (uHold) it is a bead that catches the lamps
+  vec3 p = vec3(seed.x + (H - y) * .035, y + tip * (.22 + .2 * fract(seed.y * 3.7)) * (1. - .94 * uHold), seed.z);
   float a = .05 + 2.2 / (1. + dot(p - uLampA, p - uLampA) * .9) + 2.2 / (1. + dot(p - uLampB, p - uLampB) * .9);
-  vA = a * uRain * (1. - tip * .7);
+  vA = a * uRain * (1. - tip * .7 * (1. - uHold)) * (1. + 1.6 * uHold) * mix(1., uHold, more);      // held still, the finer rain between the streaks shows too
   gl_Position = projectionMatrix * viewMatrix * vec4(p, 1.);
 }`;
 const RAIN_FS = /* glsl */`
 varying float vA; uniform float uExpo, uPass;
 void main(){ if (uPass > .5) discard; gl_FragColor = vec4(vec3(.62, .76, .95) * vA * uExpo * .5, 1.); }`;
+
+// the furniture of the two doors (bolts, number plate): plain metal under the lamp above each door
+const PROP_FS = /* glsl */`
+varying vec2 vUv; varying vec3 vW; varying vec3 vN;
+uniform sampler2D tMap; uniform vec3 uBase, uLampP; uniform float uLamp, uUseMap, uGloss;
+${COMMON}
+void main(){
+  vec3 toCam = cameraPosition - vW; float dist = length(toCam); vec3 v = toCam / dist;
+  vec3 n = normalize(vN); if (dot(n, v) < 0.) n = -n;
+  vec3 L = uLampP - vW; float r2 = dot(L, L); L *= inversesqrt(r2);
+  vec3 lamp = vec3(.78, .86, 1.) * uLamp * 4. / (1. + r2 * .8);
+  vec3 alb = uBase * (uUseMap > .5 ? toLin(texture2D(tMap, vUv).rgb) : vec3(1.));
+  vec3 col = alb * (vec3(.02, .028, .04) + lamp * (.3 + .7 * max(dot(n, L), 0.)));
+  col += lamp * pow(max(dot(n, normalize(L + v)), 0.), uGloss) * .12 * (uUseMap > .5 ? .3 : 1.);
+  gl_FragColor = vec4(finish(col, dist), 1.);
+}`;
 
 const BLADE_VS = /* glsl */`
 varying vec3 vW; varying vec3 vN; varying vec3 vO;
@@ -203,11 +220,11 @@ export function createWorld(canvas, base = 'assets/world/') {
   const maxAniso = Math.min(8, renderer.capabilities.getMaxAnisotropy());
   // uniforms shared by every material in the world
   const G = {
-    uExpo: { value: 0.8 }, uTime: { value: 0 }, uVig: { value: 0.5 }, uGrain: { value: 0.03 }, uFogD: { value: 0.01 }, uPass: { value: 0 }, uCon: { value: 0 },
+    uExpo: { value: 0.8 }, uTime: { value: 0 }, uWet: { value: 0 }, uVig: { value: 0.5 }, uGrain: { value: 0.03 }, uFogD: { value: 0.01 }, uPass: { value: 0 }, uCon: { value: 0 },
     uRes: { value: new THREE.Vector2(1, 1) }, uFogC: { value: new THREE.Color(0.02, 0.03, 0.05) }, tRefl: { value: rt.texture }, uMirrorY: { value: 0 },
     uPL: { value: [new THREE.Vector4(0, -99, 0, 1), new THREE.Vector4(0, -99, 0, 1)] }, uPLc: { value: [new THREE.Color(0, 0, 0), new THREE.Color(0, 0, 0)] },
   };
-  const common = () => ({ uExpo: G.uExpo, uTime: G.uTime, uVig: G.uVig, uGrain: G.uGrain, uFogD: G.uFogD, uPass: G.uPass, uCon: G.uCon, uRes: G.uRes, uFogC: G.uFogC });
+  const common = () => ({ uExpo: G.uExpo, uTime: G.uTime, uWet: G.uWet, uVig: G.uVig, uGrain: G.uGrain, uFogD: G.uFogD, uPass: G.uPass, uCon: G.uCon, uRes: G.uRes, uFogC: G.uFogC });
   const inside = new THREE.Group(); scene.add(inside);
   const groups = {}, haze = {};
   for (const n of ZONES) { const g = groups[n] = new THREE.Group(); g.name = n; haze[n] = { value: 0 }; if (n === 'alley') scene.add(g); else { b2t(ORIGIN[n], g.position); inside.add(g); } }
@@ -316,7 +333,56 @@ export function createWorld(canvas, base = 'assets/world/') {
     const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: W._glow || (W._glow = glowTex()), color, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
     s.position.copy(pos); s.scale.setScalar(size); s.userData = { lamp, k }; sprites.push(s); return s;
   };
-  let rain = null, keeperPlane = null, keeperTex = null;
+  let rain = null, keeperPlane = null, keeperTex = null, hold = 0, wet = 0;
+  // Each door carries two bolts that reach across into its frame, and a blank steel plate under its seal. Accepting
+  // a place draws the bolts and strikes the member's number into the plate (js/outside.js, A08).
+  function doorFurniture(Z, k, D) {
+    const A = Z.man.anchors, sg = k === 'L' ? -1 : 1, r = A['door' + k].rect, yF = r[0][1], xE = sg * Math.max(Math.abs(r[0][0]), Math.abs(r[1][0])), xC = (r[0][0] + r[1][0]) / 2;
+    const lampP = { value: Z.group.localToWorld(b2t(A['lamp' + k].p)) }, lampW = { value: 1 };
+    const mat = (base, gloss, map) => new THREE.ShaderMaterial({ vertexShader: BAKED_VS, fragmentShader: PROP_FS, side: THREE.DoubleSide,
+      uniforms: { ...common(), tMap: { value: map || blank }, uUseMap: { value: map ? 1 : 0 }, uBase: { value: new V3(...base) }, uGloss: { value: gloss }, uLampP: lampP, uLamp: lampW } });
+    const put = (geo, m, bp, parent) => { const o = new THREE.Mesh(geo, m); b2t(bp, o.position); Z.group.add(o); o.updateMatrixWorld(true); (parent || D.pivot).attach(o); return o; };
+    const steel = mat([0.5, 0.52, 0.54], 50), dark = mat([0.11, 0.115, 0.125], 18);
+    D.lampW = lampW; D.bolts = []; D.boltGoal = [0, 0]; D.boltAt = [0, 0];
+    [1.37, 1.2].forEach((z) => {
+      put(new THREE.BoxGeometry(0.38, 0.09, 0.008), dark, [xE - sg * 0.21, yF - 0.004, z]);                                   // the plate it runs on
+      for (const dx of [0.07, 0.27]) put(new THREE.BoxGeometry(0.05, 0.066, 0.05), steel, [xE - sg * dx, yF - 0.029, z]);       // two saddles
+      const bar = new THREE.Group(); b2t([xE - sg * 0.08, yF - 0.029, z], bar.position); Z.group.add(bar); bar.updateMatrixWorld(true); D.pivot.attach(bar);
+      const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.44, 20), steel); rod.rotation.z = Math.PI / 2; bar.add(rod);
+      const knob = new THREE.Mesh(new THREE.CylinderGeometry(0.011, 0.011, 0.06, 14), steel); knob.rotation.x = Math.PI / 2; knob.position.set(-sg * 0.05, 0, 0.04); bar.add(knob);
+      bar.userData.x0 = bar.position.x; bar.userData.dir = new V3(-sg, 0, 0).applyQuaternion(D.pivot.getWorldQuaternion(new THREE.Quaternion()).invert()).x;
+      D.bolts.push(bar);
+    });
+    // the number plate, between the seal and the slit
+    const cv = document.createElement('canvas'); cv.width = 840; cv.height = 210;
+    const tx = new THREE.CanvasTexture(cv); tx.colorSpace = THREE.NoColorSpace; tx.anisotropy = maxAniso; tx.generateMipmaps = true; tx.minFilter = THREE.LinearMipmapLinearFilter;
+    D.plate = { cv, tx, text: null };
+    put(new THREE.BoxGeometry(0.356, 0.089, 0.006), dark, [xC, yF - 0.003, 1.785]);
+    put(new THREE.PlaneGeometry(0.34, 0.085), mat([1.15, 1.15, 1.15], 40, tx), [xC, yF - 0.0075, 1.785]);
+    drawPlate(D, '');
+  }
+  function drawPlate(D, text) {
+    const P = D.plate; if (!P || P.text === text) return; P.text = text;
+    const c = P.cv.getContext('2d'), w = P.cv.width, h = P.cv.height;
+    const g = c.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#a9adb1'); g.addColorStop(0.5, '#8d9196'); g.addColorStop(1, '#9a9ea3'); c.fillStyle = g; c.fillRect(0, 0, w, h);
+    let s = 11; const rnd = () => { s = (s * 16807) % 2147483647; return s / 2147483647; };
+    for (let i = 0; i < 520; i++) { c.fillStyle = `rgba(${rnd() > 0.5 ? '255,255,255' : '0,0,0'},${(0.03 + rnd() * 0.05).toFixed(3)})`; c.fillRect(rnd() * w, rnd() * h, 60 + rnd() * 240, 1); }      // brushed
+    for (const [x, y] of [[26, 26], [w - 26, 26], [26, h - 26], [w - 26, h - 26]]) { c.fillStyle = '#4a4e53'; c.beginPath(); c.arc(x, y, 9, 0, 7); c.fill(); c.fillStyle = 'rgba(255,255,255,.25)'; c.beginPath(); c.arc(x - 2, y - 2, 4, 0, 7); c.fill(); }
+    // struck figures: a dark cut with a lit lower lip
+    c.font = '104px "PR6 Mono", Menlo, Consolas, monospace'; c.textAlign = 'left'; c.textBaseline = 'middle';
+    const full = '000 000 000', cw = c.measureText('0').width, x0 = (w - cw * full.length) / 2;
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i]; if (ch === ' ') continue; const x = x0 + i * cw, y = h / 2 + 6;
+      c.fillStyle = 'rgba(255,255,255,.5)'; c.fillText(ch, x + 1.5, y + 3); c.fillStyle = '#15181b'; c.fillText(ch, x, y);
+    }
+    P.tx.needsUpdate = true;
+  }
+  /** A door's bolts (i 0 or 1; v 1 drawn, 0 shot home) and its plate. They wait if the alley is not built yet. */
+  const pend = { L: { bolts: [0, 0], plate: '' }, R: { bolts: [0, 0], plate: '' } };
+  W.bolt = (k, i, v, now) => { pend[k].bolts[i] = v; const D = W.doors[k]; if (D && D.bolts) { D.boltGoal[i] = v; if (now || !W.motion) D.boltAt[i] = v; } };
+  W.plate = (k, text) => { pend[k].plate = text || ''; const D = W.doors[k]; if (D && D.plate) drawPlate(D, pend[k].plate); };
+  if (document.fonts && document.fonts.load) document.fonts.load('104px "PR6 Mono"').then(() => { for (const k of ['L', 'R']) { const D = W.doors[k]; if (D && D.plate) { D.plate.text = null; drawPlate(D, pend[k].plate); } } }).catch(() => {});
+
   function buildAlley(Z) {
     const A = Z.man.anchors, d = A.dims;
     for (const k of ['L', 'R']) {
@@ -326,17 +392,18 @@ export function createWorld(canvas, base = 'assets/world/') {
       for (const s of SYMS) { D.meds[s] = Z.meshes[`med${k}_${s}`]; if (D.meds[s]) D.meds[s].visible = false; }
       D.shut0 = D.shut ? D.shut.position.x : 0;
       W.doors[k] = D;
+      doorFurniture(Z, k, D); D.boltGoal = [...pend[k].bolts]; D.boltAt = [...pend[k].bolts]; drawPlate(D, pend[k].plate);
       const lp = b2t(A['lamp' + k].p); Z.group.add(sprite(lp.clone().add(new V3(0, -0.06, 0.05)), new THREE.Color(0.55, 0.72, 1.0), 1.5, 'lamp' + k, 0.55));
     }
     Z.group.add(sprite(b2t(A.pilot.p).add(new V3(0, 0, 0.03)), new THREE.Color(1.0, 0.36, 0.08), 0.22, '', 0.9));
     Z.group.add(sprite(b2t(A.tube.p).add(new V3(-0.06, 0, 0)), new THREE.Color(0.5, 0.75, 1.0), 1.6, 'tube', 0.3));
     // rain: short streaks that fall through the lamps' light
-    const N = 1500, seed = new Float32Array(N * 6), tip = new Float32Array(N * 2), pos = new Float32Array(N * 6);
+    const N0 = 1500, N = 5200, seed = new Float32Array(N * 6), tip = new Float32Array(N * 2), more = new Float32Array(N * 2), pos = new Float32Array(N * 6);
     let s = 7; const rnd = () => { s = (s * 16807) % 2147483647; return s / 2147483647; };
-    for (let i = 0; i < N; i++) { const x = (rnd() - 0.5) * 4.6, ph = rnd(), z = -7.0 + rnd() * 17; for (let e = 0; e < 2; e++) { seed.set([x, ph, z], i * 6 + e * 3); tip[i * 2 + e] = e; } }
-    const rg = new THREE.BufferGeometry(); rg.setAttribute('position', new THREE.BufferAttribute(pos, 3)); rg.setAttribute('seed', new THREE.BufferAttribute(seed, 3)); rg.setAttribute('tip', new THREE.BufferAttribute(tip, 1));
+    for (let i = 0; i < N; i++) { const x = (rnd() - 0.5) * 4.6, ph = rnd(), z = -7.0 + rnd() * 17; for (let e = 0; e < 2; e++) { seed.set([x, ph, z], i * 6 + e * 3); tip[i * 2 + e] = e; more[i * 2 + e] = i < N0 ? 0 : 1; } }
+    const rg = new THREE.BufferGeometry(); rg.setAttribute('position', new THREE.BufferAttribute(pos, 3)); rg.setAttribute('seed', new THREE.BufferAttribute(seed, 3)); rg.setAttribute('tip', new THREE.BufferAttribute(tip, 1)); rg.setAttribute('more', new THREE.BufferAttribute(more, 1));
     rain = new THREE.LineSegments(rg, new THREE.ShaderMaterial({ vertexShader: RAIN_VS, fragmentShader: RAIN_FS, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true,
-      uniforms: { uTime: G.uTime, uExpo: G.uExpo, uPass: G.uPass, uRain: { value: 0 }, uLampA: { value: b2t(A.lampL.p) }, uLampB: { value: b2t(A.lampR.p) } } }));
+      uniforms: { uWet: G.uWet, uHold: { value: 0 }, uExpo: G.uExpo, uPass: G.uPass, uRain: { value: 0 }, uLampA: { value: b2t(A.lampL.p) }, uLampB: { value: b2t(A.lampR.p) } } }));
     rain.frustumCulled = false; Z.group.add(rain);
     // the Keeper: her light shows through the slit and spills a little onto the door
     keeperPlane = new THREE.Mesh(new THREE.PlaneGeometry(d.SLIT_W * 1.36, d.SLIT_H * 3.2), new THREE.MeshBasicMaterial({ color: 0xffffff, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, toneMapped: false }));
@@ -521,6 +588,9 @@ export function createWorld(canvas, base = 'assets/world/') {
   };
   W.draw = (time, dt) => {
     stepFly(time);
+    // the weather has its own clock, so the rain can be held still in the air (W.rainHold) and let go again
+    hold += ((W.rainHold || 0) - hold) * (W.motion ? 1 - Math.pow(0.02, dt) : 1); wet += W.motion ? dt * (1 - hold) * (1 - hold) : 0;
+    G.uWet.value = wet; if (rain) rain.material.uniforms.uHold.value = hold;
     G.uTime.value = W.motion ? time : 0; G.uExpo.value = W.expo; G.uCon.value = W.con; G.uVig.value = W.vig; G.uGrain.value = W.motion ? W.grain : W.grain * 0.5;
     G.uFogC.value.setRGB(W.fog[0], W.fog[1], W.fog[2]); G.uFogD.value = W.fog[3];
     place(W.motion ? time : 0);
@@ -539,6 +609,11 @@ export function createWorld(canvas, base = 'assets/world/') {
     for (const s of sprites) s.material.opacity = (s.userData.lamp ? (W.lamps[s.userData.lamp] ?? 1) : 1) * s.userData.k * ek;
     if (rain) { rain.material.uniforms.uRain.value = W.motion ? W.rain : 0; rain.visible = W.rain > 0.01 && W.motion; }
     // doors
+    for (const k of ['L', 'R']) {
+      const D = W.doors[k]; if (!D || !D.bolts) continue; D.lampW.value = W.lamps['lamp' + k] ?? 1;
+      // a bolt is heavy: it starts slowly, runs, and stops dead against its saddle
+      D.bolts.forEach((b, i) => { const g = D.boltGoal[i], d = g - D.boltAt[i]; D.boltAt[i] = Math.abs(d) < 0.002 || !W.motion ? g : D.boltAt[i] + Math.sign(d) * Math.min(Math.abs(d), dt * 3.4); const e = D.boltAt[i]; b.position.x = b.userData.x0 + b.userData.dir * 0.2 * e * e * (3 - 2 * e); });
+    }
     for (const k of ['L', 'R']) { const D = W.doors[k]; if (!D) continue; D.pivot.rotation.y = (k === 'L' ? -1 : 1) * D.open * 1.78; if (D.shut) D.shut.position.x = D.shut0 + (k === 'L' ? 1 : -1) * D.slit * 0.56; }
     if (keeperPlane && keeperPlane.visible) keeperPlane.material.opacity = 1;
     // blades settle towards the goal
