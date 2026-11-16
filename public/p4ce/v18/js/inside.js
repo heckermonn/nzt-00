@@ -221,6 +221,15 @@ export async function formulary(app, args) {
   };
 }
 
+// the order of a record's sections below the essentials, by what the member told the Compass a useful result looks like
+const REC_ORDER = {
+  none: ['checks', 'identity', 'evidence', 'safety', 'quality', 'regulatory', 'commerce', 'field'],
+  learn: ['identity', 'evidence', 'safety', 'quality', 'checks', 'regulatory', 'commerce', 'field'],
+  evidence: ['evidence', 'quality', 'checks', 'safety', 'regulatory', 'identity', 'commerce', 'field'],
+  compare: ['checks', 'quality', 'commerce', 'identity', 'evidence', 'safety', 'regulatory', 'field'],
+  expert: ['safety', 'evidence', 'regulatory', 'checks', 'quality', 'identity', 'commerce', 'field'],
+};
+const REC_WHY = { learn: 'learn the ground', evidence: 'read the evidence', compare: 'compare eligible options', expert: 'speak with a professional' };
 export async function record(app, args) {
   const m = store.member(), ok = app.live(), view = app.view, r = byId(args[0]);
   if (!r) { app.go('#/formulary'); return null; }
@@ -231,29 +240,65 @@ export async function record(app, args) {
   if (W3) { W3.setNiche(+s.c); W3.turn.set(+s.c, k); }
   await pane(app, 'record', +s.c, 'formulary', (S, F) => { const rc = nicheRect(F, +s.c); return rc ? app.fit(S, rc, 0.66) : { cx: 0.5, cy: 0.5, zoom: 1 }; }, { need: 1 }); if (!ok()) return null;
   const able = canOrder(r), missing = CHECKS.filter(([k]) => !r.checks[k]).map(([, t]) => t.toLowerCase());
+  // The essentials come first: what it is, which size, how many. Everything else follows in the member's own order:
+  // the Compass sets it (what a useful result looks like, how much detail, whether safety leads), and "Show first" on
+  // this page overrides it and is remembered for every record.
+  const cp = (m.compassConsent && m.compass) || session, ans = (cp && cp.done && cp.a) || {};
+  const SECT = {
+    checks: ['Checks on file', `<p class="note">${statusOf(r).long}</p><ul class="checks">${CHECKS.map(([kk, t]) => `<li class="${r.checks[kk] ? '' : 'no'}"><span>${t}</span><b>${r.checks[kk] ? 'On file' : 'Not on file'}</b></li>`).join('')}</ul>`],
+  };
+  for (const [h, rows] of recordFields(r)) SECT[h.toLowerCase()] = [h, `<dl class="kv">${rows.map(([kk, v]) => `<dt>${kk}</dt><dd>${esc(v)}</dd>`).join('')}</dl>`];
+  const arrange = () => {
+    let o = [...(REC_ORDER[ans.objective] || REC_ORDER.none)];
+    const lead = (key) => { o = [key, ...o.filter((x) => x !== key)]; };
+    if (ans.safety === 'overview' || ans.safety === 'professional') lead('safety');
+    if (m.recordFirst && SECT[m.recordFirst]) lead(m.recordFirst);
+    return o.filter((x) => SECT[x]);
+  };
+  const openCount = ans.depth === 'detailed' ? 99 : ans.depth === 'overview' ? 1 : 2;
+  const why = () => (m.recordFirst && SECT[m.recordFirst] ? `${SECT[m.recordFirst][0]} first, as you chose here. `
+    : ans.objective || ans.depth || ans.safety ? `In the order your Compass set${ans.objective ? ': you asked to ' + REC_WHY[ans.objective] : ''}${ans.depth ? (ans.objective ? ', ' : ': ') + (ans.depth === 'detailed' ? 'in detail' : 'as a concise overview') : ''}${ans.safety === 'overview' || ans.safety === 'professional' ? (ans.objective || ans.depth ? ', with safety first' : ': safety first') : ''}. `
+    : 'In the standard order. ');
+  const below = () => `<div class="arrange"><p class="note">${why()}<a href="#/compass${cp && cp.done ? '/edit' : ''}">${cp && cp.done ? 'Change my Compass' : 'Let the Compass arrange it'}</a></p>
+      <label class="firstpick"><span>Show first</span><select id="first"><option value="">${cp && cp.done ? 'What my Compass says' : 'The standard order'}</option>${Object.keys(SECT).map((key) => `<option value="${key}"${m.recordFirst === key ? ' selected' : ''}>${SECT[key][0]}</option>`).join('')}</select></label></div>
+    ${arrange().map((key, i) => `<details class="fold" data-k="${key}"${i < openCount ? ' open' : ''}><summary><h2>${SECT[key][0]}</h2></summary>${SECT[key][1]}</details>`).join('')}`;
+  const z0 = able ? r.sizes[0] : null;
   view.innerHTML = `<div class="page"><a class="back" href="#/formulary/${s.c}">${s.n} · ${s.f}</a>
-    <div class="rec-head"><div><p class="label">${r.id}</p><h1 class="title" style="margin-top:8px">${r.name}</h1><p class="lead dim" style="margin-top:8px">${r.cls}, ${r.form.toLowerCase()}</p><p style="margin-top:16px">${tag(r)}</p></div>
-      <img src="assets/vials/${r.id}.webp" width="180" height="300" alt="A sealed glass vial on its stand, with a printed label reading ${r.id}, ${esc(r.name)}." loading="lazy"></div>
+    <div class="rec-head"><div><h1 class="title">${r.name}</h1><p class="lead dim" style="margin-top:8px"><span class="mono">${r.id}</span> · ${r.cls}, ${r.form.toLowerCase()}</p><p style="margin-top:14px">${tag(r)}</p></div>
+      <img src="assets/vials/${r.id}.webp" width="180" height="300" alt="A sealed glass vial on its stand, with a printed label reading ${r.id}, ${esc(r.name)}." loading="lazy">
+    ${able ? `<form class="buy" id="buy">
+        <fieldset><legend>Size</legend><div class="sizes" role="radiogroup" aria-label="Size">${r.sizes.map((z, i) => `<button class="chip" type="button" role="radio" aria-checked="${i === 0}" data-i="${i}">${z.q} ${z.u} · ${cad(z.price)}</button>`).join('')}</div></fieldset>
+        <div class="buy-row"><div><span class="field-l" id="qty-l">Quantity</span><span class="qty" role="group" aria-labelledby="qty-l"><button type="button" data-q="-1" aria-label="One fewer">−</button><span id="qty" aria-live="polite">1</span><button type="button" data-q="1" aria-label="One more">+</button></span></div>
+          <p class="buy-sum" id="sum" aria-live="polite">${cad(z0.price)}</p>
+          <button class="btn" type="submit">Add to order</button></div>
+        <p class="note" id="added" role="status"></p>
+        <p class="note">${r.stock}. Taxes are added at order, by province. ${LABEL_LINE}</p></form>`
+    : `<div class="buy"><p><strong>This record cannot be ordered.</strong></p><p class="note" style="margin-top:6px">${r.status === 'library' ? 'It is a research library entry: information only, and not an offer for sale.' : 'Its compliance review is still open.'} Not on file: ${missing.join(', ')}. Until every check is on file, the order service refuses it.</p></div>`}</div>
     <nav class="stand" aria-label="The three records in this case"><span class="label">In this case</span>${s.items.map((x, i) => `<a href="#/record/${x.id}"${i === k ? ' aria-current="page"' : ''}><span class="n">${x.id.slice(-4)}</span>${esc(x.name)}</a>`).join('')}${W3 ? '<span class="note hint">Or turn the stand in the picture by hand.</span>' : ''}</nav>
+    <div id="below">${below()}</div>
     <p class="sample">SAMPLE RECORD. Values in [brackets] are for PR6 to supply. Nothing here states a dose, a use in people or animals, or an effect.</p>
-    <section><h2>Checks on file</h2><p class="note">${statusOf(r).long}</p>
-      <ul class="checks">${CHECKS.map(([k, t]) => `<li class="${r.checks[k] ? '' : 'no'}"><span>${t}</span><b>${r.checks[k] ? 'On file' : 'Not on file'}</b></li>`).join('')}</ul></section>
-    ${able ? `<form class="buy" id="buy"><fieldset style="margin:0"><legend>Size</legend><div class="sizes" role="radiogroup" aria-label="Size">${r.sizes.map((z, i) => `<button class="chip" type="button" role="radio" aria-checked="${i === 0}" data-i="${i}">${z.q} ${z.u} · ${cad(z.price)}</button>`).join('')}</div></fieldset>
-        <p class="note">${r.stock}. Taxes are added at order, by province. ${LABEL_LINE}</p>
-        <div class="actions" style="margin-top:16px"><button class="btn" type="submit">Add to order</button><span class="note" id="added" role="status"></span></div></form>`
-    : `<div class="buy"><p><strong>This record cannot be ordered.</strong></p><p class="note" style="margin-top:6px">${r.status === 'library' ? 'It is a research library entry: information only, and not an offer for sale.' : 'Its compliance review is still open.'} Not on file: ${missing.join(', ')}. Until every check is on file, the order service refuses it.</p></div>`}
-    ${recordFields(r).map(([h, rows]) => `<section><h2>${h}</h2><dl class="kv">${rows.map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`).join('')}</dl></section>`).join('')}
     <div class="actions">${saveBtn(m, 'record', r.id)}<a class="link" href="#/support?topic=other&about=${r.id}">Ask about this record</a></div></div>`;
   bindSave(view, m);
+  $('#below', view).addEventListener('change', (e) => {
+    if (e.target.id !== 'first') return;
+    m.recordFirst = e.target.value || null; store.save();
+    $('#below', view).innerHTML = below(); $('#first', view).focus();
+    app.announce(m.recordFirst ? `${SECT[m.recordFirst][0]} now comes first on every record.` : 'Back to the order your Compass set.');
+  });
   if (able) {
-    let si = 0; const f = $('#buy', view);
-    f.addEventListener('click', (e) => { const b = e.target.closest('[role=radio]'); if (!b) return; si = +b.dataset.i; $$('[role=radio]', f).forEach((x) => x.setAttribute('aria-checked', x === b)); });
+    let si = 0, qty = 1; const f = $('#buy', view);
+    const sum = () => { const z = r.sizes[si]; $('#qty', f).textContent = qty; $('#sum', f).textContent = qty > 1 ? `${qty} × ${z.q} ${z.u} · ${cad(z.price * qty)}` : cad(z.price); };
+    f.addEventListener('click', (e) => {
+      const b = e.target.closest('[role=radio]'), q = e.target.closest('[data-q]');
+      if (b) { si = +b.dataset.i; $$('[role=radio]', f).forEach((x) => x.setAttribute('aria-checked', x === b)); sum(); }
+      if (q) { qty = Math.max(1, Math.min(9, qty + +q.dataset.q)); sum(); }
+    });
     f.addEventListener('submit', (e) => {
       e.preventDefault(); if (!canOrder(r)) return;
       const z = r.sizes[si], line = m.cart.find((l) => l.id === r.id && l.q === z.q);
-      if (line) line.qty = Math.min(9, line.qty + 1); else m.cart.push({ id: r.id, q: z.q, u: z.u, price: z.price, qty: 1 });
+      if (line) line.qty = Math.min(9, line.qty + qty); else m.cart.push({ id: r.id, q: z.q, u: z.u, price: z.price, qty });
       store.save(); app.chrome(); app.sfx('tap');
-      $('#added', view).innerHTML = `Added. <a href="#/order">Open your order list</a>`;
+      $('#added', view).innerHTML = `Added ${qty} × ${z.q} ${z.u}. <a href="#/order">Open your order list</a>`;
     });
   }
   // turning the stand by hand opens the record that comes to the front
