@@ -18,7 +18,7 @@ Live path (once on Pages): `/p4ce/v18/`. No build step: plain ES modules, open `
 | A06 Application | `#/apply` | Age and Canada eligibility, password, optional passkey offer. |
 | A07 Review Status | `#/status` | Received, in review, question, decision. Approval is separate from the door. |
 | A08 Member Acceptance | `#/offer` | Offer, generation, founding rights (marked proposed), two explicit acceptances. The door answers (below). |
-| A09 Film & Passage | `#/passage` | One take, nine records: the door opens and the camera walks the passage into the Atrium, weaving past nine steles. Each has one era cut into it in sunk relief (tools, fire, agriculture, mathematics, medicine, engineering, flight, computation, space): three of stone, three of metal, three of glass, each larger than the last, and a light finds each as the walker reaches it. The member's own stele in the Archive is the tenth (its numeral is X). Captions give the era, a line and an approximate date. Space pauses, arrows step a chapter, Skip or Esc hurries the same walk. Direct mode shows the nine as a page. |
+| A09 Film | `#/passage` | One object, nine leaps. The member's door opens on darkness. In it one stone stands on a stand. Nine times it becomes the next thing people learned to make, in one snap each (tools: a stone; fire: fired clay with embers in it; agriculture: a storage jar; mathematics: a cast bronze measure; medicine: a blown glass flask; engineering: turned steel; flight: spun aluminium; computation: a grown crystal of silicon; space: a sealed titanium canister). Each leap comes sooner than the last and lets more light into the room. The tenth thing is a PR6 vial; the light comes up, and the camera draws back to find it standing in the Formulary, where the film ends and the store begins. Captions give the era, a line and an approximate date. Space pauses, arrows step a leap, Skip or Esc hurries the same film. Direct mode shows the nine as a page. The passage and its nine steles still stand behind the door: a returning member is carried through them. |
 | A10 Atrium | `#/atrium` | "What are we pursuing today?" Three destinations plus routine links. |
 | A11 Compass | `#/compass`, `#/compass/index`, `#/compass/edit` | The wayfinder: the member at the centre of a compass card, every place on a bearing around them (below). The five optional questions are now the reading index. Never maps a goal to a product; fails closed. |
 | A12 Formulary | `#/formulary`, `#/formulary/NN`, `#/record/ID` | Search, status, structured records, checks before any order. |
@@ -108,9 +108,14 @@ the page draws it with no lights of its own and it still reads as the Cycles pic
   floor and pool reflections from a mirror pass, rain, the doors, the Keeper in the slit, the
   Compass blades, the Formulary vials, the Archive stele, and the camera director (`W.fly`).
 - `js/shots.js`: where the camera stands for each screen and the way it travels between rooms.
-- `js/film.js`: A09. Everything is a function of one clock, so it can be paused and stepped. The steles, their
-  emblems (`blender/eras.py`, also `js/eras.js` for the page) and their lamps are part of the passage bake: each
-  lamp is baked alone on the walls and floor, and each stele's manifest entry says how dark it is without its lamp.
+- `js/film.js`: A09. Everything is a function of one clock, so it can be paused and stepped. `js/leap.js` is the
+  object: ten outlines (radius, height) resampled to the same number of points, so one lathe mesh carries all ten;
+  a leap moves the outline (overshooting, then settling) and the material (albedo, metal, softness of reflection,
+  glass, pitting, turning marks, embers) together in under half a second. It is lit by the vials' own panorama, so
+  it sits in the case like they do. The room's baked light is turned down with `W.gain` and `W.emitK`, a live point
+  light (`W.light`) is the pool round the object, and the vials leave their stands (`W.vials.show`) until the last
+  leap. The only cut is in the dark behind the door. The passage's steles, emblems (`blender/eras.py`, `js/eras.js`)
+  and lamps remain for the walk a returning member is carried on.
 - `js/still.js`: the route without WebGL 2 (stills in `assets/scenes/`).
 
 Zones: alley, passage (nine bays that widen from 1.7 m to 13 m, a stele in each), atrium, compass, formulary and

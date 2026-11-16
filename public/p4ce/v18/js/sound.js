@@ -171,6 +171,21 @@ export function createSound() {
       o.connect(g); g.connect(roomIn); o.start(t + d); o.stop(t + d + 5.2);
     }
   }
+  function leap(t, n = 0) {   // the film: a leap lands with a weight, a breath of air, and one note a step above the last
+    const o = ac.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(104, t); o.frequency.exponentialRampToValueAtTime(41, t + 0.3);
+    const g = ac.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.3, t + 0.012); g.gain.exponentialRampToValueAtTime(0.001, t + 0.62);
+    o.connect(g); g.connect(master); o.start(t); o.stop(t + 0.66);
+    const w = ac.createBufferSource(); w.buffer = PINK; const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 1.1;
+    bp.frequency.setValueAtTime(420, t); bp.frequency.exponentialRampToValueAtTime(3000 + 260 * n, t + 0.16); bp.frequency.exponentialRampToValueAtTime(700, t + 0.7);
+    const wg = ac.createGain(); wg.gain.setValueAtTime(0, t); wg.gain.linearRampToValueAtTime(0.085, t + 0.1); wg.gain.exponentialRampToValueAtTime(0.0008, t + 0.8);
+    w.connect(bp); bp.connect(wg); wg.connect(master); wg.connect(roomIn); w.start(t, Math.random(), 0.9);
+    const f = 147 * Math.pow(2, [0, 2, 4, 7, 9, 12, 14, 16, 19, 24][Math.min(9, n)] / 12);
+    for (const [m, v] of [[1, 0.05], [2.01, 0.018]]) {
+      const p = ac.createOscillator(); p.type = 'sine'; p.frequency.value = f * m; const pg = ac.createGain();
+      pg.gain.setValueAtTime(0, t); pg.gain.linearRampToValueAtTime(v, t + 0.02); pg.gain.exponentialRampToValueAtTime(0.0001, t + 2.4);
+      p.connect(pg); pg.connect(roomIn); pg.connect(master); p.start(t); p.stop(t + 2.5);
+    }
+  }
   // the Keeper's recorded lines: each decoded once, then projected. She is a hologram, so the voice is close and soft
   // (the dry line), doubled a hair wide of itself (two slowly drifting delays, left and right), answered once by the
   // street (a dark echo) and hung in a much bigger space than the alley (a long, dim tail).
@@ -231,6 +246,7 @@ export function createSound() {
     slide() { slide(ac.currentTime + 0.02); },
     tap(f) { tap(ac.currentTime + 0.01, f); },
     arrive() { arrive(ac.currentTime + 0.05); },
+    leap(n) { leap(ac.currentTime + 0.01, n); },
     tick(now) {  // called every frame: schedules sparse random events
       if (city.gain.value < 0.01 || master.gain.value < 0.01) return;
       const t = ac.currentTime;

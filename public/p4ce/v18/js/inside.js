@@ -537,7 +537,7 @@ export async function archive(app) {
       <div class="scrollx"><table class="t"><thead><tr><th>Right</th><th>Scope</th><th>Boundary</th></tr></thead><tbody>${RIGHTS.map((r) => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('')}</tbody></table></div></section>
     <section><h2>Generations</h2><div class="scrollx"><table class="t"><thead><tr><th>Generation</th><th>Name</th><th>Places</th><th>Status</th></tr></thead><tbody>${GENERATIONS.map((g) => `<tr><td>${g.n}</td><td>${g.name}</td><td class="mono">${g.cap}</td><td>${g.status}</td></tr>`).join('')}</tbody></table></div>
       <p class="note" style="margin-top:12px;max-width:62ch">A generation closes for good when its places are accepted. Places that are later vacated are not refilled. Possibility is infinite. Capacity is not.</p></section>
-    <section><h2>The threshold</h2><div class="actions" style="margin-top:0"><a class="btn ghost" href="#/passage/again">Watch the passage again</a></div>
+    <section><h2>The threshold</h2><div class="actions" style="margin-top:0"><a class="btn ghost" href="#/passage/again">Watch the film again</a></div>
       <details class="more"><summary>What the Keeper said</summary><div>${KEEPER_LINES.map((l) => `<p class="serif" style="font-size:var(--s4);color:var(--fg)">${l}</p>`).join('')}<p>${answer ? `You answered: ${answer}.` : 'You did not answer, which was allowed.'} The answer was never part of your review.</p></div></details></section></div>`;
   return { title: 'Archive', crumb: 'Archive' };
 }

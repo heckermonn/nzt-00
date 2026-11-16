@@ -5,6 +5,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { createVials } from './vials.js';
+import { createLeap } from './leap.js';
 
 const V3 = THREE.Vector3, DEG = Math.PI / 180;
 const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
@@ -464,6 +465,8 @@ export function createWorld(canvas, base = 'assets/world/') {
     vials = createVials({ Z, COMMON, common, haze: haze.formulary, base, tex, BAKED_VS, maxAniso });
     Z.backs = {}; for (const e of Z.emits) { const mm = /^back(\d+)/.exec(e.name); if (mm) Z.backs[+mm[1]] = e; }
     if (W._turns) for (const n in W._turns) vials.set(+n, W._turns[n], true);
+    // the film's one object stands alone on the stand of the centre case (js/leap.js)
+    W.vials = vials; W.leap = createLeap({ Z, COMMON, common, haze: haze.formulary, U: vials.U, n: 5 });
   }
   /** The stands of the Formulary: bring vial k (0 to 2) of case n (1 to 9) to the front; turn one by hand; let it go. */
   W.turn = {
@@ -610,8 +613,9 @@ export function createWorld(canvas, base = 'assets/world/') {
         // each door, its shutter and its seal were baked whole under the lamp above them, so they follow that lamp
         if (zn === 'alley') { const d = /^(?:door|shut|med)([LR])/.exec(k); if (d) m.uniforms.uGain.value = 0.07 + 0.93 * (W.lamps['lamp' + d[1]] ?? 1); }
       }
-      for (const e of Z.emits) e.mesh.material.uniforms.uW.value = e.lamp ? (W.lamps[e.lamp] ?? 1) : 1;
-      if (Z.backs) for (const i in Z.backs) { const u = Z.backs[i].mesh.material.uniforms.uW, goal = W._niche ? (+i === W._niche ? 1.5 : 0.6) : 1; u.value += (goal - u.value) * (W.motion ? 1 - Math.pow(0.002, dt) : 1); }
+      // W.emitK(zone, name): the film turns the lines of light of a room down and up
+      for (const e of Z.emits) e.mesh.material.uniforms.uW.value = (e.lamp ? (W.lamps[e.lamp] ?? 1) : 1) * (W.emitK ? W.emitK(zn, e.name) : 1);
+      if (Z.backs) for (const i in Z.backs) { const b = Z.backs[i], goal = W._niche ? (+i === W._niche ? 1.5 : 0.6) : 1; b.w = (b.w ?? 1) + (goal - (b.w ?? 1)) * (W.motion ? 1 - Math.pow(0.002, dt) : 1); b.mesh.material.uniforms.uW.value = b.w * (W.emitK ? W.emitK(zn, b.name) : 1); }
     }
     const ek = clamp(W.expo * 1.1, 0.2, 1);
     for (const s of sprites) s.material.opacity = (s.userData.lamp ? (W.lamps[s.userData.lamp] ?? 1) : 1) * s.userData.k * ek;
@@ -629,6 +633,7 @@ export function createWorld(canvas, base = 'assets/world/') {
     W.compassHeadT += (W.compassHead - W.compassHeadT) * (W.motion ? 1 - Math.pow(0.0015, dt) : 1); W.compassPointT += (W.compassPoint - W.compassPointT) * (W.motion ? 1 - Math.pow(0.02, dt) : 1);
     updateBlades(W.compassT, time);
     if (vials) vials.update(dt, W.motion);
+    if (W.leap) W.leap.update();
     // adapt: if frames are slow, lower the resolution, then the mirror
     if (dt > 0 && W.motion) { slow = slow * 0.95 + (dt > 0.034 ? 1 : 0) * 0.05; if (slow > 0.6 && time - last > 2) { last = time; slow = 0; if ((W.dpr || Math.min(devicePixelRatio || 1, 2)) > 1) { W.dpr = Math.max(1, (W.dpr || Math.min(devicePixelRatio || 1, 2)) - 0.5); W.resize(); } else if ((W.reflScale ?? 0.5) > 0.26) { W.reflScale = 0.25; W.resize(); } } }
     // the rooms beyond the Atrium stand in the haze of the court and come out of it as the camera nears them
