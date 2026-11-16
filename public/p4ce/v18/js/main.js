@@ -271,6 +271,7 @@ addEventListener('keydown', (e) => {
 function renderProto() {
   const el = $('#proto-in'); const m = store.member(), inv = store.invitation(), a = store.application();
   const h = ['<p>Everything behind this page is simulated in this browser. Nothing is sent anywhere.</p>'];
+  h.push(`<button data-p="film">${m ? 'Play the intro film' : 'Skip to the intro film'}</button>${m ? '' : '<p>Skipping admits a sample member for you (door, Keeper, application and offer are passed over), then plays the film.</p>'}`);
   if (inv) {
     h.push(`<p>Invitation <b>${fmtCode(inv.code)}</b> · state <b>${inv.state}</b></p><p>The site no longer shows the invitation: the card is in the visitor's hand. The seal on this one's card is <b>${DESC[inv.symbol]}</b>.</p>`);
     if (store.lock()) h.push('<button data-p="unlock">Clear the 24 hour door restriction</button>');
@@ -289,9 +290,10 @@ function renderProto() {
   h.push('<button data-p="reset">Reset the prototype</button>');
   el.innerHTML = h.join('');
 }
-$('#proto-in').addEventListener('click', (e) => {
+$('#proto-in').addEventListener('click', async (e) => {
   const b = e.target.closest('button'); if (!b) return;
   const p = b.dataset.p;
+  if (p === 'film') { b.disabled = true; const m = await store.admitSample(); $('#proto').open = false; return app.go(m ? '#/passage' : '#/'); }
   if (p === 'code') { if (location.hash.replace(/^#\/?/, '') !== '') location.hash = '#/'; setTimeout(() => { const i = $('#code'); if (i) { i.value = fmtCode(b.dataset.c); i.focus(); } }, 350); $('#proto').open = false; return; }
   if (p === 'unlock') store.clearLock();
   if (p === 'approve') store.decide('approved');

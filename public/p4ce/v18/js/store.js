@@ -144,6 +144,30 @@ export const store = {
     return db.members[id];
   },
 
+  /**
+   * Prototype shortcut (the panel's "Skip to the intro film"): carry an invitation straight through the door, the
+   * Keeper, the application, its review and the offer, so that the film can be seen at once. It uses the invitation
+   * in hand, or else the first sample invitation that is still unused; a sample member made this way before is
+   * simply signed back in.
+   */
+  async admitSample() {
+    if (this.member()) return this.member();
+    const was = Object.values(db.members).find((m) => m.sample);
+    if (!db.current && was) { db.session = was.id; write(); return was; }
+    if (!db.current) {
+      const code = DEMO_CODES.find((c) => db.invitations[c] && !['accepted', 'revoked'].includes(db.invitations[c].state));
+      if (!code) { const any = Object.values(db.members).pop(); if (any) { db.session = any.id; write(); } return any || null; }
+      if (db.invitations[code].state === 'issued') this.validate(code); else db.current = code;
+    }
+    const inv = this.invitation(); delete inv.lockUntil;
+    if (inv.state === 'issued' || inv.state === 'validated') { inv.side = inv.side || 'L'; inv.alt = inv.alt || LINEAGES.find((x) => x !== inv.symbol); inv.state = 'door'; inv.doorSide = inv.side; }
+    if (inv.state === 'door') inv.state = 'keeper';
+    if (!this.application()) await this.apply({ name: 'Sample Member', email: 'sample.member@example.com', password: 'sample-' + rnd(1)[0], passkey: false, interests: '', consents: { terms: true, compass: true } });
+    if (this.application().status !== 'approved') this.decide('approved');
+    const m = this.acceptOffer(); if (m) { m.sample = true; write(); }
+    return m;
+  },
+
   // ------------------------------------------------------------ identity
   member() { return db.session ? db.members[db.session] : null; },
   hasMembers() { return Object.keys(db.members).length > 0; },
