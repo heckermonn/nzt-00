@@ -1,0 +1,1400 @@
+{
+ "source": "public/p4ce/v11/js/catalog.js",
+ "products": {
+  "01-1": {
+   "id": "01-1",
+   "n": "Daily Multivitamin",
+   "g": "Capsules",
+   "q": "120 capsules",
+   "s": "2 capsules daily",
+   "c": "01",
+   "cn": "Foundation",
+   "pack": "tin",
+   "act": [
+    {
+     "name": "Vitamin A",
+     "form": "as beta-carotene",
+     "amt": "800 mcg",
+     "per": ""
+    },
+    {
+     "name": "Vitamin C",
+     "form": "",
+     "amt": "80 mg",
+     "per": ""
+    },
+    {
+     "name": "Vitamin D3",
+     "form": "",
+     "amt": "25 mcg",
+     "per": ""
+    },
+    {
+     "name": "Vitamin E",
+     "form": "",
+     "amt": "12 mg",
+     "per": ""
+    },
+    {
+     "name": "Vitamin K2",
+     "form": "",
+     "amt": "75 mcg",
+     "per": ""
+    },
+    {
+     "name": "Thiamin",
+     "form": "",
+     "amt": "5 mg",
+     "per": ""
+    },
+    {
+     "name": "Riboflavin",
+     "form": "",
+     "amt": "5 mg",
+     "per": ""
+    },
+    {
+     "name": "Niacin",
+     "form": "",
+     "amt": "16 mg",
+     "per": ""
+    },
+    {
+     "name": "Vitamin B6",
+     "form": "",
+     "amt": "5 mg",
+     "per": ""
+    },
+    {
+     "name": "Folate",
+     "form": "",
+     "amt": "400 mcg",
+     "per": ""
+    },
+    {
+     "name": "Vitamin B12",
+     "form": "",
+     "amt": "25 mcg",
+     "per": ""
+    },
+    {
+     "name": "Zinc",
+     "form": "",
+     "amt": "10 mg",
+     "per": ""
+    },
+    {
+     "name": "Selenium",
+     "form": "",
+     "amt": "55 mcg",
+     "per": ""
+    }
+   ],
+   "oth": "Capsule shell: hypromellose. Rice flour.",
+   "conc": null,
+   "serving": "2 capsules",
+   "keyLine": "Vitamin A 800 mcg / Vitamin C 80 mg"
+  },
+  "01-2": {
+   "id": "01-2",
+   "n": "Vitamin D3 + K2",
+   "g": "Softgels",
+   "q": "60 softgels",
+   "s": "1 softgel daily",
+   "c": "01",
+   "cn": "Foundation",
+   "pack": "tin",
+   "act": [
+    {
+     "name": "Vitamin D3",
+     "form": "cholecalciferol",
+     "amt": "50 mcg",
+     "per": ""
+    },
+    {
+     "name": "Vitamin K2",
+     "form": "menaquinone-7",
+     "amt": "100 mcg",
+     "per": ""
+    }
+   ],
+   "oth": "Olive oil. Softgel shell: gelatin, glycerin.",
+   "conc": null,
+   "serving": "1 softgel",
+   "keyLine": "Vitamin D3 50 mcg / Vitamin K2 100 mcg"
+  },
+  "01-3": {
+   "id": "01-3",
+   "n": "Vitamin C",
+   "g": "Tablets",
+   "q": "90 tablets",
+   "s": "1 tablet daily",
+   "c": "01",
+   "cn": "Foundation",
+   "pack": "tin",
+   "act": [
+    {
+     "name": "Vitamin C",
+     "form": "ascorbic acid",
+     "amt": "1000 mg",
+     "per": ""
+    }
+   ],
+   "oth": "Microcrystalline cellulose, stearic acid.",
+   "conc": null,
+   "serving": "1 tablet",
+   "keyLine": "Vitamin C 1000 mg"
+  },
+  "01-4": {
+   "id": "01-4",
+   "n": "Vitamin B Complex",
+   "g": "Capsules",
+   "q": "60 capsules",
+   "s": "1 capsule daily",
+   "c": "01",
+   "cn": "Foundation",
+   "pack": "tin",
+   "act": [
+    {
+     "name": "Thiamin",
+     "form": "",
+     "amt": "10 mg",
+     "per": ""
+    },
+    {
+     "name": "Riboflavin",
+     "form": "",
+     "amt": "10 mg",
+     "per": ""
+    },
+    {
+     "name": "Niacin",
+     "form": "",
+     "amt": "20 mg",
+     "per": ""
+    },
+    {
+     "name": "Pantothenic acid",
+     "form": "",
+     "amt": "10 mg",
+     "per": ""
+    },
+    {
+     "name": "Vitamin B6",
+     "form": "",
+     "amt": "10 mg",
+     "per": ""
+    },
+    {
+     "name": "Biotin",
+     "form": "",
+     "amt": "150 mcg",
+     "per": ""
+    },
+    {
+     "name": "Folate",
+     "form": "",
+     "amt": "400 mcg",
+     "per": ""
+    },
+    {
+     "name": "Vitamin B12",
+     "form": "",
+     "amt": "100 mcg",
+     "per": ""
+    }
+   ],
+   "oth": "Capsule shell: hypromellose. Rice flour.",
+   "conc": null,
+   "serving": "1 capsule",
+   "keyLine": "Thiamin 10 mg / Riboflavin 10 mg"
+  },
+  "01-5": {
+   "id": "01-5",
+   "n": "Greens Powder",
+   "g": "Powder",
+   "q": "240 g",
+   "s": "8 g, 30 servings",
+   "c": "01",
+   "cn": "Foundation",
+   "pack": "pouch",
+   "act": [
+    {
+     "name": "Spirulina",
+     "form": "",
+     "amt": "2 g",
+     "per": ""
+    },
+    {
+     "name": "Chlorella",
+     "form": "",
+     "amt": "2 g",
+     "per": ""
+    },
+    {
+     "name": "Barley grass juice powder",
+     "form": "",
+     "amt": "2 g",
+     "per": ""
+    },
+    {
+     "name": "Spinach powder",
+     "form": "",
+     "amt": "1 g",
+     "per": ""
+    },
+    {
+     "name": "Kale powder",
+     "form": "",
+     "amt": "1 g",
+     "per": ""
+    }
+   ],
+   "oth": "Natural apple flavour, stevia leaf extract.",
+   "conc": null,
+   "serving": "8 g",
+   "keyLine": "Spirulina 2 g / Chlorella 2 g"
+  },
+  "02-1": {
+   "id": "02-1",
+   "n": "Collagen Peptides",
+   "g": "Powder",
+   "q": "300 g",
+   "s": "10 g, 30 servings",
+   "c": "02",
+   "cn": "Form",
+   "pack": "pouch",
+   "act": [
+    {
+     "name": "Hydrolysed bovine collagen peptides",
+     "form": "types I and III",
+     "amt": "10 g",
+     "per": ""
+    }
+   ],
+   "oth": "No other ingredients.",
+   "conc": null,
+   "serving": "10 g",
+   "keyLine": "Hydrolysed bovine collagen peptides 10 g"
+  },
+  "02-2": {
+   "id": "02-2",
+   "n": "Whey Protein Isolate",
+   "g": "Powder",
+   "q": "900 g",
+   "s": "30 g, 30 servings",
+   "c": "02",
+   "cn": "Form",
+   "pack": "pouch",
+   "act": [
+    {
+     "name": "Whey protein isolate",
+     "form": "milk",
+     "amt": "30 g",
+     "per": ""
+    }
+   ],
+   "oth": "Sunflower lecithin, natural vanilla flavour, stevia leaf extract. Contains milk.",
+   "conc": null,
+   "serving": "30 g",
+   "keyLine": "Whey protein isolate 30 g"
+  },
+  "02-3": {
+   "id": "02-3",
+   "n": "Plant Protein Blend",
+   "g": "Powder",
+   "q": "900 g",
+   "s": "30 g, 30 servings",
+   "c": "02",
+   "cn": "Form",
+   "pack": "pouch",
+   "act": [
+    {
+     "name": "Pea protein",
+     "form": "",
+     "amt": "18 g",
+     "per": ""
+    },
+    {
+     "name": "Brown rice protein",
+     "form": "",
+     "amt": "9 g",
+     "per": ""
+    }
+   ],
+   "oth": "Sunflower lecithin, natural cocoa, stevia leaf extract.",
+   "conc": null,
+   "serving": "30 g",
+   "keyLine": "Pea protein 18 g / Brown rice protein 9 g"
+  },
+  "02-4": {
+   "id": "02-4",
+   "n": "Green Tea Extract",
+   "g": "Capsules",
+   "q": "90 capsules",
+   "s": "1 capsule daily",
+   "c": "02",
+   "cn": "Form",
+   "pack": "tin",
+   "act": [
+    {
+     "name": "Green tea leaf extract",
+     "form": "decaffeinated",
+     "amt": "500 mg",
+     "per": ""
+    }
+   ],
+   "oth": "Capsule shell: hypromellose. Rice flour.",
+   "conc": null,
+   "serving": "1 capsule",
+   "keyLine": "Green tea leaf extract 500 mg"
+  },
+  "02-5": {
+   "id": "02-5",
+   "n": "Psyllium Fibre",
+   "g": "Sachets",
+   "q": "30 sachets",
+   "s": "1 sachet daily",
+   "c": "02",
+   "cn": "Form",
+   "pack": "box",
+   "act": [
+    {
+     "name": "Psyllium husk powder",
+     "form": "",
+     "amt": "5 g",
+     "per": ""
+    }
+   ],
+   "oth": "No other ingredients.",
+   "conc": null,
+   "serving": "1 sachet",
+   "keyLine": "Psyllium husk powder 5 g"
+  },
+  "02-6": {
+   "id": "02-6",
+   "n": "Chromium Picolinate",
+   "g": "Tablets",
+   "q": "120 tablets",
+   "s": "1 tablet daily",
+   "c": "02",
+   "cn": "Form",
+   "pack": "tin",
+   "act": [
+    {
+     "name": "Chromium",
+     "form": "chromium picolinate",
+     "amt": "200 mcg",
+     "per": ""
+    }
+   ],
+   "oth": "Microcrystalline cellulose, stearic acid.",
+   "conc": null,
+   "serving": "1 tablet",
+   "keyLine": "Chromium 200 mcg"
+  },
+  "03-1": {
+   "id": "03-1",
+   "n": "Creatine Monohydrate",
+   "g": "Powder",
+   "q": "300 g",
+   "s": "5 g, 60 servings",
+   "c": "03",
+   "cn": "Force",
+   "pack": "pouch",
+   "act": [
+    {
+     "name": "Creatine monohydrate",
+     "form": "micronised",
+     "amt": "5 g",
+     "per": ""
+    }
+   ],
+   "oth": "No other ingredients.",
+   "conc": null,
+   "serving": "5 g",
+   "keyLine": "Creatine monohydrate 5 g"
+  },
+  "03-2": {
+   "id": "03-2",
+   "n": "Creatine Capsules",
+   "g": "Capsules",
+   "q": "180 capsules",
+   "s": "3 capsules daily",
+   "c": "03",
+   "cn": "Force",
+   "pack": "tin",
+   "act": [
+    {
+     "name": "Creatine monohydrate",
+     "form": "",
+     "amt": "5 g",
+     "per": "per 3 capsules"
+    }
+   ],
+   "oth": "Capsule shell: hypromellose. Rice flour.",
+   "conc": null,
+   "serving": "3 capsules",
+   "keyLine": "Creatine monohydrate 5 g"
+  },
+  "03-3": {
+   "id": "03-3",
+   "n": "Beta-Alanine",
+   "g": "Powder",
+   "q": "250 g",
+   "s": "3 g, 83 servings",
+   "c": "03",
+   "cn": "Force",
+   "pack": "pouch",
+   "act": [
+    {
+     "name": "Beta-alanine",
+     "form": "",
+     "amt": "3 g",
+     "per": ""
+    }
+   ],
+   "oth": "No other ingredients.",
+   "conc": null,
+   "serving": "3 g",
+   "keyLine": "Beta-alanine 3 g"
+  },
+  "03-4": {
+   "id": "03-4",
+   "n": "Citrulline Malate",
+   "g": "Powder",
+   "q": "300 g",
+   "s": "6 g, 50 servings",
+   "c": "03",
+   "cn": "Force",
+   "pack": "pouch",
+   "act": [
+    {
+     "name": "Citrulline malate",
+     "form": "2:1",
+     "amt": "6 g",
+     "per": ""
+    }
+   ],
+   "oth": "No other ingredients.",
+   "conc": null,
+   "serving": "6 g",
+   "keyLine": "Citrulline malate 6 g"
+  },
+  "03-5": {
+   "id": "03-5",
+   "n": "Taurine",
+   "g": "Capsules",
+   "q": "120 capsules",
+   "s": "2 capsules daily",
+   "c": "03",
+   "cn": "Force",
+   "pack": "tin",
+   "act": [
+    {
+     "name": "Taurine",
+     "form": "",
+     "amt": "2000 mg",
+     "per": "per 2 capsules"
+    }
+   ],
+   "oth": "Capsule shell: hypromellose. Rice flour.",
+   "conc": null,
+   "serving": "2 capsules",
+   "keyLine": "Taurine 2000 mg"
+  },
+  "04-1": {
+   "id": "04-1",
+   "n": "Electrolyte Sachets",
+   "g": "Sachets",
+   "q": "30 sachets",
+   "s": "1 sachet in 500 ml water",
+   "c": "04",
+   "cn": "Endure",
+   "pack": "box",
+   "act": [
+    {
+     "name": "Sodium",
+     "form": "sodium chloride",
+     "amt": "500 mg",
+     "per": ""
+    },
+    {
+     "name": "Potassium",
+     "form": "potassium citrate",
+     "amt": "200 mg",
+     "per": ""
+    },
+    {
+     "name": "Magnesium",
+     "form": "magnesium citrate",
+     "amt": "60 mg",
+     "per": ""
+    }
+   ],
+   "oth": "Citric acid, natural lemon flavour, stevia leaf extract.",
+   "conc": null,
+   "serving": "1 sachet",
+   "keyLine": "Sodium 500 mg / Potassium 200 mg"
+  },
+  "04-2": {
+   "id": "04-2",
+   "n": "Carbohydrate Mix",
+   "g": "Powder",
+   "q": "900 g",
+   "s": "45 g, 20 servings",
+   "c": "04",
+   "cn": "Endure",
+   "pack": "pouch",
+   "act": [
+    {
+     "name": "Maltodextrin",
+     "form": "",
+     "amt": "30 g",
+     "per": ""
+    },
+    {
+     "name": "Fructose",
+     "form": "",
+     "amt": "15 g",
+     "per": ""
+    },
+    {
+     "name": "Sodium",
+     "form": "sodium citrate",
+     "amt": "200 mg",
+     "per": ""
+    }
+   ],
+   "oth": "No other ingredients.",
+   "conc": null,
+   "serving": "45 g",
+   "keyLine": "Maltodextrin 30 g / Fructose 15 g"
+  },
+  "04-3": {
+   "id": "04-3",
+   "n": "Iron Bisglycinate",
+   "g": "Capsules",
+   "q": "60 capsules",
+   "s": "1 capsule daily",
+   "c": "04",
+   "cn": "Endure",
+   "pack": "tin",
+   "act": [
+    {
+     "name": "Iron",
+     "form": "iron bisglycinate",
+     "amt": "14 mg",
+     "per": ""
+    }
+   ],
+   "oth": "Capsule shell: hypromellose. Rice flour.",
+   "conc": null,
+   "serving": "1 capsule",
+   "keyLine": "Iron 14 mg"
+  },
+  "04-4": {
+   "id": "04-4",
+   "n": "Beetroot Powder",
+   "g": "Powder",
+   "q": "250 g",
+   "s": "5 g, 50 servings",
+   "c": "04",
+   "cn": "Endure",
+   "pack": "pouch",
+   "act": [
+    {
+     "name": "Beetroot root powder",
+     "form": "",
+     "amt": "5 g",
+     "per": ""
+    }
+   ],
+   "oth": "No other ingredients.",
+   "conc": null,
+   "serving": "5 g",
+   "keyLine": "Beetroot root powder 5 g"
+  },
+  "04-5": {
+   "id": "04-5",
+   "n": "Caffeine Tablets",
+   "g": "Tablets",
+   "q": "100 tablets",
+   "s": "1 tablet as needed",
+   "c": "04",
+   "cn": "Endure",
+   "pack": "tin",
+   "act": [
+    {
+     "name": "Caffeine",
+     "form": "anhydrous",
+     "amt": "100 mg",
+     "per": ""
+    }
+   ],
+   "oth": "Microcrystalline cellulose, stearic acid.",
+   "conc": null,
+   "serving": "1 tablet",
+   "keyLine": "Caffeine 100 mg"
+  },
+  "04-6": {
+   "id": "04-6",
+   "n": "Sodium Citrate",
+   "g": "Tablets",
+   "q": "120 tablets",
+   "s": "2 tablets daily",
+   "c": "04",
+   "cn": "Endure",
+   "pack": "tin",
+   "act": [
+    {
+     "name": "Sodium",
+     "form": "sodium citrate",
+     "amt": "400 mg",
+     "per": "per 2 tablets"
+    }
+   ],
+   "oth": "Microcrystalline cellulose, stearic acid.",
+   "conc": null,
+   "serving": "2 tablets",
+   "keyLine": "Sodium 400 mg"
+  },
+  "05-1": {
+   "id": "05-1",
+   "n": "Magnesium Glycinate",
+   "g": "Capsules",
+   "q": "120 capsules",
+   "s": "2 capsules daily",
+   "c": "05",
+   "cn": "Restore",
+   "pack": "tin",
+   "act": [
+    {
+     "name": "Magnesium",
+     "form": "magnesium bisglycinate",
+     "amt": "200 mg",
+     "per": "per 2 capsules"
+    }
+   ],
+   "oth": "Capsule shell: hypromellose. Rice flour.",
+   "conc": null,
+   "serving": "2 capsules",
+   "keyLine": "Magnesium 200 mg"
+  },
+  "05-2": {
+   "id": "05-2",
+   "n": "Tart Cherry Extract",
+   "g": "Capsules",
+   "q": "60 capsules",
+   "s": "1 capsule daily",
+   "c": "05",
+   "cn": "Restore",
+   "pack": "tin",
+   "act": [
+    {
+     "name": "Montmorency tart cherry extract",
+     "form": "",
+     "amt": "500 mg",
+     "per": ""
+    }
+   ],
+   "oth": "Capsule shell: hypromellose. Rice flour.",
+   "conc": null,
+   "serving": "1 capsule",
+   "keyLine": "Montmorency tart cherry extract 500 mg"
+  },
+  "05-3": {
+   "id": "05-3",
+   "n": "Glutamine",
+   "g": "Powder",
+   "q": "300 g",
+   "s": "5 g, 60 servings",
+   "c": "05",
+   "cn": "Restore",
+   "pack": "pouch",
+   "act": [
+    {
+     "name": "L-glutamine",
+     "form": "",
+     "amt": "5 g",
+     "per": ""
+    }
+   ],
+   "oth": "No other ingredients.",
+   "conc": null,
+   "serving": "5 g",
+   "keyLine": "L-glutamine 5 g"
+  },
+  "05-4": {
+   "id": "05-4",
+   "n": "Curcumin + Black Pepper",
+   "g": "Capsules",
+   "q": "60 capsules",
+   "s": "1 capsule daily",
+   "c": "05",
+   "cn": "Restore",
+   "pack": "tin",
+   "act": [
+    {
+     "name": "Turmeric root extract",
+     "form": "95% curcuminoids",
+     "amt": "500 mg",
+     "per": ""
+    },
+    {
+     "name": "Black pepper fruit extract",
+     "form": "",
+     "amt": "5 mg",
+     "per": ""
+    }
+   ],
+   "oth": "Capsule shell: hypromellose. Rice flour.",
+   "conc": null,
+   "serving": "1 capsule",
+   "keyLine": "Turmeric root extract 500 mg / Black pepper fruit extract 5 mg"
+  },
+  "05-5": {
+   "id": "05-5",
+   "n": "Magnesium Body Butter",
+   "g": "Cream",
+   "q": "150 ml",
+   "s": "Apply as needed",
+   "c": "05",
+   "cn": "Restore",
+   "pack": "jar",
+   "act": [],
+   "oth": "Aqua, magnesium chloride, shea butter, coconut oil, cetearyl alcohol, glycerin, sunflower seed oil, tocopherol, xanthan gum.",
+   "conc": [
+    [
+     "Magnesium chloride",
+     "15%"
+    ],
+    [
+     "Shea butter",
+     "10%"
+    ],
+    [
+     "Coconut oil",
+     "8%"
+    ]
+   ],
+   "serving": "A thin layer",
+   "keyLine": "Magnesium chloride 15% / Shea butter 10%"
+  },
+  "06-1": {
+   "id": "06-1",
+   "n": "L-Theanine",
+   "g": "Capsules",
+   "q": "90 capsules",
+   "s": "1 capsule daily",
+   "c": "06",
+   "cn": "Focus",
+   "pack": "tin",
+   "act": [
+    {
+     "name": "L-theanine",
+     "form": "",
+     "amt": "200 mg",
+     "per": ""
+    }
+   ],
+   "oth": "Capsule shell: hypromellose. Rice flour.",
+   "conc": null,
+   "serving": "1 capsule",
+   "keyLine": "L-theanine 200 mg"
+  },
+  "06-2": {
+   "id": "06-2",
+   "n": "Caffeine + L-Theanine",
+   "g": "Tablets",
+   "q": "90 tablets",
+   "s": "1 tablet as needed",
+   "c": "06",
+   "cn": "Focus",
+   "pack": "tin",
+   "act": [
+    {
+     "name": "Caffeine",
+     "form": "anhydrous",
+     "amt": "100 mg",
+     "per": ""
+    },
+    {
+     "name": "L-theanine",
+     "form": "",
+     "amt": "200 mg",
+     "per": ""
+    }
+   ],
+   "oth": "Microcrystalline cellulose, stearic acid.",
+   "conc": null,
+   "serving": "1 tablet",
+   "keyLine": "Caffeine 100 mg / L-theanine 200 mg"
+  },
+  "06-3": {
+   "id": "06-3",
+   "n": "Lion's Mane Extract",
+   "g": "Capsules",
+   "q": "90 capsules",
+   "s": "2 capsules daily",
+   "c": "06",
+   "cn": "Focus",
+   "pack": "tin",
+   "act": [
+    {
+     "name": "Lion's mane fruiting body extract",
+     "form": "",
+     "amt": "1000 mg",
+     "per": "per 2 capsules"
+    }
+   ],
+   "oth": "Capsule shell: hypromellose.",
+   "conc": null,
+   "serving": "2 capsules",
+   "keyLine": "Lion's mane fruiting body extract 1000 mg"
+  },
+  "06-4": {
+   "id": "06-4",
+   "n": "Alpha-GPC",
+   "g": "Capsules",
+   "q": "60 capsules",
+   "s": "1 capsule daily",
+   "c": "06",
+   "cn": "Focus",
+   "pack": "tin",
+   "act": [
+    {
+     "name": "Alpha-glycerylphosphorylcholine",
+     "form": "",
+     "amt": "300 mg",
+     "per": ""
+    }
+   ],
+   "oth": "Capsule shell: hypromellose. Rice flour.",
+   "conc": null,
+   "serving": "1 capsule",
+   "keyLine": "Alpha-glycerylphosphorylcholine 300 mg"
+  },
+  "06-5": {
+   "id": "06-5",
+   "n": "L-Tyrosine",
+   "g": "Powder",
+   "q": "200 g",
+   "s": "2 g, 100 servings",
+   "c": "06",
+   "cn": "Focus",
+   "pack": "pouch",
+   "act": [
+    {
+     "name": "L-tyrosine",
+     "form": "",
+     "amt": "2 g",
+     "per": ""
+    }
+   ],
+   "oth": "No other ingredients.",
+   "conc": null,
+   "serving": "2 g",
+   "keyLine": "L-tyrosine 2 g"
+  },
+  "06-6": {
+   "id": "06-6",
+   "n": "Rhodiola Root Extract",
+   "g": "Capsules",
+   "q": "60 capsules",
+   "s": "1 capsule daily",
+   "c": "06",
+   "cn": "Focus",
+   "pack": "tin",
+   "act": [
+    {
+     "name": "Rhodiola rosea root extract",
+     "form": "",
+     "amt": "400 mg",
+     "per": ""
+    }
+   ],
+   "oth": "Capsule shell: hypromellose. Rice flour.",
+   "conc": null,
+   "serving": "1 capsule",
+   "keyLine": "Rhodiola rosea root extract 400 mg"
+  },
+  "07-1": {
+   "id": "07-1",
+   "n": "Glycine",
+   "g": "Powder",
+   "q": "250 g",
+   "s": "3 g, 83 servings",
+   "c": "07",
+   "cn": "Still",
+   "pack": "pouch",
+   "act": [
+    {
+     "name": "Glycine",
+     "form": "",
+     "amt": "3 g",
+     "per": ""
+    }
+   ],
+   "oth": "No other ingredients.",
+   "conc": null,
+   "serving": "3 g",
+   "keyLine": "Glycine 3 g"
+  },
+  "07-2": {
+   "id": "07-2",
+   "n": "Magnesium L-Threonate",
+   "g": "Capsules",
+   "q": "90 capsules",
+   "s": "3 capsules daily",
+   "c": "07",
+   "cn": "Still",
+   "pack": "tin",
+   "act": [
+    {
+     "name": "Magnesium",
+     "form": "magnesium L-threonate",
+     "amt": "144 mg",
+     "per": "per 3 capsules"
+    }
+   ],
+   "oth": "Capsule shell: hypromellose. Rice flour.",
+   "conc": null,
+   "serving": "3 capsules",
+   "keyLine": "Magnesium 144 mg"
+  },
+  "07-3": {
+   "id": "07-3",
+   "n": "Ashwagandha Root Extract",
+   "g": "Capsules",
+   "q": "60 capsules",
+   "s": "1 capsule daily",
+   "c": "07",
+   "cn": "Still",
+   "pack": "tin",
+   "act": [
+    {
+     "name": "Ashwagandha root extract",
+     "form": "",
+     "amt": "600 mg",
+     "per": ""
+    }
+   ],
+   "oth": "Capsule shell: hypromellose. Rice flour.",
+   "conc": null,
+   "serving": "1 capsule",
+   "keyLine": "Ashwagandha root extract 600 mg"
+  },
+  "07-4": {
+   "id": "07-4",
+   "n": "Valerian Root",
+   "g": "Capsules",
+   "q": "90 capsules",
+   "s": "1 capsule daily",
+   "c": "07",
+   "cn": "Still",
+   "pack": "tin",
+   "act": [
+    {
+     "name": "Valerian root extract",
+     "form": "",
+     "amt": "400 mg",
+     "per": ""
+    }
+   ],
+   "oth": "Capsule shell: hypromellose. Rice flour.",
+   "conc": null,
+   "serving": "1 capsule",
+   "keyLine": "Valerian root extract 400 mg"
+  },
+  "07-5": {
+   "id": "07-5",
+   "n": "Lemon Balm Extract",
+   "g": "Capsules",
+   "q": "60 capsules",
+   "s": "1 capsule daily",
+   "c": "07",
+   "cn": "Still",
+   "pack": "tin",
+   "act": [
+    {
+     "name": "Lemon balm leaf extract",
+     "form": "",
+     "amt": "500 mg",
+     "per": ""
+    }
+   ],
+   "oth": "Capsule shell: hypromellose. Rice flour.",
+   "conc": null,
+   "serving": "1 capsule",
+   "keyLine": "Lemon balm leaf extract 500 mg"
+  },
+  "07-6": {
+   "id": "07-6",
+   "n": "Chamomile Infusion",
+   "g": "Sachets",
+   "q": "30 sachets",
+   "s": "1 sachet in hot water",
+   "c": "07",
+   "cn": "Still",
+   "pack": "box",
+   "act": [
+    {
+     "name": "Chamomile flower",
+     "form": "",
+     "amt": "1.5 g",
+     "per": ""
+    }
+   ],
+   "oth": "No other ingredients.",
+   "conc": null,
+   "serving": "1 sachet",
+   "keyLine": "Chamomile flower 1.5 g"
+  },
+  "08-1": {
+   "id": "08-1",
+   "n": "Vitamin C Serum",
+   "g": "Serum",
+   "q": "30 ml",
+   "s": "2 to 3 drops, morning",
+   "c": "08",
+   "cn": "Renew",
+   "pack": "dropper",
+   "act": [],
+   "oth": "Aqua, ascorbic acid, glycerin, ferulic acid, tocopherol, sodium hyaluronate, phenoxyethanol, ethylhexylglycerin.",
+   "conc": [
+    [
+     "Ascorbic acid",
+     "10%"
+    ],
+    [
+     "Ferulic acid",
+     "0.5%"
+    ],
+    [
+     "Tocopherol",
+     "1%"
+    ],
+    [
+     "Sodium hyaluronate",
+     "0.2%"
+    ]
+   ],
+   "serving": "2 to 3 drops",
+   "keyLine": "Ascorbic acid 10% / Ferulic acid 0.5%"
+  },
+  "08-2": {
+   "id": "08-2",
+   "n": "Niacinamide Serum",
+   "g": "Serum",
+   "q": "30 ml",
+   "s": "2 to 3 drops, evening",
+   "c": "08",
+   "cn": "Renew",
+   "pack": "dropper",
+   "act": [],
+   "oth": "Aqua, niacinamide, glycerin, zinc PCA, panthenol, sodium hyaluronate, phenoxyethanol, ethylhexylglycerin.",
+   "conc": [
+    [
+     "Niacinamide",
+     "10%"
+    ],
+    [
+     "Zinc PCA",
+     "1%"
+    ],
+    [
+     "Panthenol",
+     "0.5%"
+    ]
+   ],
+   "serving": "2 to 3 drops",
+   "keyLine": "Niacinamide 10% / Zinc PCA 1%"
+  },
+  "08-3": {
+   "id": "08-3",
+   "n": "Ceramide Cream",
+   "g": "Cream",
+   "q": "50 ml",
+   "s": "Apply a thin layer",
+   "c": "08",
+   "cn": "Renew",
+   "pack": "jar",
+   "act": [],
+   "oth": "Aqua, glycerin, squalane, ceramide NP, ceramide AP, ceramide EOP, cholesterol, cetearyl alcohol, tocopherol, phenoxyethanol.",
+   "conc": [
+    [
+     "Ceramide NP, AP and EOP",
+     "1%"
+    ],
+    [
+     "Squalane",
+     "5%"
+    ],
+    [
+     "Cholesterol",
+     "0.5%"
+    ]
+   ],
+   "serving": "A thin layer",
+   "keyLine": "Ceramide NP, AP and EOP 1% / Squalane 5%"
+  },
+  "08-4": {
+   "id": "08-4",
+   "n": "Zinc Bisglycinate",
+   "g": "Capsules",
+   "q": "90 capsules",
+   "s": "1 capsule daily",
+   "c": "08",
+   "cn": "Renew",
+   "pack": "tin",
+   "act": [
+    {
+     "name": "Zinc",
+     "form": "zinc bisglycinate",
+     "amt": "15 mg",
+     "per": ""
+    }
+   ],
+   "oth": "Capsule shell: hypromellose. Rice flour.",
+   "conc": null,
+   "serving": "1 capsule",
+   "keyLine": "Zinc 15 mg"
+  },
+  "08-5": {
+   "id": "08-5",
+   "n": "Biotin",
+   "g": "Tablets",
+   "q": "120 tablets",
+   "s": "1 tablet daily",
+   "c": "08",
+   "cn": "Renew",
+   "pack": "tin",
+   "act": [
+    {
+     "name": "Biotin",
+     "form": "",
+     "amt": "5000 mcg",
+     "per": ""
+    }
+   ],
+   "oth": "Microcrystalline cellulose, stearic acid.",
+   "conc": null,
+   "serving": "1 tablet",
+   "keyLine": "Biotin 5000 mcg"
+  },
+  "08-6": {
+   "id": "08-6",
+   "n": "Hyaluronic Acid",
+   "g": "Capsules",
+   "q": "60 capsules",
+   "s": "1 capsule daily",
+   "c": "08",
+   "cn": "Renew",
+   "pack": "tin",
+   "act": [
+    {
+     "name": "Sodium hyaluronate",
+     "form": "",
+     "amt": "120 mg",
+     "per": ""
+    }
+   ],
+   "oth": "Capsule shell: hypromellose. Rice flour.",
+   "conc": null,
+   "serving": "1 capsule",
+   "keyLine": "Sodium hyaluronate 120 mg"
+  },
+  "09-1": {
+   "id": "09-1",
+   "n": "Omega-3",
+   "g": "Softgels",
+   "q": "90 softgels",
+   "s": "2 softgels daily",
+   "c": "09",
+   "cn": "Vital",
+   "pack": "tin",
+   "act": [
+    {
+     "name": "Fish oil concentrate",
+     "form": "",
+     "amt": "1000 mg",
+     "per": "per 2 softgels"
+    },
+    {
+     "name": "EPA",
+     "form": "eicosapentaenoic acid",
+     "amt": "360 mg",
+     "per": ""
+    },
+    {
+     "name": "DHA",
+     "form": "docosahexaenoic acid",
+     "amt": "240 mg",
+     "per": ""
+    }
+   ],
+   "oth": "Mixed tocopherols. Softgel shell: gelatin, glycerin.",
+   "conc": null,
+   "serving": "2 softgels",
+   "keyLine": "Fish oil concentrate 1000 mg / EPA 360 mg"
+  },
+  "09-2": {
+   "id": "09-2",
+   "n": "Coenzyme Q10",
+   "g": "Softgels",
+   "q": "60 softgels",
+   "s": "1 softgel daily",
+   "c": "09",
+   "cn": "Vital",
+   "pack": "tin",
+   "act": [
+    {
+     "name": "Coenzyme Q10",
+     "form": "ubiquinone",
+     "amt": "100 mg",
+     "per": ""
+    }
+   ],
+   "oth": "Sunflower oil. Softgel shell: gelatin, glycerin.",
+   "conc": null,
+   "serving": "1 softgel",
+   "keyLine": "Coenzyme Q10 100 mg"
+  },
+  "09-3": {
+   "id": "09-3",
+   "n": "Astaxanthin",
+   "g": "Softgels",
+   "q": "60 softgels",
+   "s": "1 softgel daily",
+   "c": "09",
+   "cn": "Vital",
+   "pack": "tin",
+   "act": [
+    {
+     "name": "Astaxanthin",
+     "form": "",
+     "amt": "8 mg",
+     "per": ""
+    }
+   ],
+   "oth": "Olive oil. Softgel shell: gelatin, glycerin.",
+   "conc": null,
+   "serving": "1 softgel",
+   "keyLine": "Astaxanthin 8 mg"
+  },
+  "09-4": {
+   "id": "09-4",
+   "n": "Vitamin K2 MK-7",
+   "g": "Capsules",
+   "q": "90 capsules",
+   "s": "1 capsule daily",
+   "c": "09",
+   "cn": "Vital",
+   "pack": "tin",
+   "act": [
+    {
+     "name": "Vitamin K2",
+     "form": "menaquinone-7",
+     "amt": "100 mcg",
+     "per": ""
+    }
+   ],
+   "oth": "Capsule shell: hypromellose. Rice flour.",
+   "conc": null,
+   "serving": "1 capsule",
+   "keyLine": "Vitamin K2 100 mcg"
+  },
+  "09-5": {
+   "id": "09-5",
+   "n": "Calcium Citrate",
+   "g": "Tablets",
+   "q": "120 tablets",
+   "s": "2 tablets daily",
+   "c": "09",
+   "cn": "Vital",
+   "pack": "tin",
+   "act": [
+    {
+     "name": "Calcium",
+     "form": "calcium citrate",
+     "amt": "400 mg",
+     "per": "per 2 tablets"
+    }
+   ],
+   "oth": "Microcrystalline cellulose, stearic acid.",
+   "conc": null,
+   "serving": "2 tablets",
+   "keyLine": "Calcium 400 mg"
+  },
+  "09-6": {
+   "id": "09-6",
+   "n": "Probiotic",
+   "g": "Capsules",
+   "q": "30 capsules",
+   "s": "1 capsule daily",
+   "c": "09",
+   "cn": "Vital",
+   "pack": "tin",
+   "act": [
+    {
+     "name": "Lactobacillus and Bifidobacterium blend",
+     "form": "",
+     "amt": "10 billion CFU",
+     "per": ""
+    }
+   ],
+   "oth": "Capsule shell: hypromellose. Rice flour.",
+   "conc": null,
+   "serving": "1 capsule",
+   "keyLine": "Lactobacillus and Bifidobacterium blend 10 billion CFU"
+  }
+ },
+ "collections": [
+  {
+   "c": "01",
+   "n": "Foundation",
+   "lead": "01-1"
+  },
+  {
+   "c": "02",
+   "n": "Form",
+   "lead": "02-1"
+  },
+  {
+   "c": "03",
+   "n": "Force",
+   "lead": "03-1"
+  },
+  {
+   "c": "04",
+   "n": "Endure",
+   "lead": "04-1"
+  },
+  {
+   "c": "05",
+   "n": "Restore",
+   "lead": "05-1"
+  },
+  {
+   "c": "06",
+   "n": "Focus",
+   "lead": "06-1"
+  },
+  {
+   "c": "07",
+   "n": "Still",
+   "lead": "07-1"
+  },
+  {
+   "c": "08",
+   "n": "Renew",
+   "lead": "08-1"
+  },
+  {
+   "c": "09",
+   "n": "Vital",
+   "lead": "09-1"
+  }
+ ]
+}

@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Closed</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0a0a0b">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Hanken+Grotesk:wght@300..600&family=Instrument+Serif:ital@1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="app.css">
+<script>
+/* before first paint: test hooks (?rm reduced motion, ?nogl no WebGL, ?gate), and who is at the door */
+(function(){var q=new URLSearchParams(location.search),d=document.documentElement,m=null;
+ try{m=localStorage.getItem('p4ce.v5.member')}catch(e){}
+ if(q.has('rm')||matchMedia('(prefers-reduced-motion: reduce)').matches)d.classList.add('rm');
+ if(q.has('nogl'))d.classList.add('nogl');
+ var exit=/^#\/exit/.test(location.hash),key=(q.get('key')||'').replace(/\s+/g,'').toUpperCase()==='0047RSRV';
+ d.classList.add(m==='1'&&!q.has('gate')&&!exit&&!key?'in':'out');
+})();
+</script>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}</script>
+<script type="module" src="js/main.js"></script>
+</head>
+<body>
+<!-- the world (WebGL) sits at the back; every view floats over it on the same colour -->
+<div id="world" aria-hidden="true"></div>
+
+<!-- The gate: the only thing a guest sees. Each gate (js/gates/) writes its own markup into this section. -->
+<section id="gate" aria-label="Closed"></section>
+
+<!-- the members' chrome is written by js/app.js once the gate has been opened -->
+<main id="views" tabindex="-1"></main>
+<div id="stage" aria-hidden="true"></div>
+<div id="scrim" hidden></div>
+<aside id="drawer" role="dialog" aria-modal="true" aria-labelledby="dwH" hidden></aside>
+<p id="live" class="sr" aria-live="polite"></p>
+</body>
+</html>

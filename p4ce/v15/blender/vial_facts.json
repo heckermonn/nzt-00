@@ -1,0 +1,313 @@
+{
+ "areas": [
+  {
+   "c": "01",
+   "n": "Reference standards"
+  },
+  {
+   "c": "02",
+   "n": "Metabolic research"
+  },
+  {
+   "c": "03",
+   "n": "Musculoskeletal research"
+  },
+  {
+   "c": "04",
+   "n": "Mitochondrial and bioenergetics"
+  },
+  {
+   "c": "05",
+   "n": "Tissue and wound-healing models"
+  },
+  {
+   "c": "06",
+   "n": "Neuroscience"
+  },
+  {
+   "c": "07",
+   "n": "Circadian research"
+  },
+  {
+   "c": "08",
+   "n": "Dermatology and cosmetic science"
+  },
+  {
+   "c": "09",
+   "n": "Cellular ageing"
+  }
+ ],
+ "products": {
+  "PR6-C-0101": {
+   "c": "01",
+   "n": "Compound 01A",
+   "cls": "Peptide fragment",
+   "lot": "LOT 2601-A",
+   "purity": "xx.x%",
+   "size": "5 mg",
+   "tested": "[named third-party lab]",
+   "tdate": "2026-10-08"
+  },
+  "PR6-C-0102": {
+   "c": "01",
+   "n": "Compound 01B",
+   "cls": "Peptide conjugate",
+   "lot": "LOT 2601-B",
+   "purity": "xx.x%",
+   "size": "5 mg",
+   "tested": "[named third-party lab]",
+   "tdate": "2026-10-09"
+  },
+  "PR6-C-0103": {
+   "c": "01",
+   "n": "Compound 01C",
+   "cls": "Linear peptide",
+   "lot": "LOT 2601-C",
+   "purity": "xx.x%",
+   "size": "5 mg",
+   "tested": "[named third-party lab]",
+   "tdate": "2026-10-10"
+  },
+  "PR6-C-0201": {
+   "c": "02",
+   "n": "Compound 02A",
+   "cls": "Cyclic peptide",
+   "lot": "LOT 2602-A",
+   "purity": "xx.x%",
+   "size": "5 mg",
+   "tested": "[named third-party lab]",
+   "tdate": "2026-10-10"
+  },
+  "PR6-C-0202": {
+   "c": "02",
+   "n": "Compound 02B",
+   "cls": "Modified peptide",
+   "lot": "LOT 2602-B",
+   "purity": "xx.x%",
+   "size": "5 mg",
+   "tested": "[named third-party lab]",
+   "tdate": "2026-10-11"
+  },
+  "PR6-C-0203": {
+   "c": "02",
+   "n": "Compound 02C",
+   "cls": "Peptide fragment",
+   "lot": "LOT 2602-C",
+   "purity": "xx.x%",
+   "size": "5 mg",
+   "tested": "[named third-party lab]",
+   "tdate": "2026-10-12"
+  },
+  "PR6-C-0301": {
+   "c": "03",
+   "n": "Compound 03A",
+   "cls": "Peptide conjugate",
+   "lot": "LOT 2603-A",
+   "purity": "xx.x%",
+   "size": "5 mg",
+   "tested": "[named third-party lab]",
+   "tdate": "2026-10-12"
+  },
+  "PR6-C-0302": {
+   "c": "03",
+   "n": "Compound 03B",
+   "cls": "Linear peptide",
+   "lot": "LOT 2603-B",
+   "purity": "xx.x%",
+   "size": "5 mg",
+   "tested": "[named third-party lab]",
+   "tdate": "2026-10-13"
+  },
+  "PR6-C-0303": {
+   "c": "03",
+   "n": "Compound 03C",
+   "cls": "Cyclic peptide",
+   "lot": "LOT 2603-C",
+   "purity": "xx.x%",
+   "size": "5 mg",
+   "tested": "[named third-party lab]",
+   "tdate": "2026-10-14"
+  },
+  "PR6-C-0401": {
+   "c": "04",
+   "n": "Compound 04A",
+   "cls": "Modified peptide",
+   "lot": "LOT 2604-A",
+   "purity": "xx.x%",
+   "size": "5 mg",
+   "tested": "[named third-party lab]",
+   "tdate": "2026-10-14"
+  },
+  "PR6-C-0402": {
+   "c": "04",
+   "n": "Compound 04B",
+   "cls": "Peptide fragment",
+   "lot": "LOT 2604-B",
+   "purity": "xx.x%",
+   "size": "5 mg",
+   "tested": "[named third-party lab]",
+   "tdate": "2026-10-15"
+  },
+  "PR6-C-0403": {
+   "c": "04",
+   "n": "Compound 04C",
+   "cls": "Peptide conjugate",
+   "lot": "LOT 2604-C",
+   "purity": "xx.x%",
+   "size": "5 mg",
+   "tested": "[named third-party lab]",
+   "tdate": "2026-10-16"
+  },
+  "PR6-C-0501": {
+   "c": "05",
+   "n": "Compound 05A",
+   "cls": "Linear peptide",
+   "lot": "LOT 2605-A",
+   "purity": "xx.x%",
+   "size": "5 mg",
+   "tested": "[named third-party lab]",
+   "tdate": "2026-10-16"
+  },
+  "PR6-C-0502": {
+   "c": "05",
+   "n": "Compound 05B",
+   "cls": "Cyclic peptide",
+   "lot": "LOT 2605-B",
+   "purity": "xx.x%",
+   "size": "5 mg",
+   "tested": "[named third-party lab]",
+   "tdate": "2026-10-17"
+  },
+  "PR6-C-0503": {
+   "c": "05",
+   "n": "Compound 05C",
+   "cls": "Modified peptide",
+   "lot": "LOT 2605-C",
+   "purity": "xx.x%",
+   "size": "5 mg",
+   "tested": "[named third-party lab]",
+   "tdate": "2026-10-18"
+  },
+  "PR6-C-0601": {
+   "c": "06",
+   "n": "Compound 06A",
+   "cls": "Peptide fragment",
+   "lot": "LOT 2606-A",
+   "purity": "xx.x%",
+   "size": "5 mg",
+   "tested": "[named third-party lab]",
+   "tdate": "2026-10-18"
+  },
+  "PR6-C-0602": {
+   "c": "06",
+   "n": "Compound 06B",
+   "cls": "Peptide conjugate",
+   "lot": "LOT 2606-B",
+   "purity": "xx.x%",
+   "size": "5 mg",
+   "tested": "[named third-party lab]",
+   "tdate": "2026-10-19"
+  },
+  "PR6-C-0603": {
+   "c": "06",
+   "n": "Compound 06C",
+   "cls": "Linear peptide",
+   "lot": "LOT 2606-C",
+   "purity": "xx.x%",
+   "size": "5 mg",
+   "tested": "[named third-party lab]",
+   "tdate": "2026-10-20"
+  },
+  "PR6-C-0701": {
+   "c": "07",
+   "n": "Compound 07A",
+   "cls": "Cyclic peptide",
+   "lot": "LOT 2607-A",
+   "purity": "xx.x%",
+   "size": "5 mg",
+   "tested": "[named third-party lab]",
+   "tdate": "2026-10-20"
+  },
+  "PR6-C-0702": {
+   "c": "07",
+   "n": "Compound 07B",
+   "cls": "Modified peptide",
+   "lot": "LOT 2607-B",
+   "purity": "xx.x%",
+   "size": "5 mg",
+   "tested": "[named third-party lab]",
+   "tdate": "2026-10-21"
+  },
+  "PR6-C-0703": {
+   "c": "07",
+   "n": "Compound 07C",
+   "cls": "Peptide fragment",
+   "lot": "LOT 2607-C",
+   "purity": "xx.x%",
+   "size": "5 mg",
+   "tested": "[named third-party lab]",
+   "tdate": "2026-10-22"
+  },
+  "PR6-C-0801": {
+   "c": "08",
+   "n": "Compound 08A",
+   "cls": "Peptide conjugate",
+   "lot": "LOT 2608-A",
+   "purity": "xx.x%",
+   "size": "5 mg",
+   "tested": "[named third-party lab]",
+   "tdate": "2026-10-22"
+  },
+  "PR6-C-0802": {
+   "c": "08",
+   "n": "Compound 08B",
+   "cls": "Linear peptide",
+   "lot": "LOT 2608-B",
+   "purity": "xx.x%",
+   "size": "5 mg",
+   "tested": "[named third-party lab]",
+   "tdate": "2026-10-23"
+  },
+  "PR6-C-0803": {
+   "c": "08",
+   "n": "Compound 08C",
+   "cls": "Cyclic peptide",
+   "lot": "LOT 2608-C",
+   "purity": "xx.x%",
+   "size": "5 mg",
+   "tested": "[named third-party lab]",
+   "tdate": "2026-10-24"
+  },
+  "PR6-C-0901": {
+   "c": "09",
+   "n": "Compound 09A",
+   "cls": "Modified peptide",
+   "lot": "LOT 2609-A",
+   "purity": "xx.x%",
+   "size": "5 mg",
+   "tested": "[named third-party lab]",
+   "tdate": "2026-10-24"
+  },
+  "PR6-C-0902": {
+   "c": "09",
+   "n": "Compound 09B",
+   "cls": "Peptide fragment",
+   "lot": "LOT 2609-B",
+   "purity": "xx.x%",
+   "size": "5 mg",
+   "tested": "[named third-party lab]",
+   "tdate": "2026-10-25"
+  },
+  "PR6-C-0903": {
+   "c": "09",
+   "n": "Compound 09C",
+   "cls": "Peptide conjugate",
+   "lot": "LOT 2609-C",
+   "purity": "xx.x%",
+   "size": "5 mg",
+   "tested": "[named third-party lab]",
+   "tdate": "2026-10-26"
+  }
+ },
+ "ruo": "For laboratory research use only. Not for human or veterinary use."
+}
