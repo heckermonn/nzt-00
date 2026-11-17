@@ -12,7 +12,7 @@ attribute float part;
 varying vec3 vW; varying vec3 vN; varying vec2 vUv; varying float vPart;
 void main(){ vUv = uv; vPart = part; vec4 w = modelMatrix * vec4(position, 1.); vW = w.xyz; vN = normalize(mat3(modelMatrix) * normal); gl_Position = projectionMatrix * viewMatrix * w; }`;
 
-export const ENV = /* glsl */`
+const ENV = /* glsl */`
 uniform sampler2D tEnv, tEnvD; uniform float uEnvMax;
 // the panorama looks out of the case (towards +z here) at its centre
 vec2 envUv(vec3 d){ return vec2(.5 + atan(-d.x, d.z) / 6.2831853, .5 + asin(clamp(d.y, -1., 1.)) / 3.1415927); }
@@ -74,8 +74,7 @@ void main(){
 // right; between rests the shadows travel with the vials, and the two nearest rests are blended.
 const PADS_FS = (COMMON) => /* glsl */`
 varying vec2 vUv; varying vec3 vW; varying vec3 vN;
-uniform sampler2D tC, tL, tL0; uniform float sL, sL0, uHaze, uTurn[9], uVis, uGain; uniform vec2 uFeet; uniform vec4 uBlob;
-uniform vec4 uPL[2]; uniform vec3 uPLc[2];
+uniform sampler2D tC, tL, tL0; uniform float sL, sL0, uHaze, uTurn[9]; uniform vec2 uFeet;
 ${COMMON}
 vec3 shadeAt(vec2 cell, vec2 q, float th){
   float c = cos(th), s = sin(th); vec2 ur = (cell + .5 + vec2(q.x * c - q.y * s, q.x * s + q.y * c)) / 3.; ur.y = 1. - ur.y;
@@ -86,14 +85,11 @@ void main(){
   vec2 ub = vec2(vUv.x, 1. - vUv.y) * 3., cell = floor(ub), q = fract(ub) - .5;
   float turn = uTurn[int((2. - cell.y) * 3. + cell.x + .5)], third = 2.0943951;
   float a = mod(turn, third), w = a / third; w = w * w * (3. - 2. * w);
-  vec3 shade = length(q) > .472 ? vec3(1.) : mix(vec3(1.), mix(shadeAt(cell, q, -a), shadeAt(cell, q, third - a), w), uVis);      // uVis 0: the stands are bare
+  vec3 shade = length(q) > .472 ? vec3(1.) : mix(shadeAt(cell, q, -a), shadeAt(cell, q, third - a), w);
   // where each vial meets the stand the light cannot get in: a tight dark ring that goes round with it
-  for (int k = 0; k < 3; k++){ float an = -1.5707963 + float(k) * third + turn; float dd = length(q - uFeet.x * vec2(cos(an), sin(an))) / uFeet.y; shade *= mix(1., mix(.52, 1., smoothstep(.86, 1.42, dd)), uVis); }
-  // one thing standing alone on a stand (the film): its own soft foot
-  if (uBlob.w > 0. && abs((2. - cell.y) * 3. + cell.x - uBlob.x) < .5) { float dd = length(q - uBlob.yz) / uBlob.w; shade *= mix(.4, 1., smoothstep(.75, 1.9, dd)); }
+  for (int k = 0; k < 3; k++){ float an = -1.5707963 + float(k) * third + turn; float dd = length(q - uFeet.x * vec2(cos(an), sin(an))) / uFeet.y; shade *= mix(.52, 1., smoothstep(.86, 1.42, dd)); }
   vec3 open = toLin(texture2D(tL0, vUv).rgb) * sL0;
-  vec3 alb = toLin(texture2D(tC, vUv).rgb), col = alb * open * shade * uGain;
-  for (int i = 0; i < 2; i++){ vec3 d = uPL[i].xyz - vW; float r2 = dot(d, d), pa = uPL[i].w / (uPL[i].w + r2); col += alb * uPLc[i] * pa * pa * shade * (.25 + .75 * max(normalize(vN).y * d.y * inversesqrt(r2 + 1e-4), 0.)); }
+  vec3 col = toLin(texture2D(tC, vUv).rgb) * open * shade;
   col = mix(col, uFogC, uHaze);
   gl_FragColor = vec4(finish(col, dist), 1.);
 }`;
@@ -133,7 +129,7 @@ export function createVials(o) {
   label.translate(0, (l0 + l1) / 2 * S, 0);
   const solid = merge([withPart(lathe(d.cake, S, 40), 0), withPart(lathe(d.plug, S, 24), 1), withPart(lathe(d.crimp, S, 48), 2), withPart(lathe(d.cap, S, 48), 3), withPart(label, 4)]);
   const U = { tEnv: { value: null }, tEnvD: { value: null }, tLabels: { value: null }, uEnvMax: { value: 40 } };
-  const turnU = { value: new Float32Array(9) }, visU = { value: 1 }, blobU = { value: new THREE.Vector4(0, 0, 0, 0) };
+  const turnU = { value: new Float32Array(9) };
   const stands = [], turns = new Float32Array(9), goals = new Float32Array(9), vel = new Float32Array(9), held = new Uint8Array(9);
   const root = new THREE.Group(); root.visible = false; Z.group.add(root);
   for (let i = 0; i < 9; i++) {
@@ -154,27 +150,21 @@ export function createVials(o) {
   }
   // ---- the stands' tops: shadows that turn
   const pm = Z.mats.pads, info = Z.man.groups.pads;
-  let padMat = null, loaded = false, shown = true;
+  let padMat = null;
   const ready = Promise.all([
     new Promise((res) => new THREE.TextureLoader().load(base + 'formulary_env.webp', (t) => { t.wrapS = THREE.RepeatWrapping; t.colorSpace = THREE.NoColorSpace; t.minFilter = THREE.LinearMipmapLinearFilter; t.generateMipmaps = true; U.tEnv.value = t; res(); }, undefined, res)),
     new Promise((res) => new THREE.TextureLoader().load(base + 'formulary_envd.webp', (t) => { t.wrapS = THREE.RepeatWrapping; t.colorSpace = THREE.NoColorSpace; U.tEnvD.value = t; res(); }, undefined, res)),
     new Promise((res) => new THREE.TextureLoader().load('assets/vials/labels.webp', (t) => { t.colorSpace = THREE.NoColorSpace; t.minFilter = THREE.LinearMipmapLinearFilter; t.generateMipmaps = true; t.anisotropy = o.maxAniso || 1; U.tLabels.value = t; res(); }, undefined, res)),
     pm && info && info.nov ? tex(base + 'formulary_pads_nov_l.webp', false).then((t0) => {
       padMat = new THREE.ShaderMaterial({ vertexShader: o.BAKED_VS, fragmentShader: PADS_FS(COMMON), side: THREE.DoubleSide,
-        uniforms: { ...common(), tC: pm.uniforms.tC, tL: pm.uniforms.tL, tL0: { value: t0 }, sL: { value: info.scale }, sL0: { value: info.nov }, uHaze: haze, uTurn: turnU, uVis: visU, uBlob: blobU, uGain: pm.uniforms.uGain, uPL: pm.uniforms.uPL, uPLc: pm.uniforms.uPLc, uFeet: { value: new THREE.Vector2(d.ring / d.pad_span, Math.max(...d.body.map((q) => q[0])) * S / d.pad_span) } } });
+        uniforms: { ...common(), tC: pm.uniforms.tC, tL: pm.uniforms.tL, tL0: { value: t0 }, sL: { value: info.scale }, sL0: { value: info.nov }, uHaze: haze, uTurn: turnU, uFeet: { value: new THREE.Vector2(d.ring / d.pad_span, Math.max(...d.body.map((q) => q[0])) * S / d.pad_span) } } });
       Z.meshes.pads.material = padMat;
     }).catch(() => {}) : null,
-  ]).then(() => { loaded = !!(U.tEnv.value && U.tEnvD.value && U.tLabels.value); root.visible = loaded && shown; });
+  ]).then(() => { if (U.tEnv.value && U.tEnvD.value && U.tLabels.value) root.visible = true; });
 
   const near = (from, to) => from + ((((to - from) % TAU) + TAU + Math.PI) % TAU) - Math.PI;      // the same place, the short way round
   const V = {
-    ready, root, turns, U,
-    /** Take every vial off its stand, or put them back (the film stands one thing alone in a case). */
-    show(on) { shown = !!on; root.visible = loaded && shown; visU.value = shown ? 1 : 0; },
-    /** The foot of one thing standing alone on stand n (1 to 9): where on the stand (metres from its centre, towards the room) and how wide. r 0: none. */
-    blob(n, front, r) { blobU.value.set(n - 1, 0, -front / d.pad_span, (r || 0) / d.pad_span); },
-    /** Give every stand a push (radians): each settles back where it was. */
-    push(da) { for (let i = 0; i < 9; i++) { turns[i] += da * (1 + 0.12 * ((i * 5) % 9 - 4) / 4); held[i] = 0; } },
+    ready, root, turns,
     /** Bring vial k (0 to 2) of case n (1 to 9) to the front. */
     set(n, k, now) { const i = n - 1; goals[i] = near(turns[i], -k * THIRD); held[i] = 0; if (now) { turns[i] = goals[i]; vel[i] = 0; } },
     /** Turn a stand by hand (a drag): it follows at once. */

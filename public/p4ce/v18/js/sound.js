@@ -151,6 +151,18 @@ export function createSound() {
     const ng = ac.createGain(); ng.gain.setValueAtTime(0.5, t); ng.gain.exponentialRampToValueAtTime(0.001, t + 0.7);
     n.connect(bp); bp.connect(ng); ng.connect(verbIn); ng.connect(master); n.start(t, Math.random(), 0.8);
   }
+  function gather(t, n = 0) {   // the cell draws itself into a sign: a breath in, and one soft note that sits higher each time
+    const f = 98 * Math.pow(2, [0, 2, 4, 7, 9, 12, 14, 16, 19, 24][Math.max(0, Math.min(9, n))] / 12);
+    const b = ac.createBufferSource(); b.buffer = PINK; const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 1.4;
+    bp.frequency.setValueAtTime(f * 1.5, t); bp.frequency.exponentialRampToValueAtTime(f * 5, t + 0.9);
+    const bg = ac.createGain(); bg.gain.setValueAtTime(0, t); bg.gain.linearRampToValueAtTime(0.1, t + 0.7); bg.gain.exponentialRampToValueAtTime(0.001, t + 1.5);
+    b.connect(bp); bp.connect(bg); bg.connect(verbIn); bg.connect(master); b.start(t, Math.random(), 1.6);
+    for (const [m, v] of [[1, 0.13], [2, 0.05], [3.01, 0.022]]) {
+      const o = ac.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(f * m * 0.985, t + 0.5); o.frequency.exponentialRampToValueAtTime(f * m, t + 1.1);
+      const g = ac.createGain(); g.gain.setValueAtTime(0, t + 0.5); g.gain.linearRampToValueAtTime(v, t + 1.0); g.gain.exponentialRampToValueAtTime(0.0008, t + 3.4);
+      o.connect(g); g.connect(verbIn); g.connect(master); o.start(t + 0.5); o.stop(t + 3.5);
+    }
+  }
   function slide(t, dur = 0.7) {   // the viewing slit: steel on steel, then a stop
     const n = ac.createBufferSource(); n.buffer = PINK; const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 3;
     bp.frequency.setValueAtTime(2100, t); bp.frequency.linearRampToValueAtTime(1300, t + dur);
@@ -169,21 +181,6 @@ export function createSound() {
       const o = ac.createOscillator(); o.type = 'sine'; o.frequency.value = f; const g = ac.createGain();
       g.gain.setValueAtTime(0, t + d); g.gain.linearRampToValueAtTime(0.035, t + d + 1.2); g.gain.exponentialRampToValueAtTime(0.0001, t + d + 5);
       o.connect(g); g.connect(roomIn); o.start(t + d); o.stop(t + d + 5.2);
-    }
-  }
-  function leap(t, n = 0) {   // the film: a leap lands with a weight, a breath of air, and one note a step above the last
-    const o = ac.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(104, t); o.frequency.exponentialRampToValueAtTime(41, t + 0.3);
-    const g = ac.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.3, t + 0.012); g.gain.exponentialRampToValueAtTime(0.001, t + 0.62);
-    o.connect(g); g.connect(master); o.start(t); o.stop(t + 0.66);
-    const w = ac.createBufferSource(); w.buffer = PINK; const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 1.1;
-    bp.frequency.setValueAtTime(420, t); bp.frequency.exponentialRampToValueAtTime(3000 + 260 * n, t + 0.16); bp.frequency.exponentialRampToValueAtTime(700, t + 0.7);
-    const wg = ac.createGain(); wg.gain.setValueAtTime(0, t); wg.gain.linearRampToValueAtTime(0.085, t + 0.1); wg.gain.exponentialRampToValueAtTime(0.0008, t + 0.8);
-    w.connect(bp); bp.connect(wg); wg.connect(master); wg.connect(roomIn); w.start(t, Math.random(), 0.9);
-    const f = 147 * Math.pow(2, [0, 2, 4, 7, 9, 12, 14, 16, 19, 24][Math.min(9, n)] / 12);
-    for (const [m, v] of [[1, 0.05], [2.01, 0.018]]) {
-      const p = ac.createOscillator(); p.type = 'sine'; p.frequency.value = f * m; const pg = ac.createGain();
-      pg.gain.setValueAtTime(0, t); pg.gain.linearRampToValueAtTime(v, t + 0.02); pg.gain.exponentialRampToValueAtTime(0.0001, t + 2.4);
-      p.connect(pg); pg.connect(roomIn); pg.connect(master); p.start(t); p.stop(t + 2.5);
     }
   }
   // the Keeper's recorded lines: each decoded once, then projected. She is a hologram, so the voice is close and soft
@@ -244,9 +241,9 @@ export function createSound() {
     key() { key(ac.currentTime); },
     lock() { lock(ac.currentTime + 0.02); },
     slide() { slide(ac.currentTime + 0.02); },
+    gather(n) { gather(ac.currentTime + 0.02, n); },
     tap(f) { tap(ac.currentTime + 0.01, f); },
     arrive() { arrive(ac.currentTime + 0.05); },
-    leap(n) { leap(ac.currentTime + 0.01, n); },
     tick(now) {  // called every frame: schedules sparse random events
       if (city.gain.value < 0.01 || master.gain.value < 0.01) return;
       const t = ac.currentTime;

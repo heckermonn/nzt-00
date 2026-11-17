@@ -69,11 +69,8 @@ export function createShots(W, app) {
   /** The way from the alley through the opened door and the passage into the Atrium. */
   S.through = (side) => {
     const x = X(side), pts = [W.pt('alley', [x, 5.2, 1.6]), W.pt('alley', [x, 7.6, 1.6])];
-    // past the nine steles, on the open side of each
-    const st = W.zones.passage && W.zones.passage.man.anchors.steles;
-    // past every stele on its open side: a small weave while the passage is narrow, straightening as it widens
-    if (st) st.forEach((s, i) => pts.push(W.pt('passage', [-s.side * [0.3, 0.33, 0.36, 0.38, 0.35, 0.3, 0.2, 0.1, 0][i], s.y, 1.6 + (s.y / BAYS.L) * 0.5])));
-    else for (const f of [0.2, 0.45, 0.7, 0.9]) pts.push(W.pt('passage', [0, BAYS.L * f, 1.6 + f * 0.5]));
+    // straight down the passage, rising a little as it grows
+    for (const f of [0.08, 0.25, 0.45, 0.7, 0.9]) pts.push(W.pt('passage', [0, BAYS.L * f, 1.6 + f * 0.5]));
     pts.push(W.pt('atrium', [0, -12, 1.9]));
     return pts;
   };

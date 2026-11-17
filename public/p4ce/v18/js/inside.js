@@ -512,7 +512,7 @@ export async function archive(app) {
   const inv = Object.values(store.exportAll().invitations).find((i) => i.member === m.id) || {};
   const answer = { discover: 'To discover', create: 'To create', become: 'To become', unknown: 'I do not know yet' }[inv.pursuit];
   view.innerHTML = `<div class="page"><header><h1 class="title">A record of where you began.</h1>
-      <p class="lead">Nine records stand in the passage you came in by. This stele is the tenth, and it is cut with your insignia.</p></header>
+      <p class="lead">Nine signs led you down the passage. The tenth was your own, and it is cut into this stele.</p></header>
     <dl class="kv">
       <dt>Institution</dt><dd>PR6</dd>
       <dt>Member number</dt><dd class="mono">${fmtId(m.id)}<span class="note" style="font-family:var(--sans)">Identifies you. Not a credential.</span></dd>

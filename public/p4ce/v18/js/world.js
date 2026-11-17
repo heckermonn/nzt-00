@@ -5,7 +5,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { createVials } from './vials.js';
-import { createLeap } from './leap.js';
+import { createCell } from './cell.js';
 
 const V3 = THREE.Vector3, DEG = Math.PI / 180;
 const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
@@ -320,6 +320,7 @@ export function createWorld(canvas, base = 'assets/world/') {
       if (name === 'compass') buildCompass(Z);
       if (name === 'formulary') buildFormulary(Z);
       if (name === 'archive') setLineage(W.lineage);
+      if (name === 'passage') W.steles(false);
       return Z;
     })();
     loading[name].catch(() => { delete loading[name]; });
@@ -465,8 +466,6 @@ export function createWorld(canvas, base = 'assets/world/') {
     vials = createVials({ Z, COMMON, common, haze: haze.formulary, base, tex, BAKED_VS, maxAniso });
     Z.backs = {}; for (const e of Z.emits) { const mm = /^back(\d+)/.exec(e.name); if (mm) Z.backs[+mm[1]] = e; }
     if (W._turns) for (const n in W._turns) vials.set(+n, W._turns[n], true);
-    // the film's one object stands alone on the stand of the centre case (js/leap.js)
-    W.vials = vials; W.leap = createLeap({ Z, COMMON, common, haze: haze.formulary, U: vials.U, n: 5 });
   }
   /** The stands of the Formulary: bring vial k (0 to 2) of case n (1 to 9) to the front; turn one by hand; let it go. */
   W.turn = {
@@ -482,6 +481,40 @@ export function createWorld(canvas, base = 'assets/world/') {
 
   /** How brightly a baked group shows (1 as baked): the film lets each stele's light find it. */
   W.gain = (zone, group, v) => { const Z = W.zones[zone], m = Z && Z.mats[group]; if (m) m.uniforms.uGain.value = v; };
+  /** The nine steles of the passage and their lamps. They are put away: the film's living sign stands where they stood. */
+  W.steles = (on) => {
+    const Z = W.zones.passage; for (let i = 0; i < 9; i++) { W.lamps['s' + i] = on ? 1 : 0; if (Z) for (const k of ['era' + i, 'body' + i]) if (Z.meshes[k]) Z.meshes[k].visible = !!on; }
+    if (Z) { if (!Z.patches) Z.patches = patchFloor(Z); for (const o of Z.patches) o.visible = !on; }
+  };
+  // Where a stele stood, the baked floor is dark: no light fell under it. A piece of the same floor, taken from just
+  // in front of that place and laid over it, makes the floor whole.
+  function patchFloor(Z) {
+    const out = [];
+    Z.man.anchors.steles.forEach((s, i) => {
+      const fm = Z.meshes['pf' + Math.floor(i / 3)]; if (!fm) return;
+      const g = fm.geometry, P = g.attributes.position, U = g.attributes.uv, ix = g.index; if (!ix || !U) return;
+      // the floor lies in the zone's frame: a place (x, y) of the plan is (x, -z) here. Find the piece of floor under the stele
+      const bary = (t, x, z) => {
+        const a = ix.getX(t), b = ix.getX(t + 1), c = ix.getX(t + 2), x0 = P.getX(a), z0 = P.getZ(a), e1x = P.getX(b) - x0, e1z = P.getZ(b) - z0, e2x = P.getX(c) - x0, e2z = P.getZ(c) - z0;
+        const det = e1x * e2z - e1z * e2x; if (Math.abs(det) < 1e-9) return null;
+        const dx = x - x0, dz = z - z0, u = (dx * e2z - dz * e2x) / det, v = (e1x * dz - e1z * dx) / det;
+        return { a, b, c, u, v };
+      };
+      let T = -1; for (let t = 0; t < ix.count; t += 3) { const k = bary(t, s.x, -s.y); if (k && k.u >= 0 && k.v >= 0 && k.u + k.v <= 1) { T = t; break; } }
+      if (T < 0) return;
+      const uvAt = (x, y) => { const k = bary(T, x, -y); return [U.getX(k.a) + k.u * (U.getX(k.b) - U.getX(k.a)) + k.v * (U.getX(k.c) - U.getX(k.a)), U.getY(k.a) + k.u * (U.getY(k.b) - U.getY(k.a)) + k.v * (U.getY(k.c) - U.getY(k.a))]; };
+      const mg = 0.1 + 0.07 * s.sw, x0 = s.x - s.sw / 2 - mg, x1 = s.x + s.sw / 2 + mg, yF = s.y - s.st / 2 - mg, yB = s.y + s.st / 2 + mg, yS = yF - (yB - yF), fy = P.getY(ix.getX(T)) + 0.006;
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.Float32BufferAttribute([x0, fy, -yF, x1, fy, -yF, x1, fy, -yB, x0, fy, -yB], 3));
+      geo.setAttribute('normal', new THREE.Float32BufferAttribute([0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0], 3));
+      geo.setAttribute('uv', new THREE.Float32BufferAttribute([...uvAt(x0, yF), ...uvAt(x1, yF), ...uvAt(x1, yS), ...uvAt(x0, yS)], 2));
+      geo.setIndex([0, 1, 2, 0, 2, 3]);
+      const o = new THREE.Mesh(geo, fm.material); o.name = 'patch' + i; fm.parent.add(o); o.updateMatrixWorld(true); out.push(o);
+    });
+    return out;
+  }
+  /** The living cell that leads the film (js/cell.js). */
+  W.cell = createCell({ scene, COMMON, common });
   /** A live point light on the baked surfaces (slot 0 or 1). */
   W.light = (i, pos, color, radius2) => { if (pos) G.uPL.value[i].set(pos.x, pos.y, pos.z, radius2 || 1); else G.uPL.value[i].set(0, -999, 0, 1); G.uPLc.value[i].setRGB(color ? color[0] : 0, color ? color[1] : 0, color ? color[2] : 0); };
 
@@ -613,9 +646,8 @@ export function createWorld(canvas, base = 'assets/world/') {
         // each door, its shutter and its seal were baked whole under the lamp above them, so they follow that lamp
         if (zn === 'alley') { const d = /^(?:door|shut|med)([LR])/.exec(k); if (d) m.uniforms.uGain.value = 0.07 + 0.93 * (W.lamps['lamp' + d[1]] ?? 1); }
       }
-      // W.emitK(zone, name): the film turns the lines of light of a room down and up
-      for (const e of Z.emits) e.mesh.material.uniforms.uW.value = (e.lamp ? (W.lamps[e.lamp] ?? 1) : 1) * (W.emitK ? W.emitK(zn, e.name) : 1);
-      if (Z.backs) for (const i in Z.backs) { const b = Z.backs[i], goal = W._niche ? (+i === W._niche ? 1.5 : 0.6) : 1; b.w = (b.w ?? 1) + (goal - (b.w ?? 1)) * (W.motion ? 1 - Math.pow(0.002, dt) : 1); b.mesh.material.uniforms.uW.value = b.w * (W.emitK ? W.emitK(zn, b.name) : 1); }
+      for (const e of Z.emits) e.mesh.material.uniforms.uW.value = e.lamp ? (W.lamps[e.lamp] ?? 1) : 1;
+      if (Z.backs) for (const i in Z.backs) { const u = Z.backs[i].mesh.material.uniforms.uW, goal = W._niche ? (+i === W._niche ? 1.5 : 0.6) : 1; u.value += (goal - u.value) * (W.motion ? 1 - Math.pow(0.002, dt) : 1); }
     }
     const ek = clamp(W.expo * 1.1, 0.2, 1);
     for (const s of sprites) s.material.opacity = (s.userData.lamp ? (W.lamps[s.userData.lamp] ?? 1) : 1) * s.userData.k * ek;
@@ -633,7 +665,6 @@ export function createWorld(canvas, base = 'assets/world/') {
     W.compassHeadT += (W.compassHead - W.compassHeadT) * (W.motion ? 1 - Math.pow(0.0015, dt) : 1); W.compassPointT += (W.compassPoint - W.compassPointT) * (W.motion ? 1 - Math.pow(0.02, dt) : 1);
     updateBlades(W.compassT, time);
     if (vials) vials.update(dt, W.motion);
-    if (W.leap) W.leap.update();
     // adapt: if frames are slow, lower the resolution, then the mirror
     if (dt > 0 && W.motion) { slow = slow * 0.95 + (dt > 0.034 ? 1 : 0) * 0.05; if (slow > 0.6 && time - last > 2) { last = time; slow = 0; if ((W.dpr || Math.min(devicePixelRatio || 1, 2)) > 1) { W.dpr = Math.max(1, (W.dpr || Math.min(devicePixelRatio || 1, 2)) - 0.5); W.resize(); } else if ((W.reflScale ?? 0.5) > 0.26) { W.reflScale = 0.25; W.resize(); } } }
     // the rooms beyond the Atrium stand in the haze of the court and come out of it as the camera nears them

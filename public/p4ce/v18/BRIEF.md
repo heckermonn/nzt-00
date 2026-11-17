@@ -18,7 +18,7 @@ Live path (once on Pages): `/p4ce/v18/`. No build step: plain ES modules, open `
 | A06 Application | `#/apply` | Age and Canada eligibility, password, optional passkey offer. |
 | A07 Review Status | `#/status` | Received, in review, question, decision. Approval is separate from the door. |
 | A08 Member Acceptance | `#/offer` | Offer, generation, founding rights (marked proposed), two explicit acceptances. The door answers (below). |
-| A09 Film | `#/passage` | One object, nine leaps. The member's door opens on darkness. In it one stone stands on a stand. Nine times it becomes the next thing people learned to make, in one snap each (tools: a stone; fire: fired clay with embers in it; agriculture: a storage jar; mathematics: a cast bronze measure; medicine: a blown glass flask; engineering: turned steel; flight: spun aluminium; computation: a grown crystal of silicon; space: a sealed titanium canister). Each leap comes sooner than the last and lets more light into the room. The tenth thing is a PR6 vial; the light comes up, and the camera draws back to find it standing in the Formulary, where the film ends and the store begins. Captions give the era, a line and an approximate date. Space pauses, arrows step a leap, Skip or Esc hurries the same film. Direct mode shows the nine as a page. The passage and its nine steles still stand behind the door: a returning member is carried through them. |
+| A09 Film | `#/passage` | One living cell, nine signs. The member's door opens on darkness, and a bright drop is waiting behind it: soft, never still, with a heart in it, like the cells on the first page of the kit. The camera follows it down the passage in one take. In each of the nine bays the drop gathers itself into one sign of something people worked out (tools, fire, agriculture, mathematics, medicine, engineering, flight, computation, space), holds it, and lets go; each sign is larger than the last and comes sooner. In the dark the cell is the light; as the passage grows and pales it becomes a body of deep blue that the day shines through. In the Atrium it makes a tenth sign, the member's own insignia, then clears like water and goes on ahead into the round light at the far end. The film ends in the Atrium. Captions give the era, a line and an approximate date. Space pauses, arrows step from sign to sign, Skip or Esc hurries the same film. Direct mode shows the nine as a page. The steles that stood in the passage are put away (`W.steles`). |
 | A10 Atrium | `#/atrium` | "What are we pursuing today?" Three destinations plus routine links. |
 | A11 Compass | `#/compass`, `#/compass/index`, `#/compass/edit` | The wayfinder: the member at the centre of a compass card, every place on a bearing around them (below). The five optional questions are now the reading index. Never maps a goal to a product; fails closed. |
 | A12 Formulary | `#/formulary`, `#/formulary/NN`, `#/record/ID` | Search, status, structured records, checks before any order. |
@@ -108,14 +108,15 @@ the page draws it with no lights of its own and it still reads as the Cycles pic
   floor and pool reflections from a mirror pass, rain, the doors, the Keeper in the slit, the
   Compass blades, the Formulary vials, the Archive stele, and the camera director (`W.fly`).
 - `js/shots.js`: where the camera stands for each screen and the way it travels between rooms.
-- `js/film.js`: A09. Everything is a function of one clock, so it can be paused and stepped. `js/leap.js` is the
-  object: ten outlines (radius, height) resampled to the same number of points, so one lathe mesh carries all ten;
-  a leap moves the outline (overshooting, then settling) and the material (albedo, metal, softness of reflection,
-  glass, pitting, turning marks, embers) together in under half a second. It is lit by the vials' own panorama, so
-  it sits in the case like they do. The room's baked light is turned down with `W.gain` and `W.emitK`, a live point
-  light (`W.light`) is the pool round the object, and the vials leave their stands (`W.vials.show`) until the last
-  leap. The only cut is in the dark behind the door. The passage's steles, emblems (`blender/eras.py`, `js/eras.js`)
-  and lamps remain for the walk a returning member is carried on.
+- `js/film.js`: A09. Everything is a function of one clock, so it can be paused and stepped. `js/cell.js` is the
+  cell: not a mesh but a distance field, marched in the fragment shader inside a box that follows it (with
+  `gl_FragDepth`, so walls hide it and it shows in the floor's mirror). The drop is five spheres that run into one
+  another; each sign is the outline the page uses (`js/eras.js`, `js/insignia.js`) turned into a distance field once
+  at load (canvas, then an exact distance transform, into one half-float atlas), given a body that is fuller toward
+  its middle. `uForm` moves the surface from the drop to the sign, so the change is a change of shape and never a
+  fade. Its colour is light let through a blue body (thin is pale, thick is deep) plus its own glow in the dark. It
+  leads the walker at a set distance and waits at its place in each bay. A live point light (`W.light`) is its glow
+  on the walls. `W.steles(false)` hides the nine steles and lays a patch of floor over each place one stood.
 - `js/still.js`: the route without WebGL 2 (stills in `assets/scenes/`).
 
 Zones: alley, passage (nine bays that widen from 1.7 m to 13 m, a stele in each), atrium, compass, formulary and
