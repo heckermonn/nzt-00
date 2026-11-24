@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en-CA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Closed</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#171c1f">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700;800&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="app.css">
+<script>
+/* before first paint: test hooks (?rm reduced motion, ?nogl no WebGL, ?gate forces the gate, ?key=0047RSRV the NFC key,
+   #/exit forgets this device), and who is at the door */
+(function(){var q=new URLSearchParams(location.search),d=document.documentElement,m=null;
+ try{m=localStorage.getItem('pr6.v8.member')}catch(e){}
+ if(q.has('rm')||matchMedia('(prefers-reduced-motion: reduce)').matches)d.classList.add('rm');
+ if(q.has('nogl'))d.classList.add('nogl');
+ var exit=/^#\/exit/.test(location.hash),key=(q.get('key')||'').replace(/\s+/g,'').toUpperCase()==='0047RSRV';
+ if(exit){try{localStorage.removeItem('pr6.v8.member')}catch(e){}m=null}
+ d.classList.add(m==='1'&&!q.has('gate')&&!key?'in':'out');
+})();
+</script>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}</script>
+<script type="module" src="js/main.js"></script>
+</head>
+<body>
+<!-- The gate: the only thing a guest sees. The gate module (js/gates/) writes its own markup here. -->
+<section id="gate" aria-label="Closed"></section>
+
+<!-- Members only. The Atlas (js/atlas/) is the front: it draws into #world, full screen; its nine stations are standing
+     glass panels. #home is the chrome over it; a collection, a Dossier and every other page live on one slab (#slab)
+     that a panel turns into. -->
+<div id="world" aria-hidden="true"><div class="world-fb"></div></div>
+<nav id="labels" class="labels" aria-label="Atlas stations"></nav>
+<a class="skip" href="#views">Skip to content</a>
+<header id="bar" hidden></header>
+<section id="home" class="home" aria-label="The Atlas" hidden></section>
+<main id="stage" hidden>
+  <div class="plate" aria-hidden="true"></div>
+  <div class="slab" id="slab">
+    <div class="slab-glass" aria-hidden="true"><i class="sheen"></i><i class="far"></i></div>
+    <div class="slab-in" id="slabIn">
+      <header class="slab-head">
+        <a class="slab-mark" href="#/" aria-label="PR6, back to the Atlas"><span class="wm" aria-hidden="true">PR6</span><i aria-hidden="true">/</i><span class="sec mono" data-sec aria-hidden="true">Daily practice</span></a>
+        <div class="slab-tr" data-tr></div>
+      </header>
+      <div class="disc-wrap" id="disc" aria-hidden="true"><div class="disc"><i class="disc-rim"></i></div><div class="disc-items"></div></div>
+      <div class="screens" id="views" tabindex="-1"></div>
+      <footer class="slab-foot" aria-hidden="true"><span class="mono" data-cap>Product concept</span><i class="hair"></i></footer>
+    </div>
+  </div>
+  <div class="dock mono" id="dock"></div>
+</main>
+<!-- the morph: a pane that starts exactly over a 3D panel (carrying its face) and grows into the slab, or back -->
+<div id="ghost" aria-hidden="true" hidden><div class="gh-glass"></div><canvas class="gh-face"></canvas></div>
+<div id="fly" aria-hidden="true"></div>
+<div id="scrim" hidden></div>
+<aside id="drawer" role="dialog" aria-modal="true" aria-labelledby="dwH" hidden></aside>
+<div id="search" role="dialog" aria-modal="true" aria-label="Search the Formulary" hidden></div>
+<div id="sheet" role="dialog" aria-modal="true" aria-label="Menu" hidden></div>
+<p id="live" class="sr" aria-live="polite"></p>
+</body>
+</html>
