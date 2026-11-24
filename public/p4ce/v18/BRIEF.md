@@ -33,10 +33,29 @@ Two ways through the same site, as the blueprint asks:
   Atrium, the three rooms); pages slide in beside the picture. There are no cross-fades between pictures. Optional
   sound, off until switched on.
 - **Direct**: still pictures and instant pages. Chosen automatically when the device asks for reduced motion, or from
-  the Index (top right, or press `/`), which also lists and searches every room.
+  the menu (Movement).
 
-On a phone the bottom bar always holds the same five places (Atrium, Compass, Formulary, Archive, More), the top
-bar shows the section and, inside it, a link back up to it, and More opens the Index.
+## Getting around inside (store navigation, 24 Nov)
+
+Once a member is inside, the site is laid out like a shop, because the rooms and the Compass alone were hard for
+ordinary visitors to find their way around. The entry (code, alley, Keeper, application, film) is unchanged.
+
+- **One fixed header on every inside page**: Menu, PR6 (home), Shop, Dispatches, Support, then Search, Account and
+  Bag with its count. On a phone it is Menu, PR6 in the centre, Search and Bag; there is no bottom bar any more.
+- **Menu** (also opened by Shop): a sheet with four columns, Shop, Series, Account and PR6, the search field, and
+  the sound and movement settings. `/` opens search from anywhere. Search still never maps a goal word to a record.
+- **Home** (`#/atrium`): the Atrium picture as the hero with "What are we pursuing today?", then Ready to order,
+  the nine Series as tiles, the member's own places (Bag, Orders, Nominations, Membership), Dispatches and a footer.
+- **Shop** (`#/formulary`): every record as a picture card under its Series, with search and the filters All,
+  Available now, In review, Library only (`?show=available` opens it filtered). A Series page (`#/formulary/NN`)
+  is a three-card grid with previous and next Series. Records carry breadcrumbs: Shop / Series / name.
+- **Bag** (`#/order`) is the old order list under a plainer name. A record that has not been reviewed still cannot
+  reach it.
+- **Account pages** (Membership, Orders, Nominations, Saved, Reading guide, Settings) share one row of links.
+- The Compass wayfinder is still at `#/compass` but nothing depends on it; the reading guide lives under Account.
+
+Code: header and menu in `index.html` and `js/main.js` (`chrome`, `menuCols`, `openIndex`, `ACCOUNT`); home, shop and
+the product card `pcard` in `js/inside.js`; styles under "the store (inside)" in `app.css`.
 
 A device without WebGL 2 gets the earlier Cycles stills of the same rooms, with the same controls (`?still` forces it).
 

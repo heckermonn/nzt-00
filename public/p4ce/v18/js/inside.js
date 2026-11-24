@@ -19,31 +19,71 @@ const toggleSave = (m, k, id) => { const i = m.saved.findIndex((s) => s.k === k 
 const saveBtn = (m, k, id) => `<button class="link" type="button" data-save="${k}:${id}" aria-pressed="${isSaved(m, k, id)}">${isSaved(m, k, id) ? 'Saved to your Library. Remove' : 'Save to your Library'}</button>`;
 const bindSave = (root, m) => root.addEventListener('click', (e) => { const b = e.target.closest('[data-save]'); if (!b) return; const [k, id] = b.dataset.save.split(':'); const on = toggleSave(m, k, id); b.textContent = on ? 'Saved to your Library. Remove' : 'Save to your Library'; b.setAttribute('aria-pressed', on); });
 
-// ---------------------------------------------------------------------------------------------- A10 the Atrium
+// One product, the way a store shows it: its picture, its name, and what it costs or why it cannot be bought yet.
+const pcard = (r, o = {}) => {
+  const able = canOrder(r);
+  return `<a class="pcard" href="#/record/${r.id}" data-n="${+r.c}" data-i="${r.i - 1}">
+    <span class="pc-pic"><img src="assets/vials/${r.id}.webp" width="456" height="760" alt="" loading="lazy" decoding="async"><span class="pc-no">${r.id.slice(-4)}</span>${able ? '' : `<span class="pc-st">${statusOf(r).label}</span>`}</span>
+    <span class="pc-t">${r.name}</span>
+    <span class="pc-d">${o.series ? seriesOf(r).f : r.cls}</span>
+    <span class="pc-p">${able ? 'From ' + cad(r.sizes[0].price) : r.status === 'library' ? 'Information only' : 'Not yet offered'}</span></a>`;
+};
+
+// ---------------------------------------------------------------------------------------------- A10 the Atrium: home
+// The Atrium is the store's front page. The room fills the first screen; the page then rises over it with what a
+// member comes for: what can be bought now, the nine Series, their own bag and orders, and the latest Dispatches.
 export async function atrium(app) {
-  const m = store.member(), ok = app.live(), view = app.view, marks = app.marks;
+  const m = store.member(), ok = app.live(), view = app.view;
   const first = !m.seenAtrium;
   app.amb('inside');
   const vf = (S) => (app.narrow() ? { cx: 0.5, cy: (0.5 - 56 / Math.max(1, S.ch)) * S.span[1], zoom: 1 } : { cx: 0.5, cy: 0.5, zoom: 1.05 });
-  const F = await app.scene({ layout: 'full', theme: 'inside', shot: 'atrium', frame: 'atrium', need: app.narrow() ? 0.8 : 0, view: vf, setup: (S) => { S.vig = 0.06; S.parK = 0.02; }, dur: 1.8 });
+  await app.scene({ layout: 'full', theme: 'inside', shot: 'atrium', frame: 'atrium', need: app.narrow() ? 0.8 : 0, view: vf, setup: (S) => { S.vig = 0.06; S.parK = 0.02; }, dur: 1.8 });
   if (!ok()) return null;
   if (first) { m.seenAtrium = true; store.save(); app.sfx('arrive'); }
-  const D = [['compass', 'Discover', 'The Compass'], ['formulary', 'Explore', 'The Formulary'], ['archive', 'View', 'Your Archive']];
-  const narrow = app.narrow();
-  view.innerHTML = `<section class="atrium">
-    <div class="prompt">
-      <p class="inscription" aria-label="Member ${esc(m.initials.split('').join(' '))}, Generation one">${esc(m.initials.split('').join(' '))} ${glyph(m.lineage)} Generation I</p>
-      <h1>What are we pursuing today?</h1>
+  const narrow = app.narrow(), listed = ALL.filter(canOrder), o = m.orders[0];
+  const cart = m.cart.reduce((s, l) => s + l.qty, 0), I = INSIGNIA[m.lineage];
+  const cell = (href, k, v, d) => `<a class="ycell" href="${href}"><span class="label">${k}</span><span class="yv">${v}</span><span class="yd">${d}</span></a>`;
+  view.innerHTML = `<div class="home">
+    <section class="hero">
+      <div class="hero-in">
+        <p class="inscription" aria-label="Member ${esc(m.initials.split('').join(' '))}, Generation one">${esc(m.initials.split('').join(' '))} ${glyph(m.lineage)} Generation I</p>
+        <h1>What are we pursuing today?</h1>
+        <div class="actions"><a class="btn" href="#/formulary">Shop the Formulary</a>${o ? `<a class="btn ghost" href="#/orders/${o.id}">Order ${o.id} · ${ORDER_STATE[o.state]}</a>` : cart ? `<a class="btn ghost" href="#/order">Open your bag · ${cart}</a>` : '<a class="btn ghost" href="#/formulary?show=available">Available now</a>'}</div>
+      </div>
+      <button class="hero-cue" type="button" id="cue"><span>The store</span><i aria-hidden="true"></i></button>
+    </section>
+    <div class="home-body" id="store">
+      <section class="hsec">
+        <header class="sec-h"><div><p class="label">Available now</p><h2>Ready to order</h2></div><a class="more" href="#/formulary">Shop all ${ALL.length}</a></header>
+        <div class="rail" tabindex="0" role="group" aria-label="Available now">${listed.map((r) => pcard(r, { series: 1 })).join('')}</div>
+      </section>
+      <section class="hsec">
+        <header class="sec-h"><div><p class="label">The Formulary</p><h2>Nine Series</h2></div><p class="note">Named for the field of research each one serves.</p></header>
+        <ol class="sgrid">${SERIES.map((s) => `<li><a class="stile" href="#/formulary/${s.c}"><img src="assets/vials/${s.items[0].id}.webp" width="456" height="760" alt="" loading="lazy" decoding="async"><span class="sg-n">${s.c}</span><span class="sg-t">${s.f}</span><span class="sg-d">${s.items.filter(canOrder).length} of ${s.items.length} available</span></a></li>`).join('')}</ol>
+      </section>
+      <section class="hsec">
+        <header class="sec-h"><div><p class="label">Yours</p><h2>Your account</h2></div></header>
+        <div class="yours">
+          ${cell('#/order', 'Bag', cart ? `${cart} item${cart > 1 ? 's' : ''}` : 'Empty', cart ? 'Review and place your order' : 'Nothing in it yet')}
+          ${cell(o ? '#/orders/' + o.id : '#/orders', 'Orders', o ? ORDER_STATE[o.state] : 'None yet', o ? `Order ${o.id}` : 'Your orders appear here')}
+          ${cell('#/nominations', 'Nominations', m.nominationsOpen ? `${left(m)} of 5` : 'Not open yet', m.nominationsOpen ? 'Remaining, for life' : 'They open after a first order')}
+          ${cell('#/archive', 'Membership', `<span class="mono">${fmtId(m.id)}</span>`, `Generation I · ${I.name}`)}
+        </div>
+      </section>
+      <section class="hsec">
+        <header class="sec-h"><div><p class="label">Reading</p><h2>Dispatches</h2></div><a class="more" href="#/dispatches">All ${DISPATCHES.length}</a></header>
+        <ul class="rows">${DISPATCHES.slice(0, 3).map((x) => `<li><a class="row plain" href="#/dispatches/${x.id}"><span><span class="t">${x.title}</span><span class="d">${x.dek}</span></span><span class="m">${x.kind} · ${fmtDate(x.date + 'T12:00:00')}</span></a></li>`).join('')}</ul>
+      </section>
+      <footer class="foot">
+        <p class="foot-mark">PR6</p>
+        <nav aria-label="More"><a href="#/formulary">Shop</a><a href="#/archive">Account</a><a href="#/support">Support</a><a href="#/compass/index">Reading guide</a><a href="#/passage/again">Watch the film again</a></nav>
+        <p class="note">${LABEL_LINE} Names, prices and statuses in this prototype are sample data.</p>
+      </footer>
     </div>
-    ${narrow ? `<div class="dest-list"><ul class="rows">${D.map(([k, a, t]) => `<li><a class="row" href="#/${k}" data-k="${k}"><span class="n">${a}</span><span class="t">${t}</span></a></li>`).join('')}</ul></div>` : ''}
-    <p class="also"><a href="#/orders">Orders</a><a href="#/dispatches">Dispatches</a><a href="#/nominations">Nominations</a><a href="#/support">Support</a></p>
-  </section>`;
-  // the three openings in the far wall are the three ways on: choosing one walks the camera through it
-  if (!narrow && F) marks.innerHTML = D.map(([k, a, t]) => `<a class="dest" href="#/${k}" data-k="${k}"><span class="k">${a}</span><span class="t">${t}</span></a>`).join('');
-  const place = () => { if (!narrow) for (const el of marks.children) app.place(el, el.dataset.k + '_base'); };
-  place();
+  </div>`;
+  $('#cue', view).addEventListener('click', () => $('#store', view).scrollIntoView({ behavior: app.motion() ? 'smooth' : 'auto', block: 'start' }));
   return {
-    title: 'Atrium', crumb: '', noFocus: first, tick: app.world ? null : place, after: place,
+    title: 'Home', crumb: '', noFocus: first,
     resize: () => { if (app.narrow() !== narrow) app.go('#/atrium'); else if (app.stage) app.stage.viewA = vf(app.stage); },
   };
 }
@@ -57,7 +97,7 @@ let session = null;   // answers kept for this visit only, when the member has n
 // The five questions live on as the reading index, one of the places on the card.
 const WAYS = [
   { k: 'formulary', href: '#/formulary', t: 'The Formulary', go: 'Enter the Formulary', kw: 'store shop buy browse records vials catalogue series cases compounds' },
-  { k: 'order', href: '#/order', t: 'Order list', go: 'Open your order list', kw: 'cart basket checkout pay payment' },
+  { k: 'order', href: '#/order', t: 'Bag', go: 'Open your bag', kw: 'cart basket checkout pay payment' },
   { k: 'orders', href: '#/orders', t: 'Orders', go: 'See your orders', kw: 'past tracking shipped shipping delivery invoice receipt history parcel' },
   { k: 'support', href: '#/support', t: 'Support', go: 'Ask support', kw: 'help contact question problem refund return professional person human' },
   { k: 'archive', href: '#/archive', t: 'Your Archive', go: 'Open your Archive', kw: 'stele record member number lineage insignia tokens card rights standing account' },
@@ -298,42 +338,52 @@ export async function formulary(app, args) {
   F = await pane(app, series ? 'niche' : 'formulary', series ? +series.c : null, 'formulary', vf, { need: 1 }); if (!ok()) return null;
   if (W3) W3.setNiche(series ? +series.c : 0);
   if (series) {
-    view.innerHTML = `<div class="page"><a class="back" href="#/formulary">The Formulary</a>
-      <header><p class="label">${series.n}</p><h1 class="title" style="margin-top:8px">${series.f}</h1><p class="lead">${series.d}</p></header>
+    const i = SERIES.indexOf(series), prev = SERIES[(i + 8) % 9], next = SERIES[(i + 1) % 9];
+    view.innerHTML = `<div class="page shop"><nav class="crumbs" aria-label="You are here"><a href="#/formulary">Shop</a><span aria-current="page">${series.n}</span></nav>
+      <header><p class="label">${series.n}</p><h1 class="title">${series.f}</h1><p class="lead">${series.d}</p></header>
+      <div class="pgrid">${series.items.map((r) => pcard(r)).join('')}</div>
+      <nav class="pager" aria-label="Other Series"><a href="#/formulary/${prev.c}"><span class="label">${prev.n}</span>${prev.f}</a><a href="#/formulary/${next.c}"><span class="label">${next.n}</span>${next.f}</a></nav>
       <p class="sample">SAMPLE DATA. Names, lots, prices and statuses are placeholders that show the shape of a verified record.</p>
-      <ul class="rows" style="margin-top:24px">${series.items.map((r) => `<li><a class="row" href="#/record/${r.id}"><span class="n">${r.id.slice(-4)}</span><span><span class="t">${r.name}</span><span class="d">${r.cls} · ${r.sizes.map((z) => `${z.q} ${z.u}`).join(', ')}${canOrder(r) ? ' · from ' + cad(r.sizes[0].price) : ''}</span></span><span class="m">${tag(r)}</span></a></li>`).join('')}</ul>
       <p class="note" style="margin-top:18px">${LABEL_LINE}</p></div>`;
-    // reading down the list turns the stand, so the vial in front is always the one the row names
-    const rows = $$('.row', view), mark = (k) => rows.forEach((a, i) => a.classList.toggle('at-front', i === k));
+    // looking along the shelf turns the stand, so the vial in front is always the one under the hand
+    const cards = $$('.pcard', view), mark = (k) => cards.forEach((a, j) => a.classList.toggle('at-front', j === k));
     const front = (k) => { if (W3) W3.turn.set(+series.c, k); mark(k); };
-    rows.forEach((a, i) => { a.addEventListener('pointerenter', () => front(i)); a.addEventListener('focus', () => front(i)); });
+    cards.forEach((a, j) => { a.addEventListener('pointerenter', () => front(j)); a.addEventListener('focus', () => front(j)); });
     mark(W3 ? W3.turn.at(+series.c) : 0);
     const placeT = turner(app, +series.c, mark);
-    return { title: series.n, crumb: 'Formulary', after: placeT, leave: () => { if (W3) W3.setNiche(0); } };
+    return { title: series.f, crumb: 'Shop', after: placeT, leave: () => { if (W3) W3.setNiche(0); } };
   }
-  let filter = 'all', q = '';
-  view.innerHTML = `<div class="page"><header><h1 class="title">The Formulary</h1><p class="lead">Information first. Action with clarity.</p></header>
+  const hq = hashQuery();
+  const FILTERS = [['all', 'All'], ['available', 'Available now'], ['review', 'In review'], ['library', 'Library only']];
+  let filter = FILTERS.some(([k]) => k === hq.show) ? hq.show : 'all', q = '';
+  view.innerHTML = `<div class="page shop"><header><p class="label">Shop</p><h1 class="title">The Formulary</h1><p class="lead">${ALL.length} records in nine Series. Information first, action with clarity.</p></header>
+    <div class="shop-tools">
+      <div class="field"><label class="sr" for="fq">Search the shop</label><input id="fq" type="search" placeholder="Search by name, number, class or lot" autocomplete="off"></div>
+      <div class="chips" role="group" aria-label="Show">${FILTERS.map(([k, t]) => `<button class="chip" type="button" aria-pressed="${k === filter}" data-f="${k}">${t}</button>`).join('')}</div>
+    </div>
+    <p class="note" id="cnt" aria-live="polite"></p>
+    <div id="out"></div>
     <p class="sample">SAMPLE DATA. Every name, lot, price and status here is a placeholder that shows the shape of a verified record. PR6 supplies the real, reviewed records before anything is offered.</p>
-    <div class="field"><label for="fq">Search the Formulary</label><input id="fq" type="search" placeholder="Name, catalogue number, class or lot" autocomplete="off"></div>
-    <div class="chips" role="group" aria-label="Filter by status">${[['all', 'All'], ['available', 'Listed'], ['review', 'In review'], ['library', 'Library only']].map(([k, t]) => `<button class="chip" type="button" aria-pressed="${k === 'all'}" data-f="${k}">${t}</button>`).join('')}</div>
-    <div id="out" style="margin-top:26px" aria-live="polite"></div></div>`;
-  const out = $('#out', view);
+    <p class="note" style="margin-top:18px">${LABEL_LINE}</p></div>`;
+  const out = $('#out', view), cnt = $('#cnt', view);
   const draw = () => {
     if (filter === 'all' && !q) {
-      out.innerHTML = `<ul class="rows">${SERIES.map((s) => `<li><a class="row" href="#/formulary/${s.c}" data-n="${+s.c}"><span class="n">${s.c}</span><span><span class="t">${s.f}</span><span class="d">${s.d}</span></span><span class="m">${s.items.filter(canOrder).length} of ${s.items.length} listed</span></a></li>`).join('')}</ul>`;
+      cnt.textContent = '';
+      out.innerHTML = SERIES.map((s) => `<section class="shelf" data-n="${+s.c}"><header class="sec-h"><div><p class="label">${s.n}</p><h2><a href="#/formulary/${s.c}">${s.f}</a></h2></div><a class="more" href="#/formulary/${s.c}">View the Series</a></header><div class="pgrid">${s.items.map((r) => pcard(r)).join('')}</div></section>`).join('');
       return;
     }
     const res = ALL.filter((r) => (filter === 'all' || r.status === filter) && (!q || (r.id + ' ' + r.name + ' ' + r.cls + ' ' + r.lot + ' ' + seriesOf(r).f + ' ' + r.tags.join(' ')).toLowerCase().includes(q)));
-    out.innerHTML = res.length ? `<p class="note" style="margin-bottom:10px">${res.length} record${res.length > 1 ? 's' : ''}</p><ul class="rows">${res.map((r) => `<li><a class="row" href="#/record/${r.id}"><span class="n">${r.id.slice(-4)}</span><span><span class="t">${r.name}</span><span class="d">${seriesOf(r).n} · ${r.cls}</span></span><span class="m">${tag(r)}</span></a></li>`).join('')}</ul>`
-      : `<p>No record matches. <button class="link" type="button" id="clr">Clear the search and filter</button></p>`;
+    cnt.textContent = res.length ? `${res.length} record${res.length > 1 ? 's' : ''}` : '';
+    out.innerHTML = res.length ? `<div class="pgrid flat">${res.map((r) => pcard(r, { series: 1 })).join('')}</div>`
+      : `<p style="margin-top:28px">No record matches. <button class="link" type="button" id="clr">Clear the search and filter</button></p>`;
     const c = $('#clr', out); if (c) c.addEventListener('click', () => { q = ''; filter = 'all'; $('#fq', view).value = ''; $$('.chip', view).forEach((b) => b.setAttribute('aria-pressed', b.dataset.f === 'all')); draw(); });
   };
   $('#fq', view).addEventListener('input', (e) => { q = e.target.value.trim().toLowerCase(); draw(); });
   $('.chips', view).addEventListener('click', (e) => { const b = e.target.closest('.chip'); if (!b) return; filter = b.dataset.f; $$('.chip', view).forEach((x) => x.setAttribute('aria-pressed', x === b)); draw(); });
   draw();
-  // the niches in the picture are the same nine links
+  // the nine cases in the picture are the nine Series: each is a link, and the case of whatever is under the hand lights
   if (F) {
-    marks.innerHTML = SERIES.map((s) => `<a class="niche" href="#/formulary/${s.c}" data-n="${+s.c}" aria-label="${s.n}, ${s.f}"><span>${s.c}</span></a>`).join('');
+    marks.innerHTML = SERIES.map((s) => `<a class="niche" href="#/formulary/${s.c}" data-n="${+s.c}" aria-label="${s.n}, ${s.f}"><span>${s.c} ${s.f}</span></a>`).join('');
     const hot = (n, on) => { const el = $(`.niche[data-n="${n}"]`, marks); if (el) el.classList.toggle('hot', on); if (W3) W3.setNiche(on ? +n : 0); };
     marks.addEventListener('pointerover', (e) => { const a = e.target.closest('[data-n]'); if (a && W3) W3.setNiche(+a.dataset.n); });
     marks.addEventListener('pointerout', () => { if (W3) W3.setNiche(0); });
@@ -344,7 +394,7 @@ export async function formulary(app, args) {
   const place = () => { for (const el of marks.children) app.place(el, 'n' + el.dataset.n); };
   place();
   return {
-    title: 'Formulary', crumb: 'Formulary',
+    title: 'Shop', crumb: 'Shop',
     tick: W3 ? null : place, after: place, leave: () => { if (W3) W3.setNiche(0); },
   };
 }
@@ -391,14 +441,14 @@ export async function record(app, args) {
       <label class="firstpick"><span>Show first</span><select id="first"><option value="">${cp && cp.done ? 'What my reading index says' : 'The standard order'}</option>${Object.keys(SECT).map((key) => `<option value="${key}"${m.recordFirst === key ? ' selected' : ''}>${SECT[key][0]}</option>`).join('')}</select></label></div>
     ${arrange().map((key, i) => `<details class="fold" data-k="${key}"${i < openCount ? ' open' : ''}><summary><h2>${SECT[key][0]}</h2></summary>${SECT[key][1]}</details>`).join('')}`;
   const z0 = able ? r.sizes[0] : null;
-  view.innerHTML = `<div class="page"><a class="back" href="#/formulary/${s.c}">${s.n} · ${s.f}</a>
+  view.innerHTML = `<div class="page"><nav class="crumbs" aria-label="You are here"><a href="#/formulary">Shop</a><a href="#/formulary/${s.c}">${s.n} · ${s.f}</a><span aria-current="page">${r.name}</span></nav>
     <div class="rec-head"><div><h1 class="title">${r.name}</h1><p class="lead dim" style="margin-top:8px"><span class="mono">${r.id}</span> · ${r.cls}, ${r.form.toLowerCase()}</p><p style="margin-top:14px">${tag(r)}</p></div>
       <img src="assets/vials/${r.id}.webp" width="180" height="300" alt="A sealed glass vial on its stand, with a printed label reading ${r.id}, ${esc(r.name)}." loading="lazy">
     ${able ? `<form class="buy" id="buy">
         <fieldset><legend>Size</legend><div class="sizes" role="radiogroup" aria-label="Size">${r.sizes.map((z, i) => `<button class="chip" type="button" role="radio" aria-checked="${i === 0}" data-i="${i}">${z.q} ${z.u} · ${cad(z.price)}</button>`).join('')}</div></fieldset>
         <div class="buy-row"><div><span class="field-l" id="qty-l">Quantity</span><span class="qty" role="group" aria-labelledby="qty-l"><button type="button" data-q="-1" aria-label="One fewer">−</button><span id="qty" aria-live="polite">1</span><button type="button" data-q="1" aria-label="One more">+</button></span></div>
           <p class="buy-sum" id="sum" aria-live="polite">${cad(z0.price)}</p>
-          <button class="btn" type="submit">Add to order</button></div>
+          <button class="btn" type="submit">Add to bag</button></div>
         <p class="note" id="added" role="status"></p>
         <p class="note">${r.stock}. Taxes are added at order, by province. ${LABEL_LINE}</p></form>`
     : `<div class="buy"><p><strong>This record cannot be ordered.</strong></p><p class="note" style="margin-top:6px">${r.status === 'library' ? 'It is a research library entry: information only, and not an offer for sale.' : 'Its compliance review is still open.'} Not on file: ${missing.join(', ')}. Until every check is on file, the order service refuses it.</p></div>`}</div>
@@ -426,12 +476,12 @@ export async function record(app, args) {
       const z = r.sizes[si], line = m.cart.find((l) => l.id === r.id && l.q === z.q);
       if (line) line.qty = Math.min(9, line.qty + qty); else m.cart.push({ id: r.id, q: z.q, u: z.u, price: z.price, qty });
       store.save(); app.chrome(); app.sfx('tap');
-      $('#added', view).innerHTML = `Added ${qty} × ${z.q} ${z.u}. <a href="#/order">Open your order list</a>`;
+      $('#added', view).innerHTML = `Added ${qty} × ${z.q} ${z.u}. <a href="#/order">View your bag</a>`;
     });
   }
   // turning the stand by hand opens the record that comes to the front
   const placeT = turner(app, +s.c, (kk) => { if (kk !== k) app.go('#/record/' + s.items[kk].id); });
-  return { title: r.name, crumb: 'Formulary', after: placeT, leave: () => { if (W3) W3.setNiche(0); } };
+  return { title: r.name, crumb: 'Shop', after: placeT, leave: () => { if (W3) W3.setNiche(0); } };
 }
 
 // ---------------------------------------------------------------------------------------------- order list and orders (A15)
@@ -442,8 +492,8 @@ export async function order(app) {
   const draw = () => {
     const lines = m.cart.map((l) => ({ ...l, r: byId(l.id) })).filter((l) => l.r);
     const total = lines.reduce((s, l) => s + l.price * l.qty, 0), a = m.address || {};
-    if (!lines.length) { view.innerHTML = `<div class="page"><header><h1 class="title">Order list</h1><p class="lead">Nothing here yet.</p></header><div class="actions"><a class="btn" href="#/formulary">Open the Formulary</a><a class="link" href="#/orders">Past orders</a></div></div>`; return; }
-    view.innerHTML = `<div class="page"><header><h1 class="title">Order list</h1></header>
+    if (!lines.length) { view.innerHTML = `<div class="page"><header><h1 class="title">Your bag</h1><p class="lead">Nothing in it yet.</p></header><div class="actions"><a class="btn" href="#/formulary">Shop the Formulary</a><a class="link" href="#/orders">Past orders</a></div></div>`; return; }
+    view.innerHTML = `<div class="page"><header><h1 class="title">Your bag</h1></header>
       <ul class="rows">${lines.map((l, i) => `<li><div class="row"><span class="n">${l.id.slice(-4)}</span><span><a class="t" href="#/record/${l.id}" style="text-decoration:none">${l.r.name}</a><span class="d">${l.q} ${l.u} · ${cad(l.price)} each${canOrder(l.r) ? '' : ' · no longer orderable'}</span>
         <span class="actions" style="margin-top:10px"><span class="qty" role="group" aria-label="Quantity of ${l.r.name}"><button type="button" data-q="-1" data-i="${i}" aria-label="One fewer">−</button><span aria-live="polite">${l.qty}</span><button type="button" data-q="1" data-i="${i}" aria-label="One more">+</button></span><button class="link small" type="button" data-rm="${i}">Remove</button></span></span>
         <span class="m">${cad(l.price * l.qty)}</span></div></li>`).join('')}</ul>
@@ -454,7 +504,7 @@ export async function order(app) {
         <div class="cols">${field('city', 'City', `type="text" autocomplete="address-level2" value="${esc(a.city || '')}"`)}${field('postal', 'Postal code', `type="text" autocomplete="postal-code" value="${esc(a.postal || '')}"`)}</div>
         <div class="field"><label for="prov">Province or territory</label><select id="prov" autocomplete="address-level1"><option value="">Choose</option>${PROV.map((p) => `<option${a.prov === p ? ' selected' : ''}>${p}</option>`).join('')}</select><p class="err" id="prov-e" role="alert"></p></div></section>
         <label class="check" style="margin-top:26px"><input type="checkbox" id="ack"><span>I have read the label statement for each item: ${LABEL_LINE}</span></label><p class="err" id="ack-e" role="alert"></p>
-        <div class="actions"><button class="btn" type="submit">Place order</button><a class="link" href="#/formulary">Keep browsing</a></div>
+        <div class="actions"><button class="btn" type="submit">Place order</button><a class="link" href="#/formulary">Keep shopping</a></div>
         <p class="sample">PROTOTYPE. No payment is taken and nothing ships. In the live service, payment is handled by an established provider and every item is checked again against its record before the order is accepted.</p></form></div>`;
     $('#f', view).addEventListener('submit', (e) => {
       e.preventDefault(); const g = (id) => $('#' + id, view).value.trim();
@@ -474,7 +524,7 @@ export async function order(app) {
     if (rm) { m.cart.splice(+rm.dataset.rm, 1); store.save(); app.chrome(); draw(); const h = $('h1', view); h.tabIndex = -1; h.focus(); }
   });
   draw();
-  return { title: 'Order list', crumb: 'Order list' };
+  return { title: 'Bag', crumb: 'Bag' };
 }
 
 export async function orders(app, args) {
@@ -484,7 +534,7 @@ export async function orders(app, args) {
   if (args[0] && !o) { app.go('#/orders'); return null; }
   if (!o) {
     view.innerHTML = `<div class="page"><header><h1 class="title">Orders</h1>${m.orders.length ? '' : '<p class="lead">No orders yet.</p>'}</header>
-      ${m.orders.length ? `<ul class="rows">${m.orders.map((x) => `<li><a class="row plain" href="#/orders/${x.id}"><span><span class="t">${x.id}</span><span class="d">Placed ${fmtDate(x.placed)} · ${x.lines.reduce((s, l) => s + l.qty, 0)} item${x.lines.reduce((s, l) => s + l.qty, 0) > 1 ? 's' : ''} · ${cad(x.total)}</span></span><span class="m">${ORDER_STATE[x.state]}</span></a></li>`).join('')}</ul>` : '<div class="actions"><a class="btn" href="#/formulary">Open the Formulary</a></div>'}
+      ${m.orders.length ? `<ul class="rows">${m.orders.map((x) => `<li><a class="row plain" href="#/orders/${x.id}"><span><span class="t">${x.id}</span><span class="d">Placed ${fmtDate(x.placed)} · ${x.lines.reduce((s, l) => s + l.qty, 0)} item${x.lines.reduce((s, l) => s + l.qty, 0) > 1 ? 's' : ''} · ${cad(x.total)}</span></span><span class="m">${ORDER_STATE[x.state]}</span></a></li>`).join('')}</ul>` : '<div class="actions"><a class="btn" href="#/formulary">Shop the Formulary</a></div>'}
       <section><h2>Help with an order</h2><p>A person answers, usually within two business days. <a href="#/support?topic=order">Contact support about an order</a>.</p></section></div>`;
     return { title: 'Orders', crumb: 'Orders' };
   }
@@ -539,7 +589,7 @@ export async function archive(app) {
       <p class="note" style="margin-top:12px;max-width:62ch">A generation closes for good when its places are accepted. Places that are later vacated are not refilled. Possibility is infinite. Capacity is not.</p></section>
     <section><h2>The threshold</h2><div class="actions" style="margin-top:0"><a class="btn ghost" href="#/passage/again">Watch the film again</a></div>
       <details class="more"><summary>What the Keeper said</summary><div>${KEEPER_LINES.map((l) => `<p class="serif" style="font-size:var(--s4);color:var(--fg)">${l}</p>`).join('')}<p>${answer ? `You answered: ${answer}.` : 'You did not answer, which was allowed.'} The answer was never part of your review.</p></div></details></section></div>`;
-  return { title: 'Archive', crumb: 'Archive' };
+  return { title: 'Membership', crumb: 'Account' };
 }
 
 // ---------------------------------------------------------------------------------------------- A14 nominations

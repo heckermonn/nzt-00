@@ -54,7 +54,7 @@ const app = {
     store.setPref('sound', !!on);
     if (on && !snd) { snd = createSound(); if (snd) app.amb(state.amb); }
     if (snd) snd.on(on);
-    const b = $('#snd'); b.textContent = on ? 'Sound on' : 'Sound off'; b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    for (const b of [$('#snd'), $('#snd2')]) { b.textContent = on ? 'Sound on' : 'Sound off'; b.setAttribute('aria-pressed', on ? 'true' : 'false'); }
   },
   soundTick: (t) => { if (snd && store.prefs.sound) snd.tick(t); },
   buzz: (v) => { if (snd && store.prefs.sound) snd.buzz(v); },
@@ -190,12 +190,16 @@ async function route() {
   if (my !== epoch) return;
   cur = res || {};
   document.title = (cur.title ? cur.title + ' · ' : '') + 'PR6';
-  // the name of the section, and from a page inside it the way back up to it
-  const cr = $('#crumb'), up = cur.crumb && (args.length || name === 'record') ? '#/' + ({ record: 'formulary' }[name] || name) : null;
-  cr.textContent = (up ? '← ' : '') + (cur.crumb || ''); if (up) cr.href = up; else cr.removeAttribute('href');
-  const tab = { atrium: 'atrium', compass: 'compass', formulary: 'formulary', record: 'formulary', archive: 'archive' }[name] || 'more';
-  $$('#thumb [data-k]').forEach((a) => { if (a.dataset.k === tab) a.setAttribute('aria-current', a.dataset.k === 'more' ? 'true' : 'page'); else a.removeAttribute('aria-current'); });
-  chrome(); renderProto();
+  // the store header says which part of the store this is; the account pages share one row of links
+  const part = { formulary: 'shop', record: 'shop', dispatches: 'dispatches', support: 'support', ...Object.fromEntries(ACCOUNT.map(([h]) => [h.slice(2).split('/')[0], 'account'])) }[name] || '';
+  $$('#bar [data-k]').forEach((a) => { if (a.dataset.k === part) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+  const pg = $('.page', view);
+  if (m && part === 'account' && pg && (name !== 'compass' || args.length)) {
+    const here = '#/' + name + (name === 'compass' ? '/index' : '');
+    pg.insertAdjacentHTML('afterbegin', `<nav class="subnav" aria-label="Account">${ACCOUNT.map(([h, t]) => `<a href="${h}"${h === here ? ' aria-current="page"' : ''}>${t}</a>`).join('')}</nav>`);
+  }
+  document.body.dataset.route = name;
+  chrome(); renderProto(); onScroll();
   view.style.transition = app.motion() ? 'opacity .45s' : 'none'; view.style.opacity = 1; view.classList.remove('leaving');
   document.body.classList.remove('booting');
   if (!cur.keepScroll) window.scrollTo(0, 0);
@@ -205,33 +209,54 @@ async function route() {
 function chrome() {
   const m = store.member(), inside = state.theme === 'inside' && !!m;
   $('#home').href = m ? '#/atrium' : '#/';
-  $('#idx').hidden = !m; $('#bar-help').hidden = !!m;
-  const th = $('#thumb'); th.hidden = !inside || document.body.classList.contains('film'); document.body.classList.toggle('has-thumb', !th.hidden);
-  const o = $('#bar-order'); const n = m ? m.cart.reduce((s, l) => s + l.qty, 0) : 0;
-  o.hidden = !n; o.textContent = `Order · ${n}`;
+  // Inside, every screen carries the same store header: menu, PR6, search, account and the bag with its count.
+  const shop = inside && !document.body.classList.contains('film');
+  document.body.classList.toggle('shop', shop);
+  for (const id of ['menu-b', 'bar-nav', 'search-b', 'bar-acct', 'bar-order']) $('#' + id).hidden = !shop;
+  $('#bar-help').hidden = !!m; $('#snd').hidden = shop;
+  const n = m ? m.cart.reduce((s, l) => s + l.qty, 0) : 0, o = $('#bar-order'), bn = $('#bag-n');
+  if (shop && bagN !== null && n > bagN) { o.classList.remove('bump'); void o.offsetWidth; o.classList.add('bump'); }
+  bagN = shop ? n : null;
+  bn.textContent = n; o.setAttribute('aria-label', n ? `Bag, ${n} item${n > 1 ? 's' : ''}` : 'Bag, empty'); o.classList.toggle('full', n > 0);
   document.body.classList.toggle('still', !app.motion());
 }
+let bagN = null;
+// over a full picture the header is clear; once the page has moved it takes the page's ground
+const onScroll = () => document.body.classList.toggle('scrolled', scrollY > 24);
+addEventListener('scroll', onScroll, { passive: true });
+const ACCOUNT = [['#/archive', 'Membership'], ['#/orders', 'Orders'], ['#/nominations', 'Nominations'], ['#/library', 'Saved'], ['#/compass/index', 'Reading guide'], ['#/account', 'Settings']];
 
-// ------------------------------------------------------------------ the direct index (always one press away inside)
-function indexItems() {
+// ------------------------------------------------------------------ the menu (one press away on every screen inside)
+// Plain words, the way a store names things: Shop, Account, Bag. Each column is a short list; the nine Series are
+// named in full, so a returning member goes straight to one.
+function menuCols() {
   const m = store.member(); if (!m) return [];
   const o = m.orders[0], left = 5 - m.nominations.filter((n) => n.state !== 'revoked-unused').length;
-  const cart = m.cart.reduce((s, l) => s + l.qty, 0);
+  const cart = m.cart.reduce((s, l) => s + l.qty, 0), listed = ALL.filter((r) => r.status === 'available').length;
   return [
-    ['#/atrium', 'Atrium', 'Home'],
-    ['#/orders' + (o ? '/' + o.id : ''), 'Orders', o ? `${o.id} · ${ORDER_STATE[o.state]}` : 'No orders yet'],
-    ...(cart ? [['#/order', 'Order list', `${cart} item${cart > 1 ? 's' : ''}`]] : []),
-    ['#/formulary', 'Formulary', `${ALL.length} records`],
-    ['#/compass', 'Compass', 'Find your way'],
-    ['#/compass/index', 'Reading index', m.compass && m.compass.done ? 'Arranged for you' : 'Optional'],
-    ['#/archive', 'Archive', 'Your record'],
-    ['#/nominations', 'Nominations', m.nominationsOpen ? `${left} of 5 remaining` : 'After a first order'],
-    ['#/dispatches', 'Dispatches', `${DISPATCHES.length} entries`],
-    ['#/library', 'Library', `${m.saved.length} saved`],
-    ['#/support', 'Support', 'Answered by people'],
-    ['#/account', 'Account', 'Sign-in, privacy, data'],
+    ['Shop', [
+      ['#/formulary', 'Shop all', `${ALL.length} records`],
+      ['#/formulary?show=available', 'Available now', `${listed} listed`],
+      ['#/order', 'Bag', cart ? `${cart} item${cart > 1 ? 's' : ''}` : 'Empty'],
+      ...(o ? [['#/orders/' + o.id, 'Latest order', ORDER_STATE[o.state]]] : []),
+    ]],
+    ['Series', SERIES.map((s) => ['#/formulary/' + s.c, s.f, s.c])],
+    ['Account', [
+      ['#/archive', 'Membership', 'Your record and insignia'],
+      ['#/orders', 'Orders', m.orders.length ? `${m.orders.length} placed` : 'None yet'],
+      ['#/nominations', 'Nominations', m.nominationsOpen ? `${left} of 5 remaining` : 'After a first order'],
+      ['#/library', 'Saved', `${m.saved.length} saved`],
+      ['#/account', 'Settings', 'Sign-in, privacy, data'],
+    ]],
+    ['PR6', [
+      ['#/atrium', 'Home', 'The Atrium'],
+      ['#/dispatches', 'Dispatches', `${DISPATCHES.length} entries`],
+      ['#/compass/index', 'Reading guide', m.compass && m.compass.done ? 'Arranged for you' : 'Optional'],
+      ['#/support', 'Support', 'Answered by people'],
+    ]],
   ];
 }
+const indexItems = () => menuCols().filter(([h]) => h !== 'Series').flatMap(([, items]) => items);
 function search(q) {
   const m = store.member(); q = q.trim().toLowerCase(); if (!q || !m) return [];
   const out = [];
@@ -243,19 +268,24 @@ function search(q) {
   return out.slice(0, 12);
 }
 const rowsHTML = (items) => `<ul class="rows">${items.map(([h, t, d]) => `<li><a class="row" href="${h}"><span class="t">${esc(t)}</span><span class="m">${esc(d)}</span></a></li>`).join('')}</ul>`;
-function openIndex() {
+function openIndex(mode) {
   const d = $('#index'); if (!store.member()) return;
-  $('#index-nav').innerHTML = rowsHTML(indexItems());
-  $('#q').value = ''; $('#q-out').innerHTML = '';
+  const find = mode === 'search';
+  d.classList.toggle('finding', find);
+  $('#index-nav').innerHTML = menuCols().map(([h, items], i) => `<section class="mcol${h === 'Series' ? ' series' : ''}" style="--i:${i}"><h2 class="label">${h}</h2><ul>${items.map(([href, t, n]) => `<li><a href="${href}"><span class="t">${esc(t)}</span><span class="m">${esc(n)}</span></a></li>`).join('')}</ul></section>`).join('');
+  $('#q').value = ''; $('#q-out').innerHTML = ''; d.classList.remove('has-q');
   $$('input[name=motion]', d).forEach((i) => { i.checked = i.value === (store.prefs.motion || 'auto'); });
   if (!d.open) d.showModal();
-  if (!app.narrow()) $('#q').focus();
+  if (find || !app.narrow()) $('#q').focus(); else $('#index-x').focus();
 }
-$('#idx').addEventListener('click', openIndex); $('#idx2').addEventListener('click', openIndex);
+$('#menu-b').addEventListener('click', () => openIndex()); $('#nav-shop').addEventListener('click', () => openIndex());
+$('#search-b').addEventListener('click', () => openIndex('search'));
+$('#snd2').addEventListener('click', () => app.setSound(!store.prefs.sound));
 $('#index-x').addEventListener('click', () => $('#index').close());
 $('#index').addEventListener('click', (e) => { if (e.target.id === 'index') e.target.close(); if (e.target.closest('a')) $('#index').close(); });
 $('#q').addEventListener('input', (e) => {
   const q = e.target.value, r = search(q);
+  $('#index').classList.toggle('has-q', !!q.trim());
   $('#q-out').innerHTML = !q.trim() ? '' : r.length ? rowsHTML(r) : `<p class="note">Nothing matches “${esc(q)}”. Try a catalogue number, a Series or an order number.</p>`;
 });
 $('#q').addEventListener('keydown', (e) => { if (e.key === 'Enter') { const a = $('#q-out a'); if (a) { e.preventDefault(); a.click(); } } });
@@ -264,7 +294,7 @@ $('#index-out').addEventListener('click', () => { store.signOut(); $('#index').c
 $('#index-proto').addEventListener('click', () => { $('#index').close(); $('#proto').open = true; });
 $('#snd').addEventListener('click', () => app.setSound(!store.prefs.sound));
 addEventListener('keydown', (e) => {
-  if (e.key === '/' && !/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName) && store.member()) { e.preventDefault(); openIndex(); $('#q').focus(); }
+  if (e.key === '/' && !/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName) && store.member()) { e.preventDefault(); openIndex('search'); }
 });
 
 // ------------------------------------------------------------------ prototype controls (scaffold, clearly not product)

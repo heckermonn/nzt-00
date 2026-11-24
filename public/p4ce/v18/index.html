@@ -21,14 +21,20 @@
 
 <header id="bar">
   <div class="bar-l">
+    <button class="bar-link bar-menu" id="menu-b" type="button" aria-haspopup="dialog" hidden><i class="burger" aria-hidden="true"></i><span>Menu</span></button>
     <a class="mark" id="home" href="#/">PR6</a>
-    <a class="crumb" id="crumb"></a>
   </div>
+  <nav class="bar-c" id="bar-nav" aria-label="Store" hidden>
+    <button class="bar-link" id="nav-shop" type="button" aria-haspopup="dialog" data-k="shop">Shop</button>
+    <a class="bar-link" href="#/dispatches" data-k="dispatches">Dispatches</a>
+    <a class="bar-link" href="#/support" data-k="support">Support</a>
+  </nav>
   <div class="bar-r">
-    <a class="bar-link" id="bar-order" href="#/order" hidden></a>
     <button class="bar-link" id="snd" type="button" aria-pressed="false">Sound off</button>
     <a class="bar-link" id="bar-help" href="#/support">Help</a>
-    <button class="bar-link strong" id="idx" type="button" aria-haspopup="dialog" hidden>Index</button>
+    <button class="bar-link bar-search" id="search-b" type="button" aria-haspopup="dialog" hidden><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.6"/><path d="M12.8 12.8 L17.5 17.5"/></svg><span>Search</span></button>
+    <a class="bar-link" id="bar-acct" href="#/archive" data-k="account" hidden>Account</a>
+    <a class="bar-link bar-bag" id="bar-order" href="#/order" hidden>Bag (<span id="bag-n">0</span>)</a>
   </div>
 </header>
 
@@ -39,30 +45,26 @@
 
 <main id="view" tabindex="-1"></main>
 
-<nav id="thumb" aria-label="Sections" hidden>
-  <a href="#/atrium" data-k="atrium">Atrium</a>
-  <a href="#/compass" data-k="compass">Compass</a>
-  <a href="#/formulary" data-k="formulary">Formulary</a>
-  <a href="#/archive" data-k="archive">Archive</a>
-  <button type="button" id="idx2" data-k="more" aria-haspopup="dialog">More</button>
-</nav>
 
-<dialog id="index" aria-labelledby="index-h">
+<dialog id="index" aria-label="Menu">
   <div class="index-in">
     <div class="index-top">
-      <h2 id="index-h">Index</h2>
+      <span class="mark" aria-hidden="true">PR6</span>
       <button class="bar-link" type="button" id="index-x">Close</button>
     </div>
-    <label class="sr" for="q">Search the Institute</label>
-    <input id="q" type="search" placeholder="Search records, orders, dispatches" autocomplete="off" spellcheck="false">
-    <div id="q-out" aria-live="polite"></div>
-    <nav id="index-nav" aria-label="Direct index"></nav>
+    <div class="index-q">
+      <label class="sr" for="q">Search PR6</label>
+      <input id="q" type="search" placeholder="Search products, orders, dispatches" autocomplete="off" spellcheck="false">
+      <div id="q-out" aria-live="polite"></div>
+    </div>
+    <nav id="index-nav" aria-label="Menu"></nav>
     <div class="index-prefs">
+      <button class="chip" type="button" id="snd2" aria-pressed="false">Sound off</button>
       <fieldset>
         <legend>Movement</legend>
         <label><input type="radio" name="motion" value="auto"> Follow my device</label>
-        <label><input type="radio" name="motion" value="explore"> Explore: rooms move</label>
-        <label><input type="radio" name="motion" value="direct"> Direct: still and instant</label>
+        <label><input type="radio" name="motion" value="explore"> Rooms move</label>
+        <label><input type="radio" name="motion" value="direct"> Still and instant</label>
       </fieldset>
       <p class="index-foot"><button class="link" type="button" id="index-out">Sign out</button> <button class="link" type="button" id="index-proto">Prototype controls</button></p>
     </div>
