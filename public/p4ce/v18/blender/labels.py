@@ -1,4 +1,4 @@
-"""PR6 / Institute: the printed label of every record in the sample catalogue (blender/catalog.json, written from
+"""PR6 / Institute: the printed label of every record in the catalogue (blender/catalog.json, written from
 js/catalog.js). One label wraps three fifths of the way round a vial, so only its middle is read from the front:
 the record sits there, the series to its left, the handling line to its right.
 
@@ -42,9 +42,11 @@ def label(r):
     d.line([(sx + 4, 132), (sx + 40, 60)], fill=ORANGE, width=9)   # the kit's one orange stroke
     spaced(d, (x0 + 2, 176), r["id"], F(MONO, 34), INK, 3)
     d.line([(x0, 232), (x1, 232)], fill=INK, width=3)
-    spaced(d, (x0 + 2, 250), r["name"].upper(), F(BOLD, 40), INK, 2)
+    px = 40                                                    # the name is set as large as the facing part allows
+    while px > 22 and sum(d.textlength(ch, font=F(BOLD, px)) + 2 for ch in r["name"].upper()) > (x1 - x0) - 8: px -= 2
+    spaced(d, (x0 + 2, 250 + (40 - px) // 2), r["name"].upper(), F(BOLD, px), INK, 2)
     spaced(d, (x0 + 2, 312), (r["cls"] + " · " + r["form"]).upper(), F(MONO, 20), DIM, 1.2)
-    spaced(d, (x0 + 2, 346), (r["size"] + " · " + r["lot"]).upper(), F(MONO, 20), DIM, 1.2)
+    spaced(d, (x0 + 2, 346), (r["size"] + " · LOT ON CERTIFICATE").upper(), F(MONO, 20), DIM, 1.2)
     # a measured edge: ticks every 2 mm of the real label
     for k in range(0, 41):
         x = x0 + (x1 - x0) * k / 40; d.line([(x, H - 40), (x, H - (28 if k % 5 else 18))], fill=RULE, width=2)
@@ -54,9 +56,9 @@ def label(r):
     for t in RUO:
         spaced(d, (x1 + 62, y), t, F(MONO, 22), INK, 1.5); y += 32
     y += 20
-    for t in ("SEALED, CRIMPED", "3 ML GLASS VIAL"):
+    for t in ("SEALED, CRIMPED", "GLASS VIAL"):
         spaced(d, (x1 + 62, y), t, F(MONO, 22), DIM, 1.5); y += 32
-    spaced(d, (x1 + 62, H - 84), "SAMPLE RECORD", F(MONO, 22), DIM, 5)
+    spaced(d, (x1 + 62, H - 84), "FORMULARY", F(MONO, 22), DIM, 5)
     return im
 
 
@@ -70,6 +72,7 @@ if __name__ == "__main__":
         cw, ch = 640, 224
         atlas = Image.new("RGB", (cw * 3, ch * 9), PAPER)
         for r in recs:
+            if r["i"] > 3: continue                # the atlas carries the three vials that stand in each case
             atlas.paste(ims[r["id"]].resize((cw, ch), Image.LANCZOS), ((r["i"] - 1) * cw, (int(r["c"]) - 1) * ch))
         atlas.save(sys.argv[2], "WEBP", quality=88, method=6)
         print("atlas", atlas.size, os.path.getsize(sys.argv[2]) // 1024, "KB")

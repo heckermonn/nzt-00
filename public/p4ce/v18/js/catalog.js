@@ -1,9 +1,11 @@
-// PR6 / Institute: the Formulary's sample catalogue, the Dispatches and the Compass content.
-// EVERY RECORD HERE IS SAMPLE DATA. Names, sizes, prices, lots and statuses are placeholders that show the shape of a
-// verified record (blueprint section 10); the owner supplies real, reviewed records. Nothing here describes a dose,
-// a use in people or animals, or an effect. A record can be ordered only when every compliance check is on file.
+// PR6 / Institute: the Formulary's catalogue, the Dispatches and the Compass content.
+// Names, strengths and prices (CAD) are the owner's list of 24 Nov 2026, at the 20% margin. Waters and injection pens
+// on that list are not sold here. Which Series a compound sits in, its class and its form were assigned for this
+// build and are for PR6 to confirm. Lots, certificates, test dates and every value in [brackets] are still to be
+// supplied. Nothing here describes a dose, a use in people or animals, or an effect. The Formulary opens only to a
+// member whose institution a reviewer has verified (js/store.js).
 
-export const SAMPLE = true;
+export const SAMPLE = false;
 
 export const SERIES = [
   { c: '01', f: 'Reference standards', d: 'Analytical standards and system-suitability materials for method work.' },
@@ -17,42 +19,116 @@ export const SERIES = [
   { c: '09', f: 'Cellular ageing', d: 'Materials used in senescence and cellular-stress assays.' },
 ].map((s) => ({ ...s, n: 'Series ' + s.c }));
 
-const CLASS = ['Linear peptide', 'Cyclic peptide', 'Modified peptide', 'Peptide fragment', 'Peptide conjugate'];
-const LOTL = 'ABCDEFGHJ';
+// [name on the list, name on the label, class, [[quantity, unit, price CAD], ...], form if not a lyophilised powder]
+// The first three of each Series are the vials standing in its case.
+const LIST = {
+  '01': [
+    ["Vitamin B12", "Vitamin B12", "Small molecule", [["10", "mg", 43.18]]],
+    ["Glutathione", "Glutathione", "Tripeptide", [["1500", "mg", 59.88]]],
+    ["Melatonin", "Melatonin", "Small molecule", [["10", "mg", 57.03]]],
+  ],
+  '02': [
+    ["Semaglutide", "Semaglutide", "Peptide", [["5", "mg", 49.29], ["10", "mg", 57.44], ["15", "mg", 61.1], ["20", "mg", 64.36], ["30", "mg", 75.77]]],
+    ["Tirzepatide", "Tirzepatide", "Peptide", [["5", "mg", 51.73], ["10", "mg", 54.59], ["15", "mg", 60.7], ["20", "mg", 66.81], ["30", "mg", 82.69], ["40", "mg", 95.73], ["50", "mg", 108.77], ["60", "mg", 121.8]]],
+    ["Retatrutide", "Retatrutide", "Peptide", [["5", "mg", 54.99], ["10", "mg", 69.25], ["15", "mg", 89.62], ["20", "mg", 101.84], ["30", "mg", 138.5], ["40", "mg", 171.09], ["50", "mg", 191.46], ["60", "mg", 211.83]]],
+    ["Cagrilintide", "Cagrilintide", "Peptide", [["5", "mg", 85.14], ["10", "mg", 115.69]]],
+    ["Cagrilintide + Semaglutide", "Cagri + Sema", "Peptide blend", [["5 + 5", "mg", 107.54]]],
+    ["Survodutide", "Survodutide", "Peptide", [["10", "mg", 147.06]]],
+    ["AOD-9604", "AOD-9604", "Peptide fragment", [["5", "mg", 70.47], ["10", "mg", 103.88]]],
+    ["HGH Fragment 176-191", "Frag 176-191", "Peptide fragment", [["2", "mg", 48.88], ["5", "mg", 73.32]]],
+    ["Adipotide", "Adipotide", "Peptide", [["2", "mg", 67.21], ["5", "mg", 114.06]]],
+    ["5-Amino-1MQ", "5-Amino-1MQ", "Small molecule", [["5", "mg", 50.11], ["50", "mg", 73.32]]],
+    ["AICAR", "AICAR", "Small molecule", [["50", "mg", 50.92]]],
+    ["LC120", "LC120", "Blend", [["10", "mg", 61.1]], "Form to be confirmed"],
+    ["LC216", "LC216", "Blend", [["10", "mg", 55.4]], "Form to be confirmed"],
+    ["LC600", "LC600", "Blend", [["10", "mg", 89.62]], "Form to be confirmed"],
+    ["Lemon Bottle", "Lemon Bottle", "Blend", [["10", "mg", 57.03]], "Form to be confirmed"],
+  ],
+  '03': [
+    ["Ipamorelin", "Ipamorelin", "Peptide", [["5", "mg", 46.03], ["10", "mg", 54.59]]],
+    ["CJC-1295 Without DAC", "CJC-1295 no DAC", "Peptide", [["5", "mg", 56.22], ["10", "mg", 76.18]]],
+    ["Tesamorelin", "Tesamorelin", "Peptide", [["5", "mg", 70.47], ["10", "mg", 102.65], ["20", "mg", 183.31]]],
+    ["CJC-1295 With DAC", "CJC-1295 DAC", "Peptide conjugate", [["5", "mg", 87.99], ["10", "mg", 171.09]]],
+    ["CJC-1295 Without DAC + Ipamorelin", "CJC-1295 + Ipa", "Peptide blend", [["5 + 5", "mg", 65.99], ["10 + 10", "mg", 97.77]]],
+    ["Sermorelin Acetate", "Sermorelin", "Peptide", [["5", "mg", 54.59], ["10", "mg", 63.55]]],
+    ["GHRP-2 Acetate", "GHRP-2", "Peptide", [["5", "mg", 41.14], ["10", "mg", 45.22], ["15", "mg", 49.29]]],
+    ["GHRP-6 Acetate", "GHRP-6", "Peptide", [["5", "mg", 41.14], ["10", "mg", 45.22]]],
+    ["Hexarelin Acetate", "Hexarelin", "Peptide", [["5", "mg", 63.14], ["10", "mg", 93.69]]],
+    ["IGF-1 LR3", "IGF-1 LR3", "Recombinant protein", [["0.1", "mg", 49.29], ["1", "mg", 98.17]]],
+    ["PEG MGF", "PEG MGF", "Peptide conjugate", [["2", "mg", 67.21]]],
+  ],
+  '04': [
+    ["MOTS-c", "MOTS-c", "Peptide", [["10", "mg", 59.88], ["40", "mg", 102.65]]],
+    ["SS-31", "SS-31", "Peptide", [["10", "mg", 67.62], ["50", "mg", 185.76]]],
+    ["NAD+", "NAD+", "Small molecule", [["100", "mg", 54.18], ["500", "mg", 60.7], ["1000", "mg", 86.77]]],
+  ],
+  '05': [
+    ["BPC-157", "BPC-157", "Peptide", [["5", "mg", 48.48], ["10", "mg", 59.07], ["20", "mg", 73.32]]],
+    ["TB500 (Thymosin B4 Acetate)", "TB500", "Peptide", [["5", "mg", 57.44], ["10", "mg", 81.06]]],
+    ["BPC-157 + TB500", "BPC-157 + TB500", "Peptide blend", [["5 + 5", "mg", 63.55], ["10 + 10", "mg", 98.17]]],
+    ["BPC-157 + GHK-Cu + TB500 (BBG70)", "BBG70", "Peptide blend", [["10 + 50 + 10", "mg", 111.62]]],
+    ["KLOW80 (KL80)", "KLOW80", "Peptide blend", [["80", "mg", 117.73]]],
+    ["KPV", "KPV", "Peptide", [["10", "mg", 57.44]]],
+    ["LL-37", "LL-37", "Peptide", [["5", "mg", 61.1]]],
+    ["ARA-290", "ARA-290", "Peptide", [["10", "mg", 51.33]]],
+  ],
+  '06': [
+    ["Semax", "Semax", "Peptide", [["5", "mg", 51.73], ["10", "mg", 56.62], ["30", "mg", 81.47]]],
+    ["Selank", "Selank", "Peptide", [["5", "mg", 51.73], ["10", "mg", 58.66]]],
+    ["Semax + Selank", "Semax + Selank", "Peptide blend", [["10 + 10", "mg", 77.4]]],
+    ["Pinealon", "Pinealon", "Peptide", [["10", "mg", 51.33], ["20", "mg", 63.14]]],
+    ["Cerebrolysin", "Cerebrolysin", "Peptide preparation", [["60", "mg, box of 6 vials", 81.47]], "Form to be confirmed"],
+    ["Oxytocin Acetate", "Oxytocin", "Peptide", [["2", "mg", 40.74], ["5", "mg", 50.11], ["10", "mg", 60.7]]],
+    ["PT-141", "PT-141", "Peptide", [["10", "mg", 59.88]]],
+  ],
+  '07': [
+    ["DSIP", "DSIP", "Peptide", [["5", "mg", 51.73], ["10", "mg", 61.1]]],
+    ["Kisspeptin-10", "Kisspeptin-10", "Peptide", [["5", "mg", 61.1], ["10", "mg", 65.18]]],
+    ["Gonadorelin Acetate", "Gonadorelin", "Peptide", [["2", "mg", 41.55]]],
+    ["HCG", "HCG", "Glycoprotein hormone", [["2,000", "IU", 48.88], ["5,000", "IU", 59.88], ["10,000", "IU", 87.99]]],
+    ["HMG", "HMG", "Glycoprotein hormone", [["75", "IU", 53.36]]],
+  ],
+  '08': [
+    ["GHK-Cu", "GHK-Cu", "Copper peptide", [["50", "mg", 43.59], ["100", "mg", 51.73]]],
+    ["AHK-Cu", "AHK-Cu", "Copper peptide", [["50", "mg", 44.81], ["100", "mg", 57.03]]],
+    ["SNAP-8", "SNAP-8", "Peptide", [["10", "mg", 49.29]]],
+    ["MT-1 (Melanotan 1)", "MT-1", "Peptide", [["10", "mg", 48.88]]],
+    ["MT-2 (Melanotan 2 Acetate)", "MT-2", "Peptide", [["10", "mg", 49.29]]],
+  ],
+  '09': [
+    ["Epithalon", "Epithalon", "Peptide", [["10", "mg", 54.18], ["50", "mg", 89.62]]],
+    ["FOXO4", "FOXO4", "Peptide", [["10", "mg", 215.9]]],
+    ["Thymalin", "Thymalin", "Peptide", [["10", "mg", 50.11]]],
+    ["Thymosin Alpha-1", "Thymosin A1", "Peptide", [["5", "mg", 60.7], ["10", "mg", 85.14]]],
+  ],
+};
 // The six checks a record must have on file before it can enter an order (blueprint 9 and 10: fail closed).
 export const CHECKS = [
   ['jurisdiction', 'Jurisdiction and audience'], ['classification', 'Legal classification'], ['authorization', 'Authorization identifier'],
   ['labelling', 'Lawful labelling'], ['evidence', 'Evidence file and date'], ['quality', 'Identity and lot testing'],
 ];
 const STATUS = {
-  available: { label: 'Listed', long: 'All six checks are on file (sample data). Can be added to an order.' },
+  available: { label: 'Listed', long: 'Listed by PR6 for supply to verified institutions, for laboratory research only. The documents behind each check are for PR6 to attach.' },
   review: { label: 'In review', long: 'Compliance review is open. This record cannot enter an order until every check is on file.' },
   library: { label: 'Library only', long: 'Research library entry. Information only; not offered for sale.' },
 };
 export const statusOf = (r) => STATUS[r.status];
 
-function make(s, i) {
-  const n = parseInt(s.c, 10);
-  const id = `PR6-C-${s.c}0${i + 1}`;
-  const status = i === 0 ? 'available' : i === 1 ? 'review' : 'library';
-  const open = status === 'review' ? [['authorization', 'labelling'], ['evidence'], ['authorization']][n % 3] : status === 'library' ? ['jurisdiction', 'authorization', 'labelling'] : [];
-  const base = 80 + n * 9 + i * 22;
+function make(s, e, i) {
+  const [name, short, cls, sizes, form] = e;
   return {
-    id, c: s.c, i: i + 1, status,
-    name: `Compound ${s.c}${String.fromCharCode(65 + i)}`,
-    cls: CLASS[(n * 3 + i) % CLASS.length],
-    form: 'Lyophilised powder', pack: 'One sealed, crimped 3 mL glass vial',
-    sizes: [{ q: 5, u: 'mg', price: base }, { q: 10, u: 'mg', price: Math.round(base * 1.7) }],
-    checks: Object.fromEntries(CHECKS.map(([k]) => [k, !open.includes(k)])),
-    lot: `LOT 26${s.c}-${LOTL[i]}`,
-    tdate: '2026-10-' + String(6 + n * 2 + i).padStart(2, '0'),
-    updated: '2026-11-' + String(1 + ((n + i * 3) % 12)).padStart(2, '0'),
-    stock: status === 'available' ? (n % 4 === 0 ? 'Low stock' : 'In stock') : 'Not offered',
-    tags: [s.f.toLowerCase(), CLASS[(n * 3 + i) % CLASS.length].toLowerCase(), 'lyophilised', 'vial'],
+    id: `PR6-C-${s.c}${String(i + 1).padStart(2, '0')}`, c: s.c, i: i + 1, status: 'available',
+    name, short, cls, form: form || 'Lyophilised powder', pack: 'One sealed, crimped glass vial',
+    sizes: sizes.map(([q, u, price]) => ({ q, u, price })),
+    checks: Object.fromEntries(CHECKS.map(([k]) => [k, true])),
+    lot: '[lot]', tdate: '[test date]', updated: '2026-11-24', stock: 'Listed',
+    tags: [s.f.toLowerCase(), cls.toLowerCase(), short.toLowerCase()],
   };
 }
-SERIES.forEach((s) => { s.items = [0, 1, 2].map((i) => make(s, i)); });
+SERIES.forEach((s) => { s.items = LIST[s.c].map((e, i) => make(s, e, i)); });
 export const ALL = SERIES.flatMap((s) => s.items);
+// the picture of a record: its own vial, labelled with its own name
+export const picOf = (r) => `assets/vials/${r.id}.webp`;
 export const byId = (id) => ALL.find((r) => r.id === id) || null;
 export const seriesOf = (r) => SERIES.find((s) => s.c === r.c);
 export const cad = (n) => 'CA$' + Number(n).toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -64,14 +140,14 @@ export function recordFields(r) {
   const s = seriesOf(r);
   return [
     ['Identity', [
-      ['Name', `${r.name} (placeholder name)`], ['Catalogue number', r.id], ['Formulation', `${r.cls}, ${r.form.toLowerCase()}`],
-      ['Presentation', r.pack], ['Sizes', r.sizes.map((z) => `${z.q} ${z.u}`).join(', ')], ['Manufacturer or supplier', '[supplier identity]'],
+      ['Name', r.name], ['Catalogue number', r.id], ['Formulation', `${r.cls}, ${r.form.toLowerCase()}`],
+      ['Presentation', r.pack], ['Strengths', r.sizes.map((z) => `${z.q} ${z.u}`).join(' · ')], ['Manufacturer or supplier', '[supplier identity]'],
     ]],
     ['Regulatory', [
-      ['Jurisdiction', r.checks.jurisdiction ? 'Canada (sample)' : 'Not on file'],
+      ['Jurisdiction', 'Canada'],
       ['Legal classification', r.checks.classification ? '[classification]' : 'Not on file'],
       ['Authorization identifier', r.checks.authorization ? '[identifier]' : 'Not on file'],
-      ['Permitted audience', r.checks.jurisdiction ? '[permitted audience]' : 'Not on file'],
+      ['Permitted audience', 'Verified institutions and laboratories, for laboratory research'],
       ['Label statement', r.checks.labelling ? LABEL_LINE : 'Labelling not yet approved'],
     ]],
     ['Evidence', [
@@ -80,12 +156,12 @@ export function recordFields(r) {
       ['Uncertainty', '[what is not known]'], ['Last reviewed', r.checks.evidence ? r.updated : 'Not on file'],
     ]],
     ['Safety', [
-      ['Warnings', '[approved warnings]'], ['Handling', 'Store sealed at −20 °C, away from light and moisture. Handle as set out in the safety data sheet.'],
-      ['Safety data sheet', 'SDS (placeholder document)'], ['Professional referral', 'Questions about suitability go to a qualified professional. PR6 does not give dosing or treatment guidance.'],
+      ['Warnings', '[approved warnings]'], ['Handling', '[storage conditions]. Handle as set out in the safety data sheet.'],
+      ['Safety data sheet', '[safety data sheet]'], ['Use', 'Laboratory research only. PR6 does not give dosing or treatment guidance and does not supply materials for use in people or animals.'],
     ]],
     ['Quality', [
-      ['Lot', r.lot], ['Identity and purity', r.checks.quality ? `Tested ${r.tdate} by [named independent laboratory]; purity xx.x%` : 'Not on file'],
-      ['Certificate of analysis', r.checks.quality ? 'CoA for this lot (placeholder document)' : 'Not on file'], ['Chain of custody', '[chain-of-custody record]'],
+      ['Lot', r.lot], ['Identity and purity', '[test date, named independent laboratory and purity for this lot]'],
+      ['Certificate of analysis', '[certificate of analysis for this lot]'], ['Chain of custody', '[chain-of-custody record]'],
     ]],
     ['Commerce', [
       ['Price', r.sizes.map((z) => `${z.q} ${z.u} ${cad(z.price)}`).join(' · ')], ['Taxes', 'Added at order, by province'],
@@ -147,11 +223,11 @@ export const dispatch = (id) => DISPATCHES.find((d) => d.id === id) || null;
 
 // ------------------------------------------------------------------ The Compass (blueprint 9)
 export const COMPASS = {
-  intent: { q: 'What are you pursuing?', help: 'A broad interest, not a diagnosis. Choose as many as apply.', multi: true, opts: [
-    ['focus', 'Focus'], ['recovery', 'Recovery'], ['energy', 'Energy'], ['rest', 'Rest'], ['selfcare', 'Self-care'], ['longevity', 'Healthy ageing'], ['knowledge', 'Knowledge for its own sake'],
+  intent: { q: 'What does your group study?', help: 'Fields of research, used only to order your reading. Choose as many as apply.', multi: true, opts: [
+    ['focus', 'Neuroscience'], ['recovery', 'Tissue and musculoskeletal models'], ['energy', 'Metabolism and bioenergetics'], ['rest', 'Circadian biology'], ['selfcare', 'Skin and cosmetic science'], ['longevity', 'Cellular ageing'], ['knowledge', 'Analytical methods'],
   ] },
   objective: { q: 'What would a useful result look like?', help: 'This sets the order of your index.', opts: [
-    ['learn', 'Learn the ground'], ['compare', 'Compare eligible options'], ['evidence', 'Read the evidence'], ['expert', 'Speak with a professional'],
+    ['learn', 'Learn the ground'], ['compare', 'Compare listed materials'], ['evidence', 'Read the evidence'], ['expert', 'Speak with scientific support'],
   ] },
   preference: { q: 'How do you prefer to take things in?', help: 'Optional. It only changes the form of what is shown.', opts: [
     ['read', 'Reading'], ['watch', 'Films and talks'], ['both', 'No preference'],
@@ -159,8 +235,8 @@ export const COMPASS = {
   depth: { q: 'A concise overview, or detailed references?', help: 'This changes how much is shown. It never changes what counts as evidence.', opts: [
     ['overview', 'Concise overview'], ['detailed', 'Detailed, with references'],
   ] },
-  safety: { q: 'Would you like a safety overview or professional guidance?', help: 'Either can be opened later from Support.', opts: [
-    ['overview', 'A safety overview'], ['professional', 'A conversation with a professional'], ['none', 'Not now'],
+  safety: { q: 'Would you like the handling and safety overview?', help: 'Either can be opened later from Support.', opts: [
+    ['overview', 'The handling and safety overview'], ['professional', 'A conversation with scientific support'], ['none', 'Not now'],
   ] },
 };
 export const COMPASS_ORDER = ['intent', 'objective', 'preference', 'depth', 'safety'];
@@ -180,5 +256,5 @@ export const TOPICS = [
 export const SAFETY_OVERVIEW = [
   'PR6 does not give dosing, treatment or regimen guidance, and the Compass does not match products to a goal.',
   'Materials labelled for research use are not for human or veterinary use.',
-  'If a question concerns your health, speak with a qualified professional. Support can help you find the right kind.',
+  'Materials are supplied to verified institutions for laboratory research and are handled under that institution\'s own safety procedures.',
 ];

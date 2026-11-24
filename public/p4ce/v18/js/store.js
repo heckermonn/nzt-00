@@ -115,7 +115,7 @@ export const store = {
     const ref = 'A-26-' + String(rnd(1)[0] % 1000000).padStart(6, '0');
     db.applications[inv.code] = {
       ref, name: f.name.trim(), email: f.email.trim().toLowerCase(), pass: await digest(inv.code + '|' + f.password), passkey: !!f.passkey,
-      interests: f.interests || '', consents: f.consents, submitted: now(), status: 'review', updates: [{ t: now(), what: 'Application received' }],
+      interests: f.interests || '', inst: f.inst || null, consents: f.consents, submitted: now(), status: 'review', updates: [{ t: now(), what: 'Application received' }, { t: now(), what: 'Institution verification opened' }],
     };
     inv.state = 'applied'; audit('application.submitted', { ref }); write();
     return { ok: true, ref };
@@ -124,8 +124,11 @@ export const store = {
   /** Prototype stand-in for the human review. */
   decide(decision) {
     const a = this.application(), inv = this.invitation(); if (!a) return;
+    // fail closed: an application with no institution on it cannot be approved
+    if (decision === 'approved' && !a.inst) decision = 'declined';
     a.status = decision; a.decided = now();
-    a.updates.push({ t: now(), what: decision === 'approved' ? 'Review complete: an offer of membership has been made' : 'Review complete: not approved at this time' });
+    if (a.inst) a.inst.verified = decision === 'approved' ? now() : null;
+    a.updates.push({ t: now(), what: decision === 'approved' ? 'Institution verified. Review complete: an offer of membership has been made' : 'Review complete: not approved at this time' });
     if (decision === 'approved') { a.offerUntil = now() + 7 * DAY; inv.state = 'approved'; }
     audit('application.decided', { ref: a.ref, decision }); write();
   },
@@ -134,7 +137,7 @@ export const store = {
     let id; do { id = String(100000000 + (rnd(1)[0] % 900000000)); } while (db.members[id]);
     const initials = a.name.split(/\s+/).filter(Boolean).map((w) => w[0]).slice(0, 3).join('').toUpperCase() || 'M';
     db.members[id] = {
-      id, name: a.name, initials, email: a.email, pass: a.pass, passSalt: inv.code, passkey: a.passkey, lineage: inv.symbol, generation: 1, standing: 'Member',
+      id, name: a.name, initials, email: a.email, inst: a.inst, pass: a.pass, passSalt: inv.code, passkey: a.passkey, lineage: inv.symbol, generation: 1, standing: 'Member',
       admitted: now(), tokens: [{ id: 'threshold', t: now() }], card: 'not-issued', nominationsOpen: false, nominations: [],
       orders: [], cart: [], saved: [], compass: null, compassConsent: !!(a.consents && a.consents.compass), sponsor: inv.sponsor || null,
       filmSeen: false, tickets: [], rights: 'active',
@@ -162,14 +165,15 @@ export const store = {
     const inv = this.invitation(); delete inv.lockUntil;
     if (inv.state === 'issued' || inv.state === 'validated') { inv.side = inv.side || 'L'; inv.alt = inv.alt || LINEAGES.find((x) => x !== inv.symbol); inv.state = 'door'; inv.doorSide = inv.side; }
     if (inv.state === 'door') inv.state = 'keeper';
-    if (!this.application()) await this.apply({ name: 'Sample Member', email: 'sample.member@example.com', password: 'sample-' + rnd(1)[0], passkey: false, interests: '', consents: { terms: true, compass: true } });
+    if (!this.application()) await this.apply({ name: 'Sample Member', email: 'sample.member@example.com', password: 'sample-' + rnd(1)[0], passkey: false, interests: '', consents: { terms: true, compass: true, ruo: true }, inst: { name: 'Sample Institute of Cell Biology', type: 'University or college', dept: 'Analytical Core', role: 'Laboratory manager', site: 'https://example.org', ref: 'Dr A. Sample, a.sample@example.org', use: 'Sample entry. In vitro assays and analytical method work in a teaching laboratory.' } });
     if (this.application().status !== 'approved') this.decide('approved');
     const m = this.acceptOffer(); if (m) { m.sample = true; write(); }
     return m;
   },
 
   // ------------------------------------------------------------ identity
-  member() { return db.session ? db.members[db.session] : null; },
+  // fail closed: nobody is a member here without an institution a reviewer has verified
+  member() { const m = db.session ? db.members[db.session] : null; return m && m.inst && m.inst.verified ? m : null; },
   hasMembers() { return Object.keys(db.members).length > 0; },
   async signIn(email, password) {
     const e = (email || '').trim().toLowerCase();
@@ -189,10 +193,10 @@ export const store = {
 
   // ------------------------------------------------------------ commerce
   placeOrder(lines, total, address) {
-    const m = this.member(); if (address) m.address = address;
+    const m = this.member(); if (!m) return null; if (address) m.address = address;
     const id = 'PR6-' + String(26000 + (rnd(1)[0] % 9000));
     const first = m.orders.length === 0;
-    m.orders.unshift({ id, placed: now(), lines, total, state: 0, track: 'SAMPLE-' + code8() });
+    m.orders.unshift({ id, placed: now(), lines, total, inst: m.inst.name, po: (address && address.po) || '', state: 0, track: 'SAMPLE-' + code8() });
     m.cart = [];
     if (first) { m.card = 'processing'; m.nominationsOpen = true; }
     audit('order.placed', { id }); write();

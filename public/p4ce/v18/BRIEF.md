@@ -35,6 +35,29 @@ Two ways through the same site, as the blueprint asks:
 - **Direct**: still pictures and instant pages. Chosen automatically when the device asks for reduced motion, or from
   the menu (Movement).
 
+## Institutions only, and the real catalogue (24 Nov)
+
+PR6 supplies laboratories and institutions, so the check happens before the Formulary opens, not after an order.
+
+- **Application (A06)** asks for a work email (personal mail domains are refused), the institution, its kind,
+  department, the applicant's role, the institution's website, a person there who can confirm it, and the research the
+  materials are for. Three statements must be true: of age and authorised to order, institution in Canada, laboratory
+  research only with no use in people or animals and no resale.
+- **Review (A07)** shows the institution on the application and "verification in progress". An application with no
+  institution cannot be approved (`store.decide`), and `store.member()` returns nobody unless the member's
+  institution carries a verified date, so the shop, prices and bag are closed until a reviewer has confirmed it.
+  Members made before this change are signed out by that rule; use Reset in the Prototype panel.
+- **Orders** ship to the verified institution, take an optional purchase order number, and record the institution.
+- **Compass** questions ask what the group studies (fields of research), not what a person wants for themselves.
+- **Catalogue** (`js/catalog.js`, `LIST`): the owner's list of 24 Nov 2026 at the 20% margin, 61 compounds and 118
+  strengths in CAD. The waters and injection pens on that list are not sold. Which Series a compound sits in, its
+  class and its form were assigned for this build and are for PR6 to confirm; LC120, LC216, LC600, Lemon Bottle and
+  Cerebrolysin are marked "form to be confirmed". Lots, certificates, test dates and bracketed values are not yet
+  supplied.
+- **Pictures**: `blender/labels.py` prints a label for every record; `blender/relabel.py` wraps each label onto the
+  path-traced vial picture of its Series (three base pictures per Series, reused in turn after the third record).
+  The three vials standing in each case in the 3D room are the first three records of that Series.
+
 ## Getting around inside (store navigation, 24 Nov)
 
 Once a member is inside, the site is laid out like a shop, because the rooms and the Compass alone were hard for
@@ -46,9 +69,8 @@ ordinary visitors to find their way around. The entry (code, alley, Keeper, appl
   the sound and movement settings. `/` opens search from anywhere. Search still never maps a goal word to a record.
 - **Home** (`#/atrium`): the Atrium picture as the hero with "What are we pursuing today?", then Ready to order,
   the nine Series as tiles, the member's own places (Bag, Orders, Nominations, Membership), Dispatches and a footer.
-- **Shop** (`#/formulary`): every record as a picture card under its Series, with search and the filters All,
-  Available now, In review, Library only (`?show=available` opens it filtered). A Series page (`#/formulary/NN`)
-  is a three-card grid with previous and next Series. Records carry breadcrumbs: Shop / Series / name.
+- **Shop** (`#/formulary`): every record as a picture card under its Series, with search (status filters appear
+  only when records differ in status). A Series page (`#/formulary/NN`) is a card grid with previous and next Series. Records carry breadcrumbs: Shop / Series / name.
 - **Bag** (`#/order`) is the old order list under a plainer name. A record that has not been reviewed still cannot
   reach it.
 - **Account pages** (Membership, Orders, Nominations, Saved, Reading guide, Settings) share one row of links.

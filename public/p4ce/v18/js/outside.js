@@ -314,6 +314,8 @@ const doorPane = async (app, inv) => app.scene({
   tiles: ['med' + (inv.doorSide || 'L') + '_' + inv.symbol], slit: 0,
   view: doorView(app), setup: (S) => { S.rain = 0.5; S.vig = 0.5; S.expo = 0.8; S.weights.holo = 0; },
 });
+// personal mail domains are refused on the application: the work address is one of the things the reviewer checks
+const FREEMAIL = /@(gmail|googlemail|outlook|hotmail|live|msn|yahoo|ymail|icloud|me|mac|aol|proton|protonmail|pm|gmx|mail|zoho|fastmail|hey|duck)\.[a-z.]+$/i;
 export async function apply(app) {
   const inv = store.invitation(), ok = app.live(), view = app.view;
   if (inv.state !== 'keeper') { app.go(resume(inv)); return null; }
@@ -321,26 +323,37 @@ export async function apply(app) {
   if (app.world) app.world.setDoors(store.doors());
   await doorPane(app, inv); if (!ok()) return null;
   view.innerHTML = `<div class="page">
-    <header><h1 class="title">Application</h1><p class="lead">An invitation is an opportunity to apply. A person reviews every application, and admission is not automatic.</p></header>
+    <header><h1 class="title">Application</h1><p class="lead">PR6 supplies laboratories and institutions. An invitation is an opportunity to apply on behalf of one. A person verifies every application before the Formulary opens, and admission is not automatic.</p></header>
     <form id="f" novalidate>
       ${field('name', 'Full name', 'type="text" autocomplete="name" required')}
-      ${field('email', 'Email', 'type="email" autocomplete="email" required', 'We write to this address about your application. Nothing else is sent to it.')}
+      ${field('email', 'Work email', 'type="email" autocomplete="email" required', 'An address at your institution. We write to it about this application and use it to confirm where you work. Personal addresses are not accepted.')}
+      <fieldset><legend>Institution</legend>
+        ${field('inst', 'Institution or laboratory', 'type="text" autocomplete="organization" required', 'The legal name of the organisation the materials are for.')}
+        <div class="field"><label for="itype">Kind of institution</label><select id="itype" name="itype" required aria-describedby="itype-e"><option value="">Choose one</option><option>University or college</option><option>Hospital or research institute</option><option>Contract or commercial laboratory</option><option>Company research and development</option><option>Government laboratory</option></select><p class="err" id="itype-e" role="alert"></p></div>
+        ${field('dept', 'Department or group', 'type="text" required')}
+        ${field('role', 'Your role there', 'type="text" autocomplete="organization-title" required', 'For example: principal investigator, laboratory manager, purchasing officer.')}
+        ${field('isite', 'Institution website', 'type="url" inputmode="url" placeholder="https://" required')}
+        ${field('ref', 'Someone there who can confirm this', 'type="text" required', 'Name and work email of a supervisor, laboratory manager or purchasing contact. The reviewer writes to them.')}
+        <div class="field"><label for="use">The research these materials are for</label><textarea id="use" name="use" maxlength="600" required aria-describedby="use-h use-e"></textarea>
+          <p class="note" id="use-h">Two or three sentences: the kind of work and the setting (for example in vitro assays, analytical method work).</p><p class="err" id="use-e" role="alert"></p></div>
+      </fieldset>
       <fieldset><legend>Eligibility</legend>
-        <label class="check"><input type="checkbox" name="age"><span>I am at or over the age of majority where I live.</span></label>
-        <label class="check"><input type="checkbox" name="region"><span>I live in Canada.<span class="note">Membership is offered in Canada only for now.</span></span></label>
+        <label class="check"><input type="checkbox" name="age"><span>I am at or over the age of majority and am authorised to order for this institution.</span></label>
+        <label class="check"><input type="checkbox" name="region"><span>The institution is in Canada.<span class="note">PR6 supplies institutions in Canada only for now.</span></span></label>
+        <label class="check"><input type="checkbox" name="ruo"><span>Materials are for laboratory research only. They will not be used in people or animals, and will not be passed on or resold.</span></label>
         <p class="err" id="elig-e" role="alert"></p>
       </fieldset>
       ${field('password', 'Choose a password', 'type="password" autocomplete="new-password" required minlength="10"', 'At least 10 characters. Your member number will never work as a password.')}
       <label class="check"><input type="checkbox" name="passkey"><span>Offer me a passkey once I am admitted.<span class="note">Optional. A passkey replaces the password on devices that support one.</span></span></label>
-      <div class="field"><label for="interests">What would you like to explore? Optional</label><textarea id="interests" maxlength="400"></textarea>
-        <p class="note">Context only. It is not scored, and leaving it empty changes nothing. Please leave out health information.</p></div>
+      <div class="field"><label for="interests">Fields of study you work in. Optional</label><textarea id="interests" maxlength="400"></textarea>
+        <p class="note">Context only. It is not scored, and leaving it empty changes nothing.</p></div>
       <fieldset><legend>Consent</legend>
         <label class="check"><input type="checkbox" name="terms"><span>I have read the privacy notice below and agree to the application terms.</span></label>
         <label class="check"><input type="checkbox" name="compass"><span>If I am admitted, keep my Compass choices on my record.<span class="note">Optional and separate. You can change it at any time.</span></span></label>
         <p class="err" id="terms-e" role="alert"></p>
       </fieldset>
       <details class="more"><summary>Privacy notice for applicants</summary><div>
-        <p>We use your name and email to review this application and to write to you about it. Your answer to the Keeper, if you gave one, is kept with the application and is not used in the review.</p>
+        <p>We use your name, work email and the institution details above to verify this application and to write to you about it. We may contact the institution and the person you named to confirm them. Your answer to the Keeper, if you gave one, is kept with the application and is not used in the review.</p>
         <p>We do not ask for a mailing address here. We ask only when something is being sent to you.</p>
         <p>You can ask to see, correct or delete what we hold at any time through Support. Applications that are not approved are deleted after [retention period, to be confirmed].</p></div></details>
       <div class="actions"><button class="btn" type="submit">Submit application</button><a class="link" href="#/support">Ask a question first</a></div>
@@ -352,13 +365,21 @@ export async function apply(app) {
     const email = v('email').value.trim();
     const good = [
       setErr(view, 'name', v('name').value.trim().length < 2 ? 'Enter your full name.' : ''),
-      setErr(view, 'email', /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) ? '' : 'Enter an email address we can write to.'),
+      setErr(view, 'email', !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) ? 'Enter an email address we can write to.' : FREEMAIL.test(email) ? 'Use an address at your institution, not a personal one.' : ''),
+      setErr(view, 'inst', v('inst').value.trim().length < 2 ? 'Enter the institution or laboratory.' : ''),
+      setErr(view, 'itype', v('itype').value ? '' : 'Choose the kind of institution.'),
+      setErr(view, 'dept', v('dept').value.trim().length < 2 ? 'Enter the department or group.' : ''),
+      setErr(view, 'role', v('role').value.trim().length < 2 ? 'Enter your role.' : ''),
+      setErr(view, 'isite', /^https?:\/\/[^\s.]+\.[^\s]+$/.test(v('isite').value.trim()) ? '' : 'Enter the institution website, starting with https://'),
+      setErr(view, 'ref', /[^@\s]+@[^@\s]+\.[^@\s]+/.test(v('ref').value) ? '' : 'Give a name and a work email we can write to.'),
+      setErr(view, 'use', v('use').value.trim().length < 40 ? 'Describe the research in two or three sentences.' : ''),
       setErr(view, 'password', v('password').value.length < 10 ? 'Use at least 10 characters.' : /^\d[\d\s]*$/.test(v('password').value) ? 'A password made only of digits is too easy to guess.' : ''),
     ];
-    $('#elig-e', view).textContent = v('age').checked && v('region').checked ? '' : 'Both eligibility statements must be true to apply.';
+    $('#elig-e', view).textContent = v('age').checked && v('region').checked && v('ruo').checked ? '' : 'All three eligibility statements must be true to apply.';
     $('#terms-e', view).textContent = v('terms').checked ? '' : 'Please read the privacy notice and agree to the application terms.';
     if (good.includes(false) || $('#elig-e', view).textContent || $('#terms-e', view).textContent) { const bad = $('[aria-invalid=true]', f) || $('.err:not(:empty)', f); if (bad) bad.focus ? bad.focus() : bad.scrollIntoView(); return; }
-    const r = await store.apply({ name: v('name').value, email, password: v('password').value, passkey: v('passkey').checked, interests: $('#interests', view).value.trim(), consents: { terms: true, compass: v('compass').checked, at: Date.now() } });
+    const r = await store.apply({ name: v('name').value, email, password: v('password').value, passkey: v('passkey').checked, interests: $('#interests', view).value.trim(), consents: { terms: true, compass: v('compass').checked, ruo: true, at: Date.now() },
+      inst: { name: v('inst').value.trim(), type: v('itype').value, dept: v('dept').value.trim(), role: v('role').value.trim(), site: v('isite').value.trim(), ref: v('ref').value.trim(), use: v('use').value.trim() } });
     if (r.ok && ok()) { app.proto(); app.go('#/status'); }
   });
   return { title: 'Application', tick: (t) => app.soundTick(t) };
@@ -375,10 +396,11 @@ export async function status(app) {
   const declined = a.status === 'declined';
   view.innerHTML = `<div class="page">
     <header><p class="label">Reference ${a.ref}</p>
-      <h1 class="title">${declined ? 'Not approved at this time.' : 'Your application is with a reviewer.'}</h1>
+      <h1 class="title">${declined ? 'Not approved at this time.' : 'Your institution is being verified.'}</h1>
       <p class="lead">${declined
-    ? 'The reviewer could not confirm one or more of the eligibility criteria. It is a decision about this application, not about you.'
-    : 'Reviews are done by people, against written standards. We aim to answer within about 14 days. That is a working target, not a waiting period.'}</p></header>
+    ? 'The reviewer could not confirm the institution or one of the eligibility criteria. It is a decision about this application, not about you.'
+    : 'A person confirms the institution, your role there and the research described, and may write to the contact you named. The Formulary and its prices stay closed until that is done. We aim to answer within about 14 days.'}</p></header>
+    ${a.inst ? `<section><h2>Institution on this application</h2><dl class="kv"><dt>Institution</dt><dd>${esc(a.inst.name)}<span class="note">${esc(a.inst.type)}</span></dd><dt>Department</dt><dd>${esc(a.inst.dept)}</dd><dt>Role</dt><dd>${esc(a.inst.role)}</dd><dt>Website</dt><dd>${esc(a.inst.site)}</dd><dt>Confirming contact</dt><dd>${esc(a.inst.ref)}</dd><dt>Research</dt><dd>${esc(a.inst.use)}</dd><dt>Verification</dt><dd>${declined ? 'Not confirmed' : 'In progress'}</dd></dl></section>` : ''}
     ${declined ? `<p class="notice">If something we relied on is wrong, say so and a different reviewer will look again. <a href="#/support">Ask for a correction</a>.</p>` : ''}
     <section><h2>Record</h2><ul class="rows">${a.updates.slice().reverse().map((u) => `<li><div class="row plain"><span class="t" style="font-size:var(--s3)">${esc(u.what)}</span><span class="m">${fmtTime(u.t)}</span></div></li>`).join('')}</ul>
       <p class="note" style="margin-top:14px">We will write to ${esc(a.email)} when there is a decision. You can come back to this page with your invitation code and the password you chose.</p></section>

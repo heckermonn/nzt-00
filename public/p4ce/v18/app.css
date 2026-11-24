@@ -108,7 +108,7 @@ body.stage-full.outside #bar { text-shadow: 0 1px 12px rgba(0, 0, 0, .8); }
 
 .field { margin-top: 22px; }
 .field label, fieldset legend, .field-l { display: block; font-family: var(--mono); font-size: var(--s1); letter-spacing: .14em; text-transform: uppercase; color: var(--dim); margin-bottom: 8px; }
-input[type=text], input[type=email], input[type=password], input[type=search], textarea, select { width: 100%; background: var(--field); border: 0; border-bottom: 1px solid var(--fg); padding: 13px 12px; font-size: var(--s3); border-radius: 0; appearance: none; }
+input[type=text], input[type=email], input[type=password], input[type=search], input[type=url], textarea, select { width: 100%; background: var(--field); border: 0; border-bottom: 1px solid var(--fg); padding: 13px 12px; font-size: var(--s3); border-radius: 0; appearance: none; }
 textarea { min-height: 96px; resize: vertical; line-height: 1.45; }
 input::placeholder, textarea::placeholder { color: var(--dim); opacity: .8; }
 input[aria-invalid=true] { border-bottom-color: var(--orange); box-shadow: 0 1px 0 var(--orange); }
